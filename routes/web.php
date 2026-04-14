@@ -7,5 +7,8 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-// Route untuk halaman Kasir
+// Route untuk nampilin halaman Kasir
 Route::get('/kasir', [CashierController::class, 'index']);
+
+// Route untuk nerima data form pesanan (INI YANG BIKIN ERROR KALAU GAADA)
+Route::post('/kasir/pesan', [CashierController::class, 'store'])->name('kasir.store');
