@@ -5,9 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kasir - Ulam Sari</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = { darkMode: 'class' }
-    </script>
+    <script>tailwind.config = { darkMode: 'class' }</script>
     <style>
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
@@ -17,13 +15,13 @@
 <body class="bg-gray-100 dark:bg-gray-900 font-sans text-gray-800 dark:text-gray-100 relative">
 
     @if(session('error'))
-        <div id="alert-error" class="fixed top-5 left-1/2 -translate-x-1/2 z- bg-red-600 text-white px-6 py-3 rounded-2xl font-bold shadow-2xl animate-bounce">
+        <div id="alert-error" class="fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-red-600 text-white px-6 py-3 rounded-2xl font-bold shadow-2xl animate-bounce">
             {{ session('error') }}
         </div>
         <script>setTimeout(() => document.getElementById('alert-error').remove(), 3000);</script>
     @endif
     @if(session('success'))
-        <div id="alert-success" class="fixed top-5 left-1/2 -translate-x-1/2 z- bg-black text-white px-6 py-3 rounded-2xl font-bold shadow-2xl border-l-8 border-orange-500">
+        <div id="alert-success" class="fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-black text-white px-6 py-3 rounded-2xl font-bold shadow-2xl border-l-8 border-orange-500">
             {{ session('success') }}
         </div>
         <script>setTimeout(() => document.getElementById('alert-success').remove(), 3000);</script>
@@ -43,7 +41,7 @@
                         <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
                     </span>
                     <input type="text" id="searchInput" onkeyup="searchMenu()" placeholder="Cari menu..."
-                           class="w-full pl-10 pr-4 py-2 border-2 border-gray-200 dark:border-gray-700 dark:bg-gray-800 rounded-xl focus:border-orange-500 outline-none font-semibold shadow-sm">
+                        class="w-full pl-10 pr-4 py-2 border-2 border-gray-200 dark:border-gray-700 dark:bg-gray-800 rounded-xl focus:border-orange-500 outline-none font-semibold shadow-sm">
                 </div>
             </div>
 
@@ -56,9 +54,9 @@
 
             <div class="grid grid-cols-2 gap-6 pb-20" id="menuGrid">
                 @foreach($menus as $menu)
-                <div onclick="openAddModal({{ $menu->id }}, '{{ $menu->name }}', {{ $menu->price }}, '{{ $menu->category_name }}')"
-                     class="menu-card bg-white dark:bg-gray-800 rounded-2xl shadow-sm border dark:border-gray-700 overflow-hidden transition hover:shadow-xl hover:border-orange-400 flex flex-col h-full cursor-pointer group"
-                     data-category="{{ $menu->category_name }}" data-name="{{ strtolower($menu->name) }}">
+                <div onclick="openAddModal({{ $menu->id }}, '{{ addslashes($menu->name) }}', {{ $menu->price }}, '{{ addslashes($menu->category_name) }}')"
+                    class="menu-card bg-white dark:bg-gray-800 rounded-2xl shadow-sm border dark:border-gray-700 overflow-hidden transition hover:shadow-xl hover:border-orange-400 flex flex-col h-full cursor-pointer group"
+                    data-category="{{ $menu->category_name }}" data-name="{{ strtolower($menu->name) }}">
                     <div class="h-40 bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-gray-400 text-sm italic font-medium uppercase text-center p-2">Foto {{ $menu->name }}</div>
                     <div class="p-5 flex flex-col flex-1 relative bg-white dark:bg-gray-800 border-t dark:border-gray-700">
                         <h3 class="font-bold text-xl leading-tight mb-2 text-gray-800 dark:text-gray-100">{{ $menu->name }}</h3>
@@ -79,7 +77,8 @@
 
         {{-- ===== RIGHT PANEL ===== --}}
         <div class="w-2/5 bg-white dark:bg-gray-800 p-6 shadow-2xl flex flex-col border-l dark:border-gray-700">
-            <div class="mb-4 border-b-2 border-gray-100 dark:border-gray-700 pb-4 text-center">
+
+            <div class="mb-4 border-b-2 border-gray-100 dark:border-gray-700 pb-4">
                 <input type="hidden" name="table_id" id="selected_table_id">
                 <button type="button" onclick="openTableModal()"
                         class="w-full bg-white dark:bg-gray-800 text-black dark:text-white border-2 border-gray-100 dark:border-gray-700 p-4 rounded-2xl font-bold text-xl hover:border-orange-500 transition flex justify-center items-center shadow-sm relative group">
@@ -89,24 +88,37 @@
             </div>
 
             <div id="panel-tabs" class="hidden gap-2 mb-4">
-                <button type="button" onclick="switchPanel('cart')" id="tab-cart" class="flex-1 py-2 rounded-xl font-bold text-sm uppercase border-2 border-orange-500 bg-orange-500 text-white transition">Pesanan Baru</button>
-                <button type="button" onclick="switchPanel('order')" id="tab-order" class="flex-1 py-2 rounded-xl font-bold text-sm uppercase border-2 border-gray-100 dark:border-gray-700 text-gray-400 transition">Cek Meja</button>
+                <button type="button" onclick="switchPanel('cart')" id="tab-cart"
+                    class="flex-1 py-2 rounded-xl font-bold text-sm uppercase border-2 border-orange-500 bg-orange-500 text-white transition">
+                    Pesanan Baru
+                </button>
+                <button type="button" onclick="switchPanel('order')" id="tab-order"
+                    class="flex-1 py-2 rounded-xl font-bold text-sm uppercase border-2 border-gray-100 dark:border-gray-700 text-gray-400 transition">
+                    Cek Meja
+                </button>
             </div>
 
+            {{-- CART PANEL --}}
             <div id="panel-cart" class="flex flex-col flex-1 overflow-hidden">
                 <h2 class="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-100 uppercase tracking-tight">Detail Pesanan</h2>
                 <div id="cart-container" class="flex-1 overflow-y-auto pr-2 space-y-3">
-                    <div id="empty-cart-msg" class="flex flex-col items-center justify-center h-full text-gray-300 dark:text-gray-600 italic font-bold"><p>BELUM ADA MENU DIPILIH</p></div>
+                    <div class="flex flex-col items-center justify-center h-full text-gray-300 dark:text-gray-600 italic font-bold">
+                        <p>BELUM ADA MENU DIPILIH</p>
+                    </div>
                 </div>
                 <div class="border-t-2 border-gray-100 dark:border-gray-700 pt-4 mt-4">
                     <div class="flex justify-between items-center mb-4">
                         <span class="text-gray-500 text-lg uppercase font-bold">Total</span>
                         <span id="total-price" class="text-orange-600 text-3xl font-bold">Rp 0</span>
                     </div>
-                    <button type="button" onclick="validateAndSubmit()" class="w-full bg-orange-500 text-white py-5 rounded-2xl font-bold text-2xl hover:bg-black dark:hover:bg-orange-600 shadow-xl transition transform active:scale-95 uppercase tracking-wider">Kirim Pesanan</button>
+                    <button type="button" onclick="validateAndSubmit()"
+                        class="w-full bg-orange-500 text-white py-5 rounded-2xl font-bold text-2xl hover:bg-black dark:hover:bg-orange-600 shadow-xl transition transform active:scale-95 uppercase tracking-wider">
+                        Kirim Pesanan
+                    </button>
                 </div>
             </div>
 
+            {{-- ORDER VIEW PANEL --}}
             <div id="panel-order" class="flex-col flex-1 overflow-hidden hidden">
                 <div class="flex items-center justify-between mb-4">
                     <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100 uppercase tracking-tight">Pesanan Aktif</h2>
@@ -120,6 +132,7 @@
                     </div>
                 </div>
             </div>
+
         </div>
     </form>
 
@@ -129,62 +142,108 @@
             <h2 class="text-2xl font-bold text-center mb-6 uppercase dark:text-white">Denah Meja</h2>
             <div class="grid grid-cols-4 gap-3 mb-6">
                 @for ($i = 1; $i <= 12; $i++)
-                    <button type="button" onclick="selectTable('{{ $i }}')" id="btn-meja-{{ $i }}" class="meja-option aspect-square flex flex-col items-center justify-center rounded-2xl border-2 border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-orange-500 transition-all font-bold group">
-                        <span class="text-[10px] text-gray-300 group-hover:text-orange-400">MEJA</span>
+                    <button type="button" onclick="selectTable('{{ $i }}')" id="btn-meja-{{ $i }}"
+                            class="relative meja-option aspect-square flex flex-col items-center justify-center rounded-2xl border-2 border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-orange-500 transition-all font-bold group">
+                        <span class="text-[10px] text-gray-300 group-hover:text-orange-400 uppercase">MEJA</span>
                         <span class="text-xl text-black dark:text-white group-hover:text-orange-600">{{ $i }}</span>
                     </button>
                 @endfor
             </div>
-            <button type="button" onclick="selectTakeaway()" id="btn-takeaway-ui" class="w-full mb-4 flex items-center justify-center gap-3 border-2 border-gray-100 dark:border-gray-700 py-4 rounded-2xl font-bold text-lg transition hover:border-orange-500 dark:text-white">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 7H4l1-7z" stroke-width="2"/></svg> TAKEAWAY
+
+            <button type="button" onclick="selectTakeaway()" id="btn-takeaway-ui"
+                    class="w-full mb-4 flex items-center justify-center gap-3 border-2 border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 py-4 rounded-2xl font-bold text-lg transition hover:border-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/20 dark:text-white hover:text-orange-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 7H4l1-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
+                TAKEAWAY
             </button>
-            <div id="takeaway-input-container" class="hidden mb-6">
-                <input type="text" id="takeaway_name_field" onkeyup="syncCustomerName()" placeholder="Atas Nama Pelanggan..." class="w-full p-4 border-2 border-orange-500 rounded-xl outline-none font-bold dark:bg-gray-700 dark:text-white">
+
+            <div id="takeaway-input-container" class="hidden mb-4">
+                <input type="text" id="takeaway_name_field" onkeyup="syncCustomerName()" placeholder="Atas Nama Pelanggan..."
+                    class="w-full p-4 border-2 border-orange-500 rounded-xl outline-none font-bold dark:bg-gray-700 dark:text-white">
             </div>
-            <button type="button" onclick="closeTableModal()" class="w-full bg-black text-white py-3 rounded-xl font-bold uppercase transition">Simpan</button>
+
+            <button type="button" onclick="closeTableModal()" class="w-full bg-black dark:bg-orange-600 text-white py-3 rounded-xl font-bold uppercase transition hover:bg-orange-600">Simpan</button>
         </div>
     </div>
 
     {{-- ===== ITEM MODAL ===== --}}
     <div id="itemModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50 backdrop-blur-sm">
-        <div class="bg-white dark:bg-gray-800 w-[420px] rounded-[2.5rem] shadow-2xl p-8">
+        <div class="bg-white dark:bg-gray-800 w-[420px] rounded-[2.5rem] shadow-2xl p-8 max-h-[90vh] overflow-y-auto scrollbar-hide">
             <div class="flex justify-between items-start mb-6 border-b dark:border-gray-700 pb-4">
                 <div>
                     <h2 id="modalItemName" class="text-2xl font-bold text-gray-800 dark:text-white uppercase">Nama Item</h2>
                     <p id="modalItemPrice" class="text-orange-500 font-bold text-xl">Rp 0</p>
                 </div>
-                <button type="button" onclick="closeModal()" class="text-gray-400 hover:text-red-500 p-2 transition"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-width="3"/></svg></button>
+                <button type="button" onclick="closeModal()" class="text-gray-400 hover:text-red-500 p-2 transition">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"/></svg>
+                </button>
             </div>
-            <input type="hidden" id="modalItemId"><input type="hidden" id="modalEditIndex" value="-1">
+
+            <input type="hidden" id="modalItemId">
+            <input type="hidden" id="modalEditIndex" value="-1">
+
             <div class="space-y-6">
                 <div id="chickenPartContainer" class="hidden">
                     <label class="block font-bold text-gray-600 dark:text-gray-400 text-sm mb-2 uppercase italic">Bagian Ayam:</label>
                     <select id="chickenPart" class="w-full border-2 border-gray-100 dark:border-gray-700 p-3 rounded-xl font-bold bg-gray-50 dark:bg-gray-700 dark:text-white outline-none">
-                        <option value="Bebas">Bebas</option><option value="Dada">Dada</option><option value="Paha">Paha</option><option value="Sayap">Sayap</option>
+                        <option value="Bebas">Bebas</option>
+                        <option value="Dada">Dada</option>
+                        <option value="Paha">Paha</option>
+                        <option value="Sayap">Sayap</option>
                     </select>
                 </div>
+
                 <div id="spicyLevelContainer" class="hidden">
                     <label class="block font-bold text-gray-600 dark:text-gray-400 text-sm mb-2 uppercase italic">Pedas:</label>
                     <select id="spicyLevel" class="w-full border-2 border-gray-100 dark:border-gray-700 p-3 rounded-xl font-bold bg-gray-50 dark:bg-gray-700 dark:text-white outline-none">
-                        <option value="Tidak Pedas">Tidak Pedas</option><option value="Sedang">Sedang</option><option value="Pedas">Pedas</option>
+                        <option value="Tidak Pedas">Tidak Pedas</option>
+                        <option value="Sedang">Sedang</option>
+                        <option value="Pedas">Pedas</option>
                     </select>
                 </div>
+
+                <div id="iceLevelContainer" class="hidden">
+                    <label class="block font-bold text-gray-600 dark:text-gray-400 text-sm mb-2 uppercase italic">Es:</label>
+                    <select id="iceLevel" class="w-full border-2 border-gray-100 dark:border-gray-700 p-3 rounded-xl font-bold bg-gray-50 dark:bg-gray-700 dark:text-white outline-none">
+                        <option value="Es Normal">Es Normal</option>
+                        <option value="Less Ice">Less Ice</option>
+                        <option value="Tanpa Es">Tanpa Es</option>
+                    </select>
+                </div>
+
+                <div id="sugarLevelContainer" class="hidden">
+                    <label class="block font-bold text-gray-600 dark:text-gray-400 text-sm mb-2 uppercase italic">Gula:</label>
+                    <select id="sugarLevel" class="w-full border-2 border-gray-100 dark:border-gray-700 p-3 rounded-xl font-bold bg-gray-50 dark:bg-gray-700 dark:text-white outline-none">
+                        <option value="Gula Normal">Gula Normal</option>
+                        <option value="Less Sugar">Less Sugar</option>
+                        <option value="Tanpa Gula">Tanpa Gula</option>
+                    </select>
+                </div>
+
                 <div>
                     <label class="block font-bold text-gray-600 dark:text-gray-400 text-sm mb-2 uppercase italic">Jumlah:</label>
                     <div class="flex items-center gap-4 bg-gray-50 dark:bg-gray-700 p-2 rounded-2xl w-fit border dark:border-gray-600">
-                        <button type="button" onclick="changeQty(-1)" class="w-10 h-10 bg-white dark:bg-gray-800 dark:text-white rounded-xl shadow-sm font-black text-xl">-</button>
+                        <button type="button" onclick="changeQty(-1)" class="w-10 h-10 bg-white dark:bg-gray-800 dark:text-white rounded-xl shadow-sm font-black text-xl hover:bg-orange-500 hover:text-white transition">-</button>
                         <input type="number" id="modalQty" value="1" min="1" class="w-12 text-center font-bold text-xl bg-transparent outline-none dark:text-white" readonly>
-                        <button type="button" onclick="changeQty(1)" class="w-10 h-10 bg-white dark:bg-gray-800 dark:text-white rounded-xl shadow-sm font-black text-xl">+</button>
+                        <button type="button" onclick="changeQty(1)" class="w-10 h-10 bg-white dark:bg-gray-800 dark:text-white rounded-xl shadow-sm font-black text-xl hover:bg-orange-500 hover:text-white transition">+</button>
                     </div>
                 </div>
+
                 <div class="pt-4 border-t dark:border-gray-700">
                     <label class="block font-bold text-gray-600 dark:text-gray-400 text-sm mb-3 uppercase italic">Tipe:</label>
                     <div class="flex gap-4">
-                        <label id="label-dinein" class="flex-1 border-2 p-3 rounded-xl cursor-pointer text-center font-bold transition-all"><input type="radio" name="orderType" value="Dine In" class="hidden" checked onchange="toggleServiceUI()"> Dine In</label>
-                        <label id="label-takeaway" class="flex-1 border-2 p-3 rounded-xl cursor-pointer text-center font-bold transition-all"><input type="radio" name="orderType" value="Takeaway" class="hidden" onchange="toggleServiceUI()"> Takeaway</label>
+                        <label id="label-dinein" class="flex-1 border-2 border-orange-500 bg-orange-50 dark:bg-orange-900/20 text-orange-600 p-3 rounded-xl cursor-pointer text-center font-bold transition-all">
+                            <input type="radio" name="orderType" value="Dine In" class="hidden" checked onchange="toggleServiceUI()"> Dine In
+                        </label>
+                        <label id="label-takeaway" class="flex-1 border-2 border-gray-100 dark:border-gray-700 text-gray-500 dark:bg-gray-800 p-3 rounded-xl cursor-pointer text-center font-bold transition-all">
+                            <input type="radio" name="orderType" value="Takeaway" class="hidden" onchange="toggleServiceUI()"> Takeaway
+                        </label>
                     </div>
                 </div>
-                <button type="button" onclick="saveToCart()" id="btn-submit-modal" class="w-full bg-black dark:bg-orange-600 text-white py-4 rounded-2xl font-bold text-lg shadow-lg uppercase tracking-widest">Tambahkan</button>
+
+                <button type="button" onclick="saveToCart()" id="btn-submit-modal"
+                    class="w-full bg-black dark:bg-orange-600 text-white py-4 rounded-2xl font-bold text-lg shadow-lg hover:bg-orange-600 transition uppercase tracking-widest">
+                    Tambahkan
+                </button>
             </div>
         </div>
     </div>
@@ -192,18 +251,40 @@
     <script>
         let cart = [];
         const formatRupiah = (n) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n);
-        const pendingOrders = @json($pendingOrders);
+        const pendingOrders = @json($pendingOrders ?? []);
 
-        // --- DARK MODE ---
+        // =====================
+        // INIT: Red dot on tables with pending orders
+        // =====================
+        window.onload = () => {
+            for (let i = 1; i <= 12; i++) {
+                const order = pendingOrders[i];
+                const hasOrder = order && (Array.isArray(order) ? order.length > 0 : Object.keys(order).length > 0);
+                if (hasOrder) {
+                    const btn = document.getElementById('btn-meja-' + i);
+                    if (btn) btn.insertAdjacentHTML('beforeend', '<span class="absolute top-2 right-2 w-3 h-3 bg-red-500 rounded-full shadow-[0_0_8px_rgba(239,68,68,0.8)] animate-pulse"></span>');
+                }
+            }
+        };
+
+        // =====================
+        // DARK MODE
+        // =====================
         function toggleDarkMode() {
             const isDark = document.documentElement.classList.toggle('dark');
             localStorage.theme = isDark ? 'dark' : 'light';
             document.getElementById('sun-icon').classList.toggle('hidden', !isDark);
             document.getElementById('moon-icon').classList.toggle('hidden', isDark);
         }
-        if (localStorage.theme === 'dark') document.documentElement.classList.add('dark');
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+            document.getElementById('sun-icon').classList.remove('hidden');
+            document.getElementById('moon-icon').classList.add('hidden');
+        }
 
-        // --- TABLE MODAL LOGIC ---
+        // =====================
+        // TABLE MODAL
+        // =====================
         function openTableModal() { document.getElementById('tableModal').classList.replace('hidden', 'flex'); }
         function closeTableModal() { document.getElementById('tableModal').classList.replace('flex', 'hidden'); }
 
@@ -211,27 +292,39 @@
             document.getElementById('selected_table_id').value = num;
             document.getElementById('table_label').innerText = "MEJA " + num;
             document.getElementById('takeaway-input-container').classList.add('hidden');
-            
-            document.querySelectorAll('.meja-option').forEach(b => b.classList.remove('border-orange-500', 'bg-orange-50'));
-            document.getElementById('btn-meja-'+num).classList.add('border-orange-500', 'bg-orange-50');
-            document.getElementById('btn-takeaway-ui').classList.remove('border-orange-500', 'bg-orange-50');
 
-            document.getElementById('panel-tabs').classList.replace('hidden', 'flex');
-            switchPanel(pendingOrders[num] ? 'order' : 'cart');
+            document.querySelectorAll('.meja-option').forEach(b => {
+                b.classList.remove('border-orange-500', 'bg-orange-50');
+                b.classList.add('border-gray-100');
+            });
+            document.getElementById('btn-meja-' + num).classList.add('border-orange-500', 'bg-orange-50');
+            document.getElementById('btn-takeaway-ui').classList.remove('border-orange-500', 'bg-orange-50', 'text-orange-600');
+
+            const tabs = document.getElementById('panel-tabs');
+            tabs.classList.remove('hidden');
+            tabs.classList.add('flex');
+
+            const order = pendingOrders[num];
+            const hasOrder = order && (Array.isArray(order) ? order.length > 0 : Object.keys(order).length > 0);
+            switchPanel(hasOrder ? 'order' : 'cart');
             setTimeout(closeTableModal, 300);
         }
 
         function selectTakeaway() {
-            // FIX ERROR: Gunakan ID 0 untuk takeaway agar masuk ke kolom Integer di DB
-            document.getElementById('selected_table_id').value = "0"; 
+            document.getElementById('selected_table_id').value = "0";
             document.getElementById('table_label').innerText = "TAKEAWAY";
             document.getElementById('takeaway-input-container').classList.remove('hidden');
             document.getElementById('takeaway_name_field').focus();
 
-            document.querySelectorAll('.meja-option').forEach(b => b.classList.remove('border-orange-500', 'bg-orange-50'));
-            document.getElementById('btn-takeaway-ui').classList.add('border-orange-500', 'bg-orange-50');
-            
-            document.getElementById('panel-tabs').classList.replace('hidden', 'flex');
+            document.querySelectorAll('.meja-option').forEach(b => {
+                b.classList.remove('border-orange-500', 'bg-orange-50');
+                b.classList.add('border-gray-100');
+            });
+            document.getElementById('btn-takeaway-ui').classList.add('border-orange-500', 'bg-orange-50', 'text-orange-600');
+
+            const tabs = document.getElementById('panel-tabs');
+            tabs.classList.remove('hidden');
+            tabs.classList.add('flex');
             switchPanel('cart');
         }
 
@@ -239,46 +332,70 @@
             document.getElementById('customer_name_input').value = document.getElementById('takeaway_name_field').value;
         }
 
-        // --- PANEL SWITCH ---
+        // =====================
+        // PANEL SWITCH
+        // =====================
         function switchPanel(p) {
             const isCart = p === 'cart';
-            document.getElementById('panel-cart').classList.toggle('hidden', !isCart);
-            document.getElementById('panel-order').classList.toggle('hidden', isCart);
-            document.getElementById('tab-cart').className = isCart ? 'flex-1 py-2 rounded-xl font-bold text-sm bg-orange-500 text-white' : 'flex-1 py-2 rounded-xl font-bold text-sm text-gray-400 border-2 border-gray-100';
-            document.getElementById('tab-order').className = !isCart ? 'flex-1 py-2 rounded-xl font-bold text-sm bg-orange-500 text-white' : 'flex-1 py-2 rounded-xl font-bold text-sm text-gray-400 border-2 border-gray-100';
+            const cartPanel = document.getElementById('panel-cart');
+            const orderPanel = document.getElementById('panel-order');
+
+            cartPanel.classList.toggle('hidden', !isCart);
+            cartPanel.classList.toggle('flex', isCart);
+            orderPanel.classList.toggle('hidden', isCart);
+            orderPanel.classList.toggle('flex', !isCart);
+
+            document.getElementById('tab-cart').className = isCart
+                ? 'flex-1 py-2 rounded-xl font-bold text-sm uppercase border-2 border-orange-500 bg-orange-500 text-white transition'
+                : 'flex-1 py-2 rounded-xl font-bold text-sm uppercase border-2 border-gray-100 dark:border-gray-700 text-gray-400 transition';
+            document.getElementById('tab-order').className = !isCart
+                ? 'flex-1 py-2 rounded-xl font-bold text-sm uppercase border-2 border-orange-500 bg-orange-500 text-white transition'
+                : 'flex-1 py-2 rounded-xl font-bold text-sm uppercase border-2 border-gray-100 dark:border-gray-700 text-gray-400 transition';
+
             if (!isCart) loadOrderPanel();
         }
 
         function loadOrderPanel() {
-            const id = document.getElementById('selected_table_id').value;
+            const tableId = document.getElementById('selected_table_id').value;
             const container = document.getElementById('order-container');
             const totalEl = document.getElementById('order-total-price');
-            const orders = pendingOrders[id];
+            const rawOrder = pendingOrders[tableId];
 
-            if (!orders || (Array.isArray(orders) && orders.length === 0)) {
-                container.innerHTML = `<div class="text-center py-20 italic text-gray-400 font-bold uppercase">Kosong</div>`;
-                totalEl.innerText = "Rp 0";
+            if (!rawOrder || (Array.isArray(rawOrder) ? rawOrder.length === 0 : Object.keys(rawOrder).length === 0)) {
+                container.innerHTML = `<div class="flex flex-col items-center justify-center h-full text-gray-300 dark:text-gray-600 italic font-bold text-center"><p>TIDAK ADA PESANAN<br>AKTIF DI MEJA INI</p></div>`;
+                totalEl.innerText = 'Rp 0';
                 return;
+            }
+
+            // Normalize to array
+            let list = [];
+            if (Array.isArray(rawOrder)) {
+                list = [...rawOrder];
+            } else if (rawOrder.hasOwnProperty('order_items') || rawOrder.hasOwnProperty('order_number')) {
+                list = [rawOrder];
+            } else {
+                list = Object.values(rawOrder);
             }
 
             container.innerHTML = '';
             let gTotal = 0;
-            // Looping Pesanan (Order 1, 2, dst)
-            const list = Array.isArray(orders) ? orders : [orders];
+            list.reverse();
+
             list.forEach((ord, idx) => {
                 gTotal += parseInt(ord.total_price);
                 container.insertAdjacentHTML('beforeend', `
-                    <div class="bg-orange-50 dark:bg-orange-900/20 p-3 rounded-xl border border-orange-200 mt-4 mb-2">
-                        <p class="text-[10px] font-bold text-orange-600 tracking-widest uppercase">Pesanan #${idx + 1} - ${ord.order_number}</p>
+                    <div class="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-2xl p-3 mt-2">
+                        <p class="text-[10px] font-bold text-orange-600 tracking-widest uppercase">Pesanan #${list.length - idx} • ${ord.order_number}</p>
                     </div>
                 `);
                 ord.order_items.forEach(item => {
+                    const itemName = item.menu ? item.menu.name : (item.name || 'Menu');
                     container.insertAdjacentHTML('beforeend', `
-                        <div class="bg-white dark:bg-gray-800 border-2 p-4 rounded-2xl shadow-sm mb-2">
-                            <h4 class="font-bold uppercase dark:text-white">${item.menu.name}</h4>
-                            <p class="text-[10px] font-bold text-orange-500 italic uppercase">${item.notes || '-'}</p>
-                            <div class="flex justify-between mt-2">
-                                <span class="bg-black text-white px-2 rounded-lg text-xs font-bold">x${item.quantity}</span>
+                        <div class="bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-4 shadow-sm">
+                            <h4 class="font-bold uppercase dark:text-white">${itemName}</h4>
+                            <p class="text-[10px] font-bold text-orange-500 italic uppercase mt-1">${item.notes || '-'}</p>
+                            <div class="flex justify-between items-center mt-2">
+                                <span class="bg-black dark:bg-orange-600 text-white px-2 py-0.5 rounded-lg text-xs font-bold">x${item.quantity}</span>
                                 <span class="font-bold dark:text-white">${formatRupiah(item.subtotal)}</span>
                             </div>
                         </div>
@@ -288,44 +405,109 @@
             totalEl.innerText = formatRupiah(gTotal);
         }
 
-        // --- MENU LOGIC ---
+        // =====================
+        // ITEM MODAL
+        // =====================
         function openAddModal(id, name, price, cat) {
             resetModal();
             document.getElementById('modalItemId').value = id;
+            document.getElementById('modalEditIndex').value = -1;
             document.getElementById('modalItemName').innerText = name;
             document.getElementById('modalItemPrice').innerText = formatRupiah(price);
-            document.getElementById('modalItemPrice').dataset.raw = price;
+            document.getElementById('modalItemPrice').dataset.rawPrice = price;
+            document.getElementById('btn-submit-modal').innerText = "Tambahkan";
+
             const isAyam = name.toLowerCase().includes('ayam');
+            const isMinuman = cat === 'Minuman';
             document.getElementById('chickenPartContainer').classList.toggle('hidden', !isAyam);
-            document.getElementById('spicyLevelContainer').classList.toggle('hidden', cat === 'Minuman');
+            document.getElementById('spicyLevelContainer').classList.toggle('hidden', isMinuman);
+            document.getElementById('iceLevelContainer').classList.toggle('hidden', !isMinuman);
+            document.getElementById('sugarLevelContainer').classList.toggle('hidden', !isMinuman);
+
+            document.getElementById('itemModal').classList.replace('hidden', 'flex');
+        }
+
+        function openEditModal(index) {
+            const item = cart[index];
+            resetModal();
+            document.getElementById('modalItemId').value = item.menu_id;
+            document.getElementById('modalEditIndex').value = index;
+            document.getElementById('modalItemName').innerText = item.name;
+            document.getElementById('modalItemPrice').innerText = formatRupiah(item.price);
+            document.getElementById('modalItemPrice').dataset.rawPrice = item.price;
+            document.getElementById('modalQty').value = item.qty;
+            document.getElementById('btn-submit-modal').innerText = "Update Item";
             document.getElementById('itemModal').classList.replace('hidden', 'flex');
         }
 
         function closeModal() { document.getElementById('itemModal').classList.replace('flex', 'hidden'); }
-        function changeQty(v) { let q = document.getElementById('modalQty'); if (parseInt(q.value) + v >= 1) q.value = parseInt(q.value) + v; }
-        function resetModal() { document.getElementById('modalQty').value = 1; document.getElementById('modalEditIndex').value = -1; }
 
+        function changeQty(v) {
+            const q = document.getElementById('modalQty');
+            if (parseInt(q.value) + v >= 1) q.value = parseInt(q.value) + v;
+        }
+
+        function resetModal() {
+            document.getElementById('modalQty').value = 1;
+            document.getElementById('modalEditIndex').value = -1;
+            document.getElementById('chickenPart').value = 'Bebas';
+            document.getElementById('spicyLevel').value = 'Tidak Pedas';
+            document.getElementById('iceLevel').value = 'Es Normal';
+            document.getElementById('sugarLevel').value = 'Gula Normal';
+            document.getElementById('chickenPartContainer').classList.add('hidden');
+            document.getElementById('spicyLevelContainer').classList.add('hidden');
+            document.getElementById('iceLevelContainer').classList.add('hidden');
+            document.getElementById('sugarLevelContainer').classList.add('hidden');
+            document.querySelector('input[name="orderType"][value="Dine In"]').checked = true;
+            toggleServiceUI();
+        }
+
+        // =====================
+        // CART
+        // =====================
         function saveToCart() {
+            const editIndex = parseInt(document.getElementById('modalEditIndex').value);
             const id = document.getElementById('modalItemId').value;
             const name = document.getElementById('modalItemName').innerText;
-            const price = parseInt(document.getElementById('modalItemPrice').dataset.raw);
+            const price = parseInt(document.getElementById('modalItemPrice').dataset.rawPrice);
             const qty = parseInt(document.getElementById('modalQty').value);
             const type = document.querySelector('input[name="orderType"]:checked').value;
-            const spicy = !document.getElementById('spicyLevelContainer').classList.contains('hidden') ? document.getElementById('spicyLevel').value : null;
-            const part = !document.getElementById('chickenPartContainer').classList.contains('hidden') ? document.getElementById('chickenPart').value : null;
+
+            if (!id || isNaN(price) || price <= 0) {
+                alert('Terjadi kesalahan data. Coba pilih menu lagi.');
+                return;
+            }
 
             let notes = [type];
-            if (part && part !== 'Bebas') notes.push(part);
-            if (spicy) notes.push(spicy);
-            const noteStr = notes.join(' • ');
-
-            const idx = cart.findIndex(i => i.menu_id === id && i.notes === noteStr);
-            if (idx > -1) {
-                cart[idx].qty += qty;
-                cart[idx].subtotal = cart[idx].qty * price;
-            } else {
-                cart.push({ menu_id: id, name, price, qty, subtotal: price * qty, notes: noteStr });
+            if (!document.getElementById('chickenPartContainer').classList.contains('hidden')) {
+                const part = document.getElementById('chickenPart').value;
+                if (part !== 'Bebas') notes.push(part);
             }
+            if (!document.getElementById('spicyLevelContainer').classList.contains('hidden')) {
+                notes.push(document.getElementById('spicyLevel').value);
+            }
+            if (!document.getElementById('iceLevelContainer').classList.contains('hidden')) {
+                notes.push(document.getElementById('iceLevel').value);
+            }
+            if (!document.getElementById('sugarLevelContainer').classList.contains('hidden')) {
+                notes.push(document.getElementById('sugarLevel').value);
+            }
+
+            const noteStr = notes.join(' • ');
+            const itemData = { menu_id: id, name, price, qty, subtotal: price * qty, notes: noteStr };
+
+            if (editIndex > -1) {
+                cart[editIndex] = itemData;
+            } else {
+                const dup = cart.findIndex(i => i.menu_id === id && i.notes === noteStr);
+                if (dup > -1) {
+                    cart[dup].qty += qty;
+                    cart[dup].subtotal = cart[dup].qty * price;
+                } else {
+                    cart.unshift(itemData);
+                }
+            }
+
             closeModal();
             updateCartUI();
         }
@@ -335,55 +517,89 @@
             const totalEl = document.getElementById('total-price');
             container.innerHTML = '';
             let total = 0;
+
             if (cart.length === 0) {
-                container.innerHTML = `<div class="text-center py-20 italic text-gray-300 font-bold uppercase">Kosong</div>`;
-                totalEl.innerText = "Rp 0";
+                container.innerHTML = `<div class="flex flex-col items-center justify-center h-full text-gray-300 dark:text-gray-600 italic font-bold"><p>BELUM ADA MENU DIPILIH</p></div>`;
+                totalEl.innerText = 'Rp 0';
+                document.getElementById('cart_data_input').value = '[]';
                 return;
             }
+
             cart.forEach((item, i) => {
                 total += item.subtotal;
                 container.insertAdjacentHTML('beforeend', `
-                    <div class="bg-white dark:bg-gray-800 border-2 p-4 rounded-2xl flex justify-between items-center shadow-sm">
-                        <div class="flex-1">
-                            <h4 class="font-bold uppercase dark:text-white">${item.name}</h4>
-                            <p class="text-[10px] font-bold text-orange-500 italic uppercase">${item.notes}</p>
-                            <div class="flex gap-2 mt-2">
-                                <span class="bg-black text-white px-2 rounded-lg text-xs font-bold">x${item.qty}</span>
-                                <span class="font-bold dark:text-white">${formatRupiah(item.subtotal)}</span>
+                    <div class="bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-4 flex justify-between items-center shadow-sm hover:border-orange-400 transition">
+                        <div class="flex-1 cursor-pointer" onclick="openEditModal(${i})">
+                            <h4 class="font-bold text-black dark:text-white uppercase">${item.name}</h4>
+                            <p class="text-[10px] font-bold text-orange-500 tracking-widest mt-1 mb-2 uppercase italic">${item.notes}</p>
+                            <div class="flex items-center gap-2">
+                                <span class="bg-black dark:bg-orange-600 text-white px-2 py-0.5 rounded-lg text-xs font-bold">x${item.qty}</span>
+                                <span class="text-black dark:text-white font-bold">${formatRupiah(item.subtotal)}</span>
                             </div>
                         </div>
-                        <button type="button" onclick="removeItem(${i})" class="text-gray-300 hover:text-red-500"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-width="2"/></svg></button>
+                        <div class="flex flex-col gap-2 ml-3">
+                            <button type="button" onclick="openEditModal(${i})" class="text-gray-300 hover:text-orange-500 transition p-1">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"/></svg>
+                            </button>
+                            <button type="button" onclick="removeItem(${i})" class="text-gray-300 hover:text-red-500 transition p-1">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"/></svg>
+                            </button>
+                        </div>
                     </div>
                 `);
             });
+
             totalEl.innerText = formatRupiah(total);
             document.getElementById('cart_data_input').value = JSON.stringify(cart);
         }
 
-        function removeItem(i) { cart.splice(i, 1); updateCartUI(); }
+        function removeItem(i) {
+            cart.splice(i, 1);
+            updateCartUI();
+        }
 
+        // =====================
+        // SUBMIT
+        // =====================
         function validateAndSubmit() {
-            const id = document.getElementById('selected_table_id').value;
-            const name = document.getElementById('customer_name_input').value;
-            if (!id) return alert("Pilih Meja Dulu Rek!");
-            if (id === "0" && !name) return alert("Nama Pelanggan Takeaway Belum Diisi!");
-            if (cart.length === 0) return alert("Keranjang Kosong!");
+            const tableId = document.getElementById('selected_table_id').value;
+            const customerName = document.getElementById('customer_name_input').value;
+            if (!tableId) { alert("Pilih Meja dulu rek!"); openTableModal(); return; }
+            if (tableId === "0" && !customerName.trim()) { alert("Isi nama pelanggan dulu untuk Takeaway!"); openTableModal(); return; }
+            if (cart.length === 0) { alert("Keranjang masih kosong!"); return; }
+            document.getElementById('cart_data_input').value = JSON.stringify(cart);
             document.getElementById('orderForm').submit();
         }
 
+        // =====================
+        // SEARCH & FILTER
+        // =====================
         function searchMenu() {
-            let val = document.getElementById('searchInput').value.toLowerCase();
+            const val = document.getElementById('searchInput').value.toLowerCase();
             document.querySelectorAll('.menu-card').forEach(c => c.style.display = c.dataset.name.includes(val) ? 'flex' : 'none');
         }
 
         function filterMenu(k) {
             document.querySelectorAll('.menu-card').forEach(c => c.style.display = (k === 'semua' || c.dataset.category === k) ? 'flex' : 'none');
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                const active = btn.innerText === (k === 'semua' ? 'Menu' : k);
+                btn.className = active
+                    ? 'filter-btn bg-orange-500 text-white px-6 py-2 rounded-full font-semibold shadow-md transition'
+                    : 'filter-btn bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 px-6 py-2 rounded-full font-semibold border dark:border-gray-700 hover:bg-orange-50 hover:text-orange-500 transition';
+            });
         }
 
+        // =====================
+        // ORDER TYPE UI
+        // =====================
         function toggleServiceUI() {
-            const isD = document.querySelector('input[name="orderType"]:checked').value === 'Dine In';
-            document.getElementById('label-dinein').classList.toggle('border-orange-500', isD);
-            document.getElementById('label-takeaway').classList.toggle('border-orange-500', !isD);
+            const isDineIn = document.querySelector('input[name="orderType"]:checked').value === 'Dine In';
+            document.getElementById('label-dinein').className = isDineIn
+                ? 'flex-1 border-2 border-orange-500 bg-orange-50 dark:bg-orange-900/20 text-orange-600 p-3 rounded-xl cursor-pointer text-center font-bold transition-all'
+                : 'flex-1 border-2 border-gray-100 dark:border-gray-700 text-gray-500 dark:bg-gray-800 p-3 rounded-xl cursor-pointer text-center font-bold transition-all';
+            document.getElementById('label-takeaway').className = !isDineIn
+                ? 'flex-1 border-2 border-orange-500 bg-orange-50 dark:bg-orange-900/20 text-orange-600 p-3 rounded-xl cursor-pointer text-center font-bold transition-all'
+                : 'flex-1 border-2 border-gray-100 dark:border-gray-700 text-gray-500 dark:bg-gray-800 p-3 rounded-xl cursor-pointer text-center font-bold transition-all';
         }
     </script>
 </body>

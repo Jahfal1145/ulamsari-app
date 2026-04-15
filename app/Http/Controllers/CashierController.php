@@ -13,19 +13,21 @@ class CashierController extends Controller
 {
     public function index()
     {
+        // Query disatukan biar efisien
         $menus = Menu::join('categories', 'menus.category_id', '=', 'categories.id')
                     ->select('menus.*', 'categories.name as category_name')
                     ->where('is_active', true)
                     ->get();
+        
         $tables = Table::all();
 
         // Ambil semua pending orders beserta items-nya
-    $pendingOrders = Order::with(['orderItems.menu'])
+        $pendingOrders = Order::with(['orderItems.menu'])
                         ->where('order_status_id', 1)
                         ->get()
-                        ->keyBy('table_id'); // key by table_id biar gampang dicari di JS
+                        ->groupBy('table_id'); // UBAH DI SINI: Pakai groupBy biar numpuk jadi array
 
-    return view('kasir.index', compact('menus', 'tables', 'pendingOrders'));
+        return view('kasir.index', compact('menus', 'tables', 'pendingOrders'));
     }
     
     public function store(Request $request)
