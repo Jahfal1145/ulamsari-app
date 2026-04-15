@@ -18,9 +18,16 @@ class CashierController extends Controller
                     ->where('is_active', true)
                     ->get();
         $tables = Table::all();
-        return view('kasir.index', compact('menus', 'tables'));
-    }
 
+        // Ambil semua pending orders beserta items-nya
+    $pendingOrders = Order::with(['orderItems.menu'])
+                        ->where('order_status_id', 1)
+                        ->get()
+                        ->keyBy('table_id'); // key by table_id biar gampang dicari di JS
+
+    return view('kasir.index', compact('menus', 'tables', 'pendingOrders'));
+    }
+    
     public function store(Request $request)
     {
         $cart = json_decode($request->cart_data, true);
