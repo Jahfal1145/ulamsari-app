@@ -17,3 +17,4 @@ Route::post('/kasir/pesan', [CashierController::class, 'store'])->name('kasir.st
 // Route untuk Dapur
 Route::get('/dapur', [DapurController::class, 'index'])->name('dapur.index');
 Route::post('/dapur/update/{id}', [DapurController::class, 'updateStatus'])->name('dapur.update');
+

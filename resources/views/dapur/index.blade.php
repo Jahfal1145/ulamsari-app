@@ -13,6 +13,7 @@
 </head>
 <body class="bg-slate-900 text-slate-200 min-h-screen p-4 md:p-8 font-sans antialiased">
     
+    <!-- Header -->
     <header class="flex justify-between items-end mb-8 pb-4 border-b-2 border-slate-800">
         <div>
             <h1 class="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-yellow-500 tracking-tight">
@@ -32,23 +33,29 @@
         </div>
     </header>
 
+    <!-- Grid Pesanan -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         @forelse($orders as $order)
         @php
-            // Mapping Status Angka ke Teks
             $statusTeks = [1 => 'PENDING', 2 => 'COOKING', 3 => 'READY'];
             $teks = $statusTeks[$order->order_status_id] ?? 'UNKNOWN';
         @endphp
 
         <div class="flex flex-col bg-slate-800 rounded-2xl shadow-xl overflow-hidden transition-all duration-300 {{ $order->order_status_id == 2 ? 'ring-2 ring-yellow-500 shadow-yellow-900/20 scale-[1.02]' : 'border border-slate-700' }}">
             
+            <!-- Header Card -->
             <div class="p-4 flex justify-between items-center {{ $order->order_status_id == 2 ? 'bg-yellow-500/10' : ($order->order_status_id == 3 ? 'bg-emerald-500/10' : 'bg-slate-800') }}">
                 <div>
                     <p class="text-xs text-slate-400 font-semibold mb-1 uppercase tracking-wider">Nomor Meja</p>
                     <h2 class="text-3xl font-black text-white leading-none">{{ $order->table_id }}</h2>
                 </div>
                 <div class="text-right">
-                    <p class="text-xs text-slate-400 font-mono mb-1">{{ $order->created_at->format('H:i') }}</p>
+                    <p class="text-xs text-slate-400 font-mono mb-1">
+                        {{ $order->created_at->setTimezone('Asia/Jakarta')->format('H:i') }}
+                        <span class="elapsed text-[10px] text-slate-500"
+                              data-created-at="{{ $order->created_at->timestamp }}">
+                        </span>
+                    </p>
                     <span class="px-3 py-1 rounded-md text-xs font-bold uppercase tracking-wider
                         {{ $order->order_status_id == 1 ? 'bg-orange-500/20 text-orange-400' : 
                           ($order->order_status_id == 2 ? 'bg-yellow-500/20 text-yellow-400' : 'bg-emerald-500/20 text-emerald-400') }}">
@@ -57,6 +64,7 @@
                 </div>
             </div>
 
+            <!-- Detail Pesanan -->
             <div class="p-5 flex-1 overflow-y-auto hide-scrollbar bg-slate-800/50">
                 <ul class="space-y-4">
                     @foreach($order->detail_pesanan as $item)
@@ -68,7 +76,10 @@
                             <h3 class="text-lg font-bold text-slate-200 leading-tight">{{ $item->name }}</h3>
                             @if(isset($item->notes) && $item->notes != '')
                                 <p class="text-sm text-yellow-400 italic mt-1.5 flex items-start gap-1">
-                                    <svg class="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    <svg class="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
                                     {{ $item->notes }}
                                 </p>
                             @endif
@@ -78,22 +89,25 @@
                 </ul>
             </div>
 
+            <!-- Tombol Aksi -->
             <div class="p-4 bg-slate-900/50 mt-auto">
                 <form action="{{ route('dapur.update', $order->id) }}" method="POST">
                     @csrf
                     @if($order->order_status_id == 1)
                         <button type="submit" class="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-400 hover:to-orange-500 text-white font-bold py-3.5 rounded-xl transition-all active:scale-[0.98] shadow-lg shadow-orange-900/20 flex justify-center items-center gap-2">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"></path></svg>
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"></path>
+                            </svg>
                             MULAI MASAK
                         </button>
                     @elseif($order->order_status_id == 2)
                         <button type="submit" class="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white font-bold py-3.5 rounded-xl transition-all active:scale-[0.98] shadow-lg shadow-emerald-900/20 flex justify-center items-center gap-2">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M5 13l4 4L19 7"></path>
+                            </svg>
                             SELESAI MASAK
-                        </button>
-                    @else
-                        <button type="submit" class="w-full bg-slate-700 hover:bg-slate-600 text-slate-300 font-bold py-3.5 rounded-xl transition-all active:scale-[0.98] flex justify-center items-center gap-2">
-                            SUDAH DIANTAR
                         </button>
                     @endif
                 </form>
@@ -102,7 +116,10 @@
         @empty
         <div class="col-span-full flex flex-col items-center justify-center py-32">
             <div class="bg-slate-800/50 p-8 rounded-full mb-6">
-                <svg class="w-20 h-20 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                <svg class="w-20 h-20 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                          d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                </svg>
             </div>
             <h3 class="text-3xl font-black text-slate-500 mb-2">ANTREAN BERSIH!</h3>
             <p class="text-slate-500 font-medium">Koki bisa istirahat sejenak, belum ada pesanan masuk.</p>
@@ -110,11 +127,45 @@
         @endforelse
     </div>
 
+    <!-- Script Jam & Durasi -->
     <script>
-        setInterval(() => {
+        // Jam real-time header
+        function updateClock() {
             const now = new Date();
-            document.getElementById('clock').innerText = now.toLocaleTimeString('id-ID', { hour12: false });
-        }, 1000);
+            document.getElementById('clock').innerText =
+                now.toLocaleTimeString('id-ID', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    hour12: false,
+                    timeZone: 'Asia/Jakarta'
+                });
+        }
+
+        // Hitung durasi pesanan
+        function updateElapsedTimes() {
+            const elements = document.querySelectorAll('.elapsed');
+            const now = Math.floor(Date.now() / 1000);
+
+            elements.forEach(el => {
+                const createdAt = parseInt(el.dataset.createdAt);
+                const diff = now - createdAt;
+
+                const minutes = Math.floor(diff / 60);
+                const seconds = diff % 60;
+
+                el.innerText = `(${minutes}m ${seconds}s)`;
+            });
+        }
+
+        updateClock();
+        updateElapsedTimes();
+        setInterval(updateClock, 1000);
+        setInterval(updateElapsedTimes, 1000);
+        
+    setInterval(() => {
+        window.location.reload();
+    }, 15000); // Refresh setiap 15 detik
     </script>
 </body>
 </html>
