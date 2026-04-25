@@ -27,9 +27,18 @@ Route::prefix('dapur')->group(function () {
     Route::get('/', [DapurController::class, 'index'])->name('dapur.index');
     Route::post('/update/{id}', [DapurController::class, 'updateStatus'])->name('dapur.update');
 });
-=======
+
 // Route untuk Dapur
 Route::get('/dapur', [DapurController::class, 'index'])->name('dapur.index');
 Route::post('/dapur/update/{id}', [DapurController::class, 'updateStatus'])->name('dapur.update');
 
->>>>>>> d74b414c12822598d9b58a32d3fd0aa8e61ccb71
+// --- ROUTE ADMIN / KELOLA MENU ---
+Route::prefix('admin/menu')->group(function () {
+    Route::get('/', [App\Http\Controllers\MenuController::class, 'index'])->name('admin.menu.index');
+    Route::post('/store', [App\Http\Controllers\MenuController::class, 'store'])->name('admin.menu.store');
+    Route::post('/toggle/{id}', [App\Http\Controllers\MenuController::class, 'toggleActive'])->name('admin.menu.toggle');
+    Route::delete('/destroy/{id}', [App\Http\Controllers\MenuController::class, 'destroy'])->name('admin.menu.destroy');
+    
+    // 👇 TAMBAHKAN BARIS INI UNTUK UPDATE MENU 👇
+    Route::post('/update/{id}', [App\Http\Controllers\MenuController::class, 'update'])->name('admin.menu.update');
+});

@@ -15,13 +15,13 @@
 <body class="bg-gray-100 dark:bg-gray-900 font-sans text-gray-800 dark:text-gray-100 relative">
 
     @if(session('error'))
-        <div id="alert-error" class="fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-red-600 text-white px-6 py-3 rounded-2xl font-bold shadow-2xl animate-bounce">
+        <div id="alert-error" class="fixed top-5 left-1/2 -translate-x-1/2 z- bg-red-600 text-white px-6 py-3 rounded-2xl font-bold shadow-2xl animate-bounce">
             {{ session('error') }}
         </div>
         <script>setTimeout(() => document.getElementById('alert-error').remove(), 3000);</script>
     @endif
     @if(session('success'))
-        <div id="alert-success" class="fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-black text-white px-6 py-3 rounded-2xl font-bold shadow-2xl border-l-8 border-orange-500">
+        <div id="alert-success" class="fixed top-5 left-1/2 -translate-x-1/2 z- bg-black text-white px-6 py-3 rounded-2xl font-bold shadow-2xl border-l-8 border-orange-500">
             {{ session('success') }}
         </div>
         <script>setTimeout(() => document.getElementById('alert-success').remove(), 3000);</script>
@@ -31,6 +31,9 @@
         @csrf
         <input type="hidden" name="cart_data" id="cart_data_input">
         <input type="hidden" name="customer_name" id="customer_name_input">
+        
+        <input type="hidden" name="payment_type" id="payment_type">
+        <input type="hidden" name="payment_method" id="payment_method" value="Belum Bayar">
 
         {{-- ===== LEFT PANEL: MENU ===== --}}
         <div class="w-3/5 p-6 overflow-y-auto flex flex-col relative z-0 border-r dark:border-gray-700">
@@ -57,7 +60,11 @@
                 <div onclick="openAddModal({{ $menu->id }}, '{{ addslashes($menu->name) }}', {{ $menu->price }}, '{{ addslashes($menu->category_name) }}')"
                     class="menu-card bg-white dark:bg-gray-800 rounded-2xl shadow-sm border dark:border-gray-700 overflow-hidden transition hover:shadow-xl hover:border-orange-400 flex flex-col h-full cursor-pointer group"
                     data-category="{{ $menu->category_name }}" data-name="{{ strtolower($menu->name) }}">
-                    <div class="h-40 bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-gray-400 text-sm italic font-medium uppercase text-center p-2">Foto {{ $menu->name }}</div>
+                    @if($menu->image)
+    <img src="{{ asset('storage/' . $menu->image) }}" alt="{{ $menu->name }}" class="h-40 w-full object-cover">
+@else
+    <div class="h-40 bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-gray-400 text-sm italic font-medium uppercase text-center p-2">FOTO<br>{{ $menu->name }}</div>
+@endif
                     <div class="p-5 flex flex-col flex-1 relative bg-white dark:bg-gray-800 border-t dark:border-gray-700">
                         <h3 class="font-bold text-xl leading-tight mb-2 text-gray-800 dark:text-gray-100">{{ $menu->name }}</h3>
                         <p class="text-orange-500 font-bold text-lg">Rp {{ number_format($menu->price, 0, ',', '.') }}</p>
@@ -106,15 +113,22 @@
                         <p>BELUM ADA MENU DIPILIH</p>
                     </div>
                 </div>
+                
                 <div class="border-t-2 border-gray-100 dark:border-gray-700 pt-4 mt-4">
                     <div class="flex justify-between items-center mb-4">
-                        <span class="text-gray-500 text-lg uppercase font-bold">Total</span>
-                        <span id="total-price" class="text-orange-600 text-3xl font-bold">Rp 0</span>
+                        <span class="text-gray-500 text-lg uppercase font-bold tracking-wider">Total</span>
+                        <span id="total-price" class="text-orange-600 text-3xl font-black">Rp 0</span>
                     </div>
-                    <button type="button" onclick="validateAndSubmit()"
-                        class="w-full bg-orange-500 text-white py-5 rounded-2xl font-bold text-2xl hover:bg-black dark:hover:bg-orange-600 shadow-xl transition transform active:scale-95 uppercase tracking-wider">
-                        Kirim Pesanan
-                    </button>
+                    <div class="grid grid-cols-2 gap-3">
+                        <button type="button" onclick="validateAndSubmit('later')" 
+                                class="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 py-4 rounded-2xl font-bold text-sm hover:bg-gray-300 dark:hover:bg-gray-600 transition uppercase tracking-widest">
+                            Bayar Nanti
+                        </button>
+                        <button type="button" onclick="validateAndSubmit('now')" 
+                                class="bg-orange-500 text-white py-4 rounded-2xl font-bold text-sm hover:bg-black dark:hover:bg-orange-600 shadow-lg transition transform active:scale-95 uppercase tracking-widest">
+                            Bayar Sekarang
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -122,7 +136,7 @@
             <div id="panel-order" class="flex-col flex-1 overflow-hidden hidden">
                 <div class="flex items-center justify-between mb-4">
                     <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100 uppercase tracking-tight">Pesanan Aktif</h2>
-                    <span class="bg-yellow-100 text-yellow-700 text-xs font-bold px-3 py-1 rounded-full uppercase">Pending</span>
+                    <span class="bg-yellow-100 text-yellow-700 text-xs font-bold px-3 py-1 rounded-full uppercase">Aktif</span>
                 </div>
                 <div id="order-container" class="flex-1 overflow-y-auto pr-2 space-y-3"></div>
                 <div class="border-t-2 border-gray-100 dark:border-gray-700 pt-4 mt-4">
@@ -136,16 +150,46 @@
         </div>
     </form>
 
+    {{-- ===== PAYMENT MODAL ===== --}}
+    <div id="paymentModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z- backdrop-blur-sm p-4">
+        <div class="bg-white dark:bg-gray-800 w-full max-w-md rounded-[2.5rem] shadow-2xl p-8">
+            <h3 class="text-2xl font-black text-center mb-6 uppercase italic dark:text-white">Pilih Pembayaran</h3>
+            <div class="grid grid-cols-1 gap-3 mb-6">
+                <button type="button" onclick="submitFinal('Tunai')" class="flex items-center justify-between p-4 border-2 border-gray-100 dark:border-gray-700 rounded-2xl hover:border-orange-500 dark:text-white font-bold transition group">
+                    <span>Tunai / Cash</span>
+                    <svg class="w-6 h-6 text-green-500 group-hover:scale-110 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" stroke-width="2"/></svg>
+                </button>
+                <button type="button" onclick="submitFinal('QRIS')" class="flex items-center justify-between p-4 border-2 border-gray-100 dark:border-gray-700 rounded-2xl hover:border-orange-500 dark:text-white font-bold transition group">
+                    <span>QRIS</span>
+                    <svg class="w-6 h-6 text-blue-500 group-hover:scale-110 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v1m4 2v1m3 12v1m-6-1v1m-3-1v1m-4-10v1m-2 10v1m1-10V4m1 10V4m1 4h1.5m2 0h.5m-8 4h.5m2 0h1.5m2 0h.5" stroke-width="2"/></svg>
+                </button>
+                <button type="button" onclick="submitFinal('Transfer')" class="flex items-center justify-between p-4 border-2 border-gray-100 dark:border-gray-700 rounded-2xl hover:border-orange-500 dark:text-white font-bold transition group">
+                    <span>Transfer Bank</span>
+                    <svg class="w-6 h-6 text-purple-500 group-hover:scale-110 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" stroke-width="2"/></svg>
+                </button>
+            </div>
+            <button type="button" onclick="closePaymentModal()" class="w-full text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 font-bold uppercase text-xs transition">Batal</button>
+        </div>
+    </div>
+
     {{-- ===== TABLE MODAL ===== --}}
     <div id="tableModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50 backdrop-blur-sm p-4">
         <div class="bg-white dark:bg-gray-800 w-full max-w-md rounded-3xl shadow-2xl p-8">
             <h2 class="text-2xl font-bold text-center mb-6 uppercase dark:text-white">Denah Meja</h2>
             <div class="grid grid-cols-4 gap-3 mb-6">
                 @for ($i = 1; $i <= 12; $i++)
+                    @php
+                        // Cek langsung dari server, apakah meja ini ada di daftar pendingOrders
+                        $hasOrder = isset($pendingOrders[$i]) && count($pendingOrders[$i]) > 0;
+                    @endphp
                     <button type="button" onclick="selectTable('{{ $i }}')" id="btn-meja-{{ $i }}"
                             class="relative meja-option aspect-square flex flex-col items-center justify-center rounded-2xl border-2 border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-orange-500 transition-all font-bold group">
                         <span class="text-[10px] text-gray-300 group-hover:text-orange-400 uppercase">MEJA</span>
                         <span class="text-xl text-black dark:text-white group-hover:text-orange-600">{{ $i }}</span>
+                        
+                        @if($hasOrder)
+                            <span class="absolute top-2 right-2 w-3 h-3 bg-red-500 rounded-full shadow-[0_0_8px_rgba(239,68,68,0.8)] animate-pulse"></span>
+                        @endif
                     </button>
                 @endfor
             </div>
@@ -161,7 +205,7 @@
                     class="w-full p-4 border-2 border-orange-500 rounded-xl outline-none font-bold dark:bg-gray-700 dark:text-white">
             </div>
 
-            <button type="button" onclick="closeTableModal()" class="w-full bg-black dark:bg-orange-600 text-white py-3 rounded-xl font-bold uppercase transition hover:bg-orange-600">Simpan</button>
+            <button type="button" onclick="closeTableModal()" class="w-full bg-black dark:bg-orange-600 text-white py-3 rounded-xl font-bold uppercase transition hover:bg-orange-600">Tutup</button>
         </div>
     </div>
 
@@ -252,20 +296,6 @@
         let cart = [];
         const formatRupiah = (n) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n);
         const pendingOrders = @json($pendingOrders ?? []);
-
-        // =====================
-        // INIT: Red dot on tables with pending orders
-        // =====================
-        window.onload = () => {
-            for (let i = 1; i <= 12; i++) {
-                const order = pendingOrders[i];
-                const hasOrder = order && (Array.isArray(order) ? order.length > 0 : Object.keys(order).length > 0);
-                if (hasOrder) {
-                    const btn = document.getElementById('btn-meja-' + i);
-                    if (btn) btn.insertAdjacentHTML('beforeend', '<span class="absolute top-2 right-2 w-3 h-3 bg-red-500 rounded-full shadow-[0_0_8px_rgba(239,68,68,0.8)] animate-pulse"></span>');
-                }
-            }
-        };
 
         // =====================
         // DARK MODE
@@ -367,7 +397,6 @@
                 return;
             }
 
-            // Normalize to array
             let list = [];
             if (Array.isArray(rawOrder)) {
                 list = [...rawOrder];
@@ -559,15 +588,33 @@
         }
 
         // =====================
-        // SUBMIT
+        // SUBMIT & PAYMENT LOGIC 
         // =====================
-        function validateAndSubmit() {
+        function validateAndSubmit(type) {
             const tableId = document.getElementById('selected_table_id').value;
             const customerName = document.getElementById('customer_name_input').value;
+            
             if (!tableId) { alert("Pilih Meja dulu rek!"); openTableModal(); return; }
             if (tableId === "0" && !customerName.trim()) { alert("Isi nama pelanggan dulu untuk Takeaway!"); openTableModal(); return; }
             if (cart.length === 0) { alert("Keranjang masih kosong!"); return; }
+            
             document.getElementById('cart_data_input').value = JSON.stringify(cart);
+            document.getElementById('payment_type').value = type;
+
+            if (type === 'now') {
+                document.getElementById('paymentModal').classList.replace('hidden', 'flex');
+            } else {
+                document.getElementById('payment_method').value = "Belum Bayar";
+                document.getElementById('orderForm').submit();
+            }
+        }
+
+        function closePaymentModal() {
+            document.getElementById('paymentModal').classList.replace('flex', 'hidden');
+        }
+
+        function submitFinal(method) {
+            document.getElementById('payment_method').value = method;
             document.getElementById('orderForm').submit();
         }
 

@@ -13,7 +13,6 @@ class CashierController extends Controller
 {
     public function index()
     {
-        // Query disatukan biar efisien
         $menus = Menu::join('categories', 'menus.category_id', '=', 'categories.id')
                     ->select('menus.*', 'categories.name as category_name')
                     ->where('is_active', true)
@@ -21,11 +20,11 @@ class CashierController extends Controller
         
         $tables = Table::all();
 
-        // Ambil semua pending orders beserta items-nya
+        // Ambil pesanan yang masih Pending (1)
         $pendingOrders = Order::with(['orderItems.menu'])
                         ->where('order_status_id', 1)
                         ->get()
-                        ->groupBy('table_id'); // UBAH DI SINI: Pakai groupBy biar numpuk jadi array
+                        ->groupBy('table_id'); 
 
         return view('kasir.index', compact('menus', 'tables', 'pendingOrders'));
     }
@@ -34,15 +33,16 @@ class CashierController extends Controller
     {
         $cart = json_decode($request->cart_data, true);
 
-        // Proteksi 1: Cek Keranjang
         if (!$cart || count($cart) == 0) {
             return back()->with('error', 'Pilih menu dulu rek!');
         }
 
-        // Proteksi 2: Cek Meja
-        if (!$request->table_id) {
+        if ($request->table_id === null || $request->table_id === '') {
             return back()->with('error', 'Meja belum dipilih, silakan pilih dulu!');
         }
+
+        $paymentStatus = ($request->payment_type === 'now') ? 'Lunas' : 'Belum Lunas';
+        $paymentMethod = $request->payment_method ?? 'Belum Bayar';
 
         DB::beginTransaction();
         try {
@@ -51,6 +51,8 @@ class CashierController extends Controller
                 'order_number' => 'ORD-' . strtoupper(uniqid()),
                 'total_price' => collect($cart)->sum('subtotal'),
                 'order_status_id' => 1,
+                'payment_status' => $paymentStatus,
+                'payment_method' => $paymentMethod,
             ]);
 
             foreach ($cart as $item) {
@@ -64,7 +66,13 @@ class CashierController extends Controller
             }
 
             DB::commit();
-            return back()->with('success', 'Pesanan Meja ' . $request->table_id . ' berhasil dikirim!');
+
+            $successMsg = ($paymentStatus === 'Lunas') 
+                ? 'Pesanan Meja ' . $request->table_id . ' dikirim. LUNAS (' . $paymentMethod . ')' 
+                : 'Pesanan Meja ' . $request->table_id . ' dikirim. (BAYAR NANTI)';
+
+            return back()->with('success', $successMsg);
+
         } catch (\Exception $e) {
             DB::rollback();
             return back()->with('error', 'Gagal simpan: ' . $e->getMessage());
