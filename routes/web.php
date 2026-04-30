@@ -27,10 +27,11 @@ Route::prefix('dapur')->group(function () {
     Route::get('/', [DapurController::class, 'index'])->name('dapur.index');
     Route::post('/update/{id}', [DapurController::class, 'updateStatus'])->name('dapur.update');
 });
-
-// Route untuk Dapur
-Route::get('/dapur', [DapurController::class, 'index'])->name('dapur.index');
-Route::post('/dapur/update/{id}', [DapurController::class, 'updateStatus'])->name('dapur.update');
+// 4. Route Dapur
+Route::prefix('dapur')->group(function () {
+    Route::get('/', [DapurController::class, 'index'])->name('dapur.index');
+    Route::post('/update/{id}', [DapurController::class, 'updateStatus'])->name('dapur.update');
+});
 
 // --- ROUTE ADMIN / KELOLA MENU ---
 Route::prefix('admin/menu')->group(function () {
