@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="refresh" content="30">
     <title>Dapur - Ulam Sari</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -11,161 +10,175 @@
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
-<body class="bg-slate-900 text-slate-200 min-h-screen p-4 md:p-8 font-sans antialiased">
+<body class="bg-[#f8f9fa] text-gray-800 min-h-screen font-sans antialiased">
     
-    <!-- Header -->
-    <header class="flex justify-between items-end mb-8 pb-4 border-b-2 border-slate-800">
-        <div>
-            <h1 class="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-yellow-500 tracking-tight">
-                ULAM SARI <span class="text-slate-100">KITCHEN</span>
-            </h1>
-            <p class="text-slate-400 mt-1 text-sm font-medium">Sistem Antrean Dapur Real-time</p>
+    <!-- Navbar / Header -->
+    <header class="bg-white border-b border-gray-200 px-8 py-5 flex justify-between items-center sticky top-0 z-10 shadow-sm">
+        <div class="flex items-center gap-4">
+            <h1 class="text-3xl font-serif font-bold text-gray-900 italic tracking-tight">Ulam Sari</h1>
+            <span class="text-xl font-bold text-gray-500 border-l-2 border-gray-300 pl-4">Dapur</span>
         </div>
-        <div class="text-right flex flex-col items-end">
-            <p id="clock" class="text-3xl font-mono font-bold text-slate-100"></p>
-            <div class="flex items-center gap-2 mt-2">
-                <span class="flex h-3 w-3 relative">
-                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                    <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
-                </span>
-                <span class="text-emerald-500 text-xs font-bold tracking-widest uppercase">Live System</span>
+
+        <!-- Tabs Filter -->
+        <div class="flex bg-gray-100 rounded-full p-1.5">
+            <a href="{{ route('dapur.index', ['jenis' => 'semua']) }}" 
+               class="px-8 py-2 rounded-full text-base font-bold transition-all {{ $jenis == 'semua' ? 'bg-white shadow-md text-gray-900' : 'text-gray-500 hover:text-gray-700' }}">
+                Semua
+            </a>
+            <a href="{{ route('dapur.index', ['jenis' => 'dine-in']) }}" 
+               class="px-8 py-2 rounded-full text-base font-bold transition-all {{ $jenis == 'dine-in' ? 'bg-white shadow-md text-gray-900' : 'text-gray-500 hover:text-gray-700' }}">
+                Dine In
+            </a>
+            <a href="{{ route('dapur.index', ['jenis' => 'take-away']) }}" 
+               class="px-8 py-2 rounded-full text-base font-bold transition-all {{ $jenis == 'take-away' ? 'bg-white shadow-md text-gray-900' : 'text-gray-500 hover:text-gray-700' }}">
+                Take Away
+            </a>
+        </div>
+
+        <div class="flex items-center gap-6">
+            <div class="flex items-center gap-2 text-gray-600 bg-gray-100 px-4 py-2 rounded-lg">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <span id="clock" class="font-mono font-bold text-lg"></span>
             </div>
+            
+            <form action="{{ route('pin.index') }}" method="GET">
+                <button type="submit" class="text-gray-400 hover:text-red-500 transition-colors p-2 bg-gray-100 rounded-lg hover:bg-red-50">
+                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                </button>
+            </form>
         </div>
     </header>
 
-    <!-- Grid Pesanan -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        @forelse($orders as $order)
-        @php
-            $statusTeks = [1 => 'PENDING', 2 => 'COOKING', 3 => 'READY'];
-            $teks = $statusTeks[$order->order_status_id] ?? 'UNKNOWN';
-        @endphp
-
-        <div class="flex flex-col bg-slate-800 rounded-2xl shadow-xl overflow-hidden transition-all duration-300 {{ $order->order_status_id == 2 ? 'ring-2 ring-yellow-500 shadow-yellow-900/20 scale-[1.02]' : 'border border-slate-700' }}">
+    <!-- Grid Pesanan Utama (DIKASIH GAP & UKURAN LEBIH GEDE) -->
+    <main class="p-8">
+        <!-- Kolom dikurangi jadi 3 maksimal agar kartu lebih lebar -->
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+            @forelse($orders as $order)
             
-            <!-- Header Card -->
-            <div class="p-4 flex justify-between items-center {{ $order->order_status_id == 2 ? 'bg-yellow-500/10' : ($order->order_status_id == 3 ? 'bg-emerald-500/10' : 'bg-slate-800') }}">
-                <div>
-                    <p class="text-xs text-slate-400 font-semibold mb-1 uppercase tracking-wider">Nomor Meja</p>
-                    <h2 class="text-3xl font-black text-white leading-none">{{ $order->table_id }}</h2>
+            @php
+                $isCooking = $order->order_status_id == 2;
+                $cardBorder = $isCooking ? 'border-green-500 ring-4 ring-green-100 shadow-lg shadow-green-100/50' : 'border-gray-200 shadow-md';
+                $headerBg = $isCooking ? 'bg-green-50' : 'bg-gray-50';
+                $headerText = $isCooking ? 'text-green-700' : 'text-gray-800';
+            @endphp
+
+            <div class="bg-white rounded-2xl border-2 {{ $cardBorder }} flex flex-col h-[500px] overflow-hidden transition-all">
+                
+                <!-- Card Header -->
+                <div class="{{ $headerBg }} border-b border-gray-200 px-6 py-4">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <!-- Ukuran Meja Diperbesar -->
+                            <h2 class="font-black text-4xl {{ $headerText }}">Meja {{ $order->table_id }}</h2>
+                            
+                            <!-- Label Dine-In / Take Away Biar Jelas -->
+                            <div class="mt-2">
+                                @if($order->order_type == 'dine-in')
+                                    <span class="bg-blue-100 text-blue-800 text-sm font-bold px-3 py-1 rounded-md border border-blue-200 tracking-wide">DINE IN</span>
+                                @elseif($order->order_type == 'take-away')
+                                    <span class="bg-orange-100 text-orange-800 text-sm font-bold px-3 py-1 rounded-md border border-orange-200 tracking-wide">TAKE AWAY</span>
+                                @endif
+                            </div>
+                        </div>
+
+                        <!-- Waktu -->
+                        <div class="text-right">
+                            <span class="text-lg font-mono font-bold text-gray-600 block">
+                                {{ $order->created_at->setTimezone('Asia/Jakarta')->format('H:i') }}
+                            </span>
+                            <span class="elapsed text-sm font-bold text-red-500" data-created-at="{{ $order->created_at->timestamp }}"></span>
+                        </div>
+                    </div>
                 </div>
-                <div class="text-right">
-                    <p class="text-xs text-slate-400 font-mono mb-1">
-                        {{ $order->created_at->setTimezone('Asia/Jakarta')->format('H:i') }}
-                        <span class="elapsed text-[10px] text-slate-500"
-                              data-created-at="{{ $order->created_at->timestamp }}">
-                        </span>
-                    </p>
-                    <span class="px-3 py-1 rounded-md text-xs font-bold uppercase tracking-wider
-                        {{ $order->order_status_id == 1 ? 'bg-orange-500/20 text-orange-400' : 
-                          ($order->order_status_id == 2 ? 'bg-yellow-500/20 text-yellow-400' : 'bg-emerald-500/20 text-emerald-400') }}">
-                        {{ $teks }}
-                    </span>
+
+                <!-- Card Body (List Menu) -->
+                <div class="p-6 flex-1 overflow-y-auto hide-scrollbar">
+                    <ul class="space-y-5">
+                        @foreach($order->detail_pesanan as $item)
+                        <li class="flex items-start gap-4 pb-4 border-b border-gray-100 last:border-0">
+                            <!-- QTY Diperbesar -->
+                            <div class="bg-gray-100 px-3 py-1 rounded-lg">
+                                <span class="font-black text-2xl text-gray-900">{{ $item->qty }}x</span>
+                            </div>
+                            <div class="pt-1">
+                                <!-- Nama Menu Diperbesar -->
+                                <p class="font-bold text-xl text-gray-800 leading-tight">{{ $item->name }}</p>
+                                @if(isset($item->notes) && $item->notes != '')
+                                    <p class="text-base text-orange-600 italic mt-1 font-medium bg-orange-50 inline-block px-2 py-0.5 rounded">
+                                        Catatan: {{ $item->notes }}
+                                    </p>
+                                @endif
+                            </div>
+                        </li>
+                        @endforeach
+                    </ul>
+                </div>
+
+                <!-- Card Footer (Tombol) -->
+                <div class="p-6 pt-0 mt-auto bg-white">
+                    <form action="{{ route('dapur.update', $order->id) }}" method="POST">
+                        @csrf
+                        @if($order->order_status_id == 1)
+                            <!-- Tombol Merah Diperbesar -->
+                            <button type="submit" class="w-full bg-[#d32f2f] hover:bg-red-700 text-white font-black text-xl py-4 rounded-xl transition-transform active:scale-95 shadow-md">
+                                MULAI MASAK
+                            </button>
+                        @elseif($order->order_status_id == 2)
+                            <!-- Tombol Hijau Diperbesar -->
+                            <button type="submit" class="w-full bg-green-500 hover:bg-green-600 text-white font-black text-xl py-4 rounded-xl transition-transform active:scale-95 shadow-md">
+                                SELESAI
+                            </button>
+                        @endif
+                    </form>
                 </div>
             </div>
 
-            <!-- Detail Pesanan -->
-            <div class="p-5 flex-1 overflow-y-auto hide-scrollbar bg-slate-800/50">
-                <ul class="space-y-4">
-                    @foreach($order->detail_pesanan as $item)
-                    <li class="flex items-start gap-4 pb-4 border-b border-dashed border-slate-700 last:border-0 last:pb-0">
-                        <div class="flex-shrink-0 bg-slate-700/50 border border-slate-600 rounded-lg px-3 py-2 text-center min-w-[3rem]">
-                            <span class="block text-xl font-black text-orange-400">{{ $item->qty }}</span>
-                        </div>
-                        <div class="pt-1">
-                            <h3 class="text-lg font-bold text-slate-200 leading-tight">{{ $item->name }}</h3>
-                            @if(isset($item->notes) && $item->notes != '')
-                                <p class="text-sm text-yellow-400 italic mt-1.5 flex items-start gap-1">
-                                    <svg class="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                    </svg>
-                                    {{ $item->notes }}
-                                </p>
-                            @endif
-                        </div>
-                    </li>
-                    @endforeach
-                </ul>
-            </div>
-
-            <!-- Tombol Aksi -->
-            <div class="p-4 bg-slate-900/50 mt-auto">
-                <form action="{{ route('dapur.update', $order->id) }}" method="POST">
-                    @csrf
-                    @if($order->order_status_id == 1)
-                        <button type="submit" class="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-400 hover:to-orange-500 text-white font-bold py-3.5 rounded-xl transition-all active:scale-[0.98] shadow-lg shadow-orange-900/20 flex justify-center items-center gap-2">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                      d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"></path>
-                            </svg>
-                            MULAI MASAK
-                        </button>
-                    @elseif($order->order_status_id == 2)
-                        <button type="submit" class="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white font-bold py-3.5 rounded-xl transition-all active:scale-[0.98] shadow-lg shadow-emerald-900/20 flex justify-center items-center gap-2">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                      d="M5 13l4 4L19 7"></path>
-                            </svg>
-                            SELESAI MASAK
-                        </button>
-                    @endif
-                </form>
-            </div>
-        </div>
-        @empty
-        <div class="col-span-full flex flex-col items-center justify-center py-32">
-            <div class="bg-slate-800/50 p-8 rounded-full mb-6">
-                <svg class="w-20 h-20 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                          d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+            @empty
+            <div class="col-span-full flex flex-col items-center justify-center py-32 text-gray-400">
+                <svg class="w-24 h-24 mb-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
                 </svg>
+                <h3 class="text-3xl font-black text-gray-400">Belum ada pesanan</h3>
+                <p class="text-lg font-medium mt-2">Dapur masih aman terkendali.</p>
             </div>
-            <h3 class="text-3xl font-black text-slate-500 mb-2">ANTREAN BERSIH!</h3>
-            <p class="text-slate-500 font-medium">Koki bisa istirahat sejenak, belum ada pesanan masuk.</p>
+            @endforelse
         </div>
-        @endforelse
-    </div>
+    </main>
 
-    <!-- Script Jam & Durasi -->
     <script>
-        // Jam real-time header
         function updateClock() {
             const now = new Date();
-            document.getElementById('clock').innerText =
-                now.toLocaleTimeString('id-ID', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    second: '2-digit',
-                    hour12: false,
-                    timeZone: 'Asia/Jakarta'
-                });
+            document.getElementById('clock').innerText = now.toLocaleTimeString('id-ID', {
+                hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false, timeZone: 'Asia/Jakarta'
+            });
         }
 
-        // Hitung durasi pesanan
         function updateElapsedTimes() {
             const elements = document.querySelectorAll('.elapsed');
             const now = Math.floor(Date.now() / 1000);
-
             elements.forEach(el => {
                 const createdAt = parseInt(el.dataset.createdAt);
                 const diff = now - createdAt;
-
                 const minutes = Math.floor(diff / 60);
-                const seconds = diff % 60;
-
-                el.innerText = `(${minutes}m ${seconds}s)`;
+                
+                // Ganti warna teks kalau udah kelamaan (contoh: lebih dari 15 menit)
+                if (minutes >= 15) {
+                    el.classList.add('text-red-600');
+                    el.classList.remove('text-red-500');
+                }
+                
+                el.innerText = `(+${minutes}m)`; 
             });
         }
 
         updateClock();
         updateElapsedTimes();
         setInterval(updateClock, 1000);
-        setInterval(updateElapsedTimes, 1000);
+        setInterval(updateElapsedTimes, 60000); 
         
-    setInterval(() => {
-        window.location.reload();
-    }, 15000); // Refresh setiap 15 detik
+        setInterval(() => {
+            window.location.reload();
+        }, 15000);
     </script>
 </body>
 </html>

@@ -2,46 +2,41 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use App\Models\Order;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Http\Request; // 👈 Pastikan baris ini ada di paling atas
+use App\Models\Order; // 👈 Sesuaikan dengan nama Model pesananmu
 
 class DapurController extends Controller
 {
-    public function index()
+    // 1. FUNGSI INDEX (Perhatikan bagian dalam kurung harus ada Request $request)
+    public function index(Request $request) 
     {
-        // Menampilkan status 1 (Pending) dan 2 (Cooking) saja
-        $orders = Order::whereIn('order_status_id', [1, 2])
-                       ->orderBy('created_at', 'asc')
-                       ->get();
+        $jenis = $request->query('jenis', 'semua'); // Default 'semua'
 
-        // Ambil detail pesanan (makanan, qty, notes)
-        foreach ($orders as $order) {
-            $order->detail_pesanan = DB::table('order_items')
-                ->join('menus', 'order_items.menu_id', '=', 'menus.id')
-                ->where('order_items.order_id', $order->id)
-                ->select(
-                    'order_items.quantity as qty',
-                    'order_items.notes',
-                    'menus.name'
-                )
-                ->get();
+        $query = Order::with('detail_pesanan'); // Sesuaikan dengan modelmu
+
+        if ($jenis == 'dine-in') {
+            // Pastikan 'jenis_pesanan' sesuai dengan nama kolom di database kamu
+            $query->where('jenis_pesanan', 'dine-in'); 
+        } elseif ($jenis == 'take-away') {
+            $query->where('jenis_pesanan', 'take-away');
         }
 
-        return view('dapur.index', compact('orders'));
+        $orders = $query->get();
+
+        return view('dapur.index', compact('orders', 'jenis'));
     }
 
-    public function updateStatus(Request $request, $id)
+    // 2. FUNGSI UPDATE STATUS (Jangan dihapus, ini yang udah kamu buat sebelumnya)
+    public function updateStatus($id)
     {
-        $order = Order::findOrFail($id);
+        $order = Order::find($id);
 
-        // Perubahan status: 1 (Pending) -> 2 (Cooking) -> 3 (Ready)
         if ($order->order_status_id == 1) {
-            $order->order_status_id = 2;
+            $order->order_status_id = 2; // Proses masak
         } elseif ($order->order_status_id == 2) {
-            $order->order_status_id = 3;
+            $order->order_status_id = 3; // Selesai
         }
-
+        
         $order->save();
 
         return redirect()->back()->with('success', 'Status pesanan berhasil diperbarui.');
