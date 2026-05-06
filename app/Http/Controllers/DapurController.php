@@ -2,20 +2,19 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request; // 👈 Pastikan baris ini ada di paling atas
-use App\Models\Order; // 👈 Sesuaikan dengan nama Model pesananmu
+use Illuminate\Http\Request;
+use App\Models\Order; // Pastikan ini sesuai dengan nama model kamu
 
 class DapurController extends Controller
 {
-    // 1. FUNGSI INDEX (Perhatikan bagian dalam kurung harus ada Request $request)
-    public function index(Request $request) 
+    // 1. FUNGSI TAMPILKAN DAPUR (Dine-in & Take-away)
+    public function index(Request $request)
     {
         $jenis = $request->query('jenis', 'semua'); // Default 'semua'
 
-        $query = Order::with('detail_pesanan'); // Sesuaikan dengan modelmu
+        $query = Order::with('detail_pesanan'); // Sesuaikan relasi dengan modelmu
 
         if ($jenis == 'dine-in') {
-            // Pastikan 'jenis_pesanan' sesuai dengan nama kolom di database kamu
             $query->where('jenis_pesanan', 'dine-in'); 
         } elseif ($jenis == 'take-away') {
             $query->where('jenis_pesanan', 'take-away');
@@ -26,7 +25,7 @@ class DapurController extends Controller
         return view('dapur.index', compact('orders', 'jenis'));
     }
 
-    // 2. FUNGSI UPDATE STATUS (Jangan dihapus, ini yang udah kamu buat sebelumnya)
+    // 2. FUNGSI UPDATE STATUS PESANAN
     public function updateStatus($id)
     {
         $order = Order::find($id);
