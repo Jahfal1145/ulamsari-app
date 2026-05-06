@@ -37,7 +37,8 @@
 
         {{-- ===== LEFT PANEL: MENU ===== --}}
         <div class="w-3/5 p-6 overflow-y-auto flex flex-col relative z-0 border-r dark:border-gray-700">
-            <div class="flex justify-between items-center mb-6">
+            
+            <div class="flex justify-between items-center mb-6 flex-shrink-0">
                 <h2 class="text-3xl font-bold text-orange-600 tracking-tight uppercase">Pilih Menu</h2>
                 <div class="relative w-64">
                     <span class="absolute inset-y-0 left-0 flex items-center pl-3">
@@ -48,7 +49,7 @@
                 </div>
             </div>
 
-            <div class="flex gap-3 mb-6 overflow-x-auto pb-2 scrollbar-hide">
+            <div class="flex gap-3 mb-6 overflow-x-auto pb-2 scrollbar-hide flex-shrink-0">
                 <button type="button" onclick="filterMenu('semua')" class="filter-btn bg-orange-500 text-white px-6 py-2 rounded-full font-semibold shadow-md transition">Menu</button>
                 <button type="button" onclick="filterMenu('Ter-favorit')" class="filter-btn bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 px-6 py-2 rounded-full font-semibold border dark:border-gray-700 hover:bg-orange-50 hover:text-orange-500 transition">Ter-favorit</button>
                 <button type="button" onclick="filterMenu('Makanan Berat')" class="filter-btn bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 px-6 py-2 rounded-full font-semibold border dark:border-gray-700 hover:bg-orange-50 hover:text-orange-500 transition">Makanan Berat</button>
@@ -61,10 +62,10 @@
                     class="menu-card bg-white dark:bg-gray-800 rounded-2xl shadow-sm border dark:border-gray-700 overflow-hidden transition hover:shadow-xl hover:border-orange-400 flex flex-col h-full cursor-pointer group"
                     data-category="{{ $menu->category_name }}" data-name="{{ strtolower($menu->name) }}">
                     @if($menu->image)
-    <img src="{{ asset('storage/' . $menu->image) }}" alt="{{ $menu->name }}" class="h-40 w-full object-cover">
-@else
-    <div class="h-40 bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-gray-400 text-sm italic font-medium uppercase text-center p-2">FOTO<br>{{ $menu->name }}</div>
-@endif
+                        <img src="{{ asset('storage/' . $menu->image) }}" alt="{{ $menu->name }}" class="h-40 w-full object-cover">
+                    @else
+                        <div class="h-40 bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-gray-400 text-sm italic font-medium uppercase text-center p-2">FOTO<br>{{ $menu->name }}</div>
+                    @endif
                     <div class="p-5 flex flex-col flex-1 relative bg-white dark:bg-gray-800 border-t dark:border-gray-700">
                         <h3 class="font-bold text-xl leading-tight mb-2 text-gray-800 dark:text-gray-100">{{ $menu->name }}</h3>
                         <p class="text-orange-500 font-bold text-lg">Rp {{ number_format($menu->price, 0, ',', '.') }}</p>
@@ -94,14 +95,18 @@
                 </button>
             </div>
 
-            <div id="panel-tabs" class="hidden gap-2 mb-4">
+            <div id="panel-tabs" class="flex gap-2 mb-4">
                 <button type="button" onclick="switchPanel('cart')" id="tab-cart"
-                    class="flex-1 py-2 rounded-xl font-bold text-sm uppercase border-2 border-orange-500 bg-orange-500 text-white transition">
+                    class="flex-1 py-2 rounded-xl font-bold text-[11px] uppercase border-2 border-orange-500 bg-orange-500 text-white transition">
                     Pesanan Baru
                 </button>
                 <button type="button" onclick="switchPanel('order')" id="tab-order"
-                    class="flex-1 py-2 rounded-xl font-bold text-sm uppercase border-2 border-gray-100 dark:border-gray-700 text-gray-400 transition">
+                    class="flex-1 py-2 rounded-xl font-bold text-[11px] uppercase border-2 border-gray-100 dark:border-gray-700 text-gray-400 transition">
                     Cek Meja
+                </button>
+                <button type="button" onclick="switchPanel('history')" id="tab-history"
+                    class="flex-1 py-2 rounded-xl font-bold text-[11px] uppercase border-2 border-gray-100 dark:border-gray-700 text-gray-400 transition">
+                    Riwayat
                 </button>
             </div>
 
@@ -144,6 +149,52 @@
                         <span class="text-gray-500 text-lg uppercase font-bold">Total Meja</span>
                         <span id="order-total-price" class="text-orange-600 text-3xl font-bold">Rp 0</span>
                     </div>
+                </div>
+            </div>
+
+            {{-- HISTORY VIEW PANEL --}}
+            <div id="panel-history" class="flex-col flex-1 overflow-hidden hidden">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100 uppercase tracking-tight">Riwayat Terakhir</h2>
+                    
+                    {{-- Filter & Export Excel (Tanpa Form) --}}
+                    <div class="flex gap-2 items-center">
+                        <select id="exportFilter" class="bg-green-50 border border-green-600 text-green-700 text-[10px] font-bold px-2 py-2 rounded-xl outline-none uppercase cursor-pointer">
+                            <option value="hari_ini">Harian</option>
+                            <option value="minggu_ini">Mingguan</option>
+                            <option value="bulan_ini">Bulanan</option>
+                        </select>
+                        <button type="button" onclick="exportExcel()" class="bg-green-600 hover:bg-green-700 text-white text-[10px] font-bold px-3 py-2 rounded-xl uppercase transition flex items-center gap-1 shadow-md cursor-pointer">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                            Excel
+                        </button>
+                        <span class="bg-green-100 text-green-700 text-xs font-bold px-3 py-2 rounded-xl uppercase hidden sm:block">Selesai</span>
+                    </div>
+                </div>
+                
+                <div class="flex-1 overflow-y-auto pr-2 space-y-3">
+                    @forelse($historyOrders ?? [] as $history)
+                        <div class="bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-4 shadow-sm hover:border-green-400 transition">
+                            <div class="flex justify-between items-start mb-2 border-b dark:border-gray-700 pb-2">
+                                <div>
+                                    <h4 class="font-bold text-black dark:text-white uppercase">{{ $history->order_number }}</h4>
+                                    <p class="text-[10px] font-bold text-gray-400 uppercase mt-1">
+                                        {{ $history->created_at->format('d/m/Y H:i') }} • 
+                                        {{ $history->table_id == '0' ? 'TAKEAWAY' : 'MEJA ' . $history->table_id }}
+                                    </p>
+                                </div>
+                                <span class="bg-green-100 text-green-700 px-2 py-1 rounded-lg text-[10px] font-bold uppercase">{{ $history->payment_method }}</span>
+                            </div>
+                            <div class="flex justify-between items-center mt-3">
+                                <span class="text-xs font-bold text-gray-500 uppercase">{{ $history->orderItems->sum('quantity') }} Item</span>
+                                <span class="font-black text-green-600">Rp {{ number_format($history->total_price, 0, ',', '.') }}</span>
+                            </div>
+                        </div>
+                    @empty
+                        <div class="flex flex-col items-center justify-center h-full text-gray-300 dark:text-gray-600 italic font-bold text-center">
+                            <p>BELUM ADA TRANSAKSI<br>YANG SELESAI</p>
+                        </div>
+                    @endforelse
                 </div>
             </div>
 
@@ -367,22 +418,26 @@
         // =====================
         function switchPanel(p) {
             const isCart = p === 'cart';
-            const cartPanel = document.getElementById('panel-cart');
-            const orderPanel = document.getElementById('panel-order');
+            const isOrder = p === 'order';
+            const isHistory = p === 'history';
 
-            cartPanel.classList.toggle('hidden', !isCart);
-            cartPanel.classList.toggle('flex', isCart);
-            orderPanel.classList.toggle('hidden', isCart);
-            orderPanel.classList.toggle('flex', !isCart);
+            document.getElementById('panel-cart').classList.toggle('hidden', !isCart);
+            document.getElementById('panel-cart').classList.toggle('flex', isCart);
+            
+            document.getElementById('panel-order').classList.toggle('hidden', !isOrder);
+            document.getElementById('panel-order').classList.toggle('flex', isOrder);
+            
+            document.getElementById('panel-history').classList.toggle('hidden', !isHistory);
+            document.getElementById('panel-history').classList.toggle('flex', isHistory);
 
-            document.getElementById('tab-cart').className = isCart
-                ? 'flex-1 py-2 rounded-xl font-bold text-sm uppercase border-2 border-orange-500 bg-orange-500 text-white transition'
-                : 'flex-1 py-2 rounded-xl font-bold text-sm uppercase border-2 border-gray-100 dark:border-gray-700 text-gray-400 transition';
-            document.getElementById('tab-order').className = !isCart
-                ? 'flex-1 py-2 rounded-xl font-bold text-sm uppercase border-2 border-orange-500 bg-orange-500 text-white transition'
-                : 'flex-1 py-2 rounded-xl font-bold text-sm uppercase border-2 border-gray-100 dark:border-gray-700 text-gray-400 transition';
+            const activeClass = 'flex-1 py-2 rounded-xl font-bold text-[11px] uppercase border-2 border-orange-500 bg-orange-500 text-white transition';
+            const inactiveClass = 'flex-1 py-2 rounded-xl font-bold text-[11px] uppercase border-2 border-gray-100 dark:border-gray-700 text-gray-400 transition';
 
-            if (!isCart) loadOrderPanel();
+            document.getElementById('tab-cart').className = isCart ? activeClass : inactiveClass;
+            document.getElementById('tab-order').className = isOrder ? activeClass : inactiveClass;
+            document.getElementById('tab-history').className = isHistory ? activeClass : inactiveClass;
+
+            if (isOrder) loadOrderPanel();
         }
 
         function loadOrderPanel() {
@@ -647,6 +702,17 @@
             document.getElementById('label-takeaway').className = !isDineIn
                 ? 'flex-1 border-2 border-orange-500 bg-orange-50 dark:bg-orange-900/20 text-orange-600 p-3 rounded-xl cursor-pointer text-center font-bold transition-all'
                 : 'flex-1 border-2 border-gray-100 dark:border-gray-700 text-gray-500 dark:bg-gray-800 p-3 rounded-xl cursor-pointer text-center font-bold transition-all';
+        }
+
+        // =====================
+        // EXPORT EXCEL
+        // =====================
+        function exportExcel() {
+            // Ambil nilai filter yang dipilih dari dropdown
+            const filterValue = document.getElementById('exportFilter').value;
+            
+            // Redirect untuk mendownload file Excel
+            window.location.href = "{{ route('kasir.export') }}?filter=" + filterValue;
         }
     </script>
 </body>

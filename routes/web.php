@@ -16,6 +16,8 @@ Route::prefix('kasir')->group(function () {
     Route::post('/pesan', [CashierController::class, 'store'])->name('kasir.store');
 });
 
+Route::get('/kasir/export', [App\Http\Controllers\CashierController::class, 'export'])->name('kasir.export');
+
 // 3. Route Pelanggan (Scan QR)
 Route::prefix('pesan')->group(function () {
     Route::get('/{meja}', [PelangganController::class, 'index'])->name('pelanggan.index');
