@@ -85,90 +85,61 @@ class CashierController extends Controller
     }
     // FUNGSI UNTUK EXPORT RIWAYAT KE EXCEL (CSV)
 // FUNGSI UNTUK EXPORT RIWAYAT KE EXCEL DENGAN STYLE (HTML to XLS)
-    // FUNGSI UNTUK EXPORT RIWAYAT KE EXCEL DENGAN STYLE (HTML to XLS) + FILTER
+    // FUNGSI UNTUK EXPORT RIWAYAT DENGAN FILTER KALENDER (START - END)
     public function export(Request $request)
     {
-        // 1. Tangkap pilihan dari dropdown, default-nya Harian
-        $filter = $request->query('filter', 'hari_ini');
-        $judulFile = 'Harian';
+        $start_date = $request->query('start_date');
+        $end_date = $request->query('end_date');
 
-        // 2. Mulai query dasar (yang sudah lunas)
+        // Query dasar: Ambil yang lunas
         $query = Order::with(['orderItems.menu'])
                       ->where('payment_method', '!=', 'Belum Bayar');
 
-        // 3. Modifikasi query berdasarkan filter
-        if ($filter == 'hari_ini') {
+        // Filter berdasarkan tanggal yang dipilih di kalender
+        if ($start_date && $end_date) {
+            $query->whereBetween('created_at', [$start_date . ' 00:00:00', $end_date . ' 23:59:59']);
+            $judulFile = $start_date . '_sd_' . $end_date;
+        } else {
+            // Jika tidak pilih tanggal, default tampilkan hari ini
             $query->whereDate('created_at', now()->format('Y-m-d'));
-            $judulFile = 'Harian';
-        } elseif ($filter == 'minggu_ini') {
-            $query->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()]);
-            $judulFile = 'Mingguan';
-        } elseif ($filter == 'bulan_ini') {
-            $query->whereMonth('created_at', now()->month)
-                  ->whereYear('created_at', now()->year);
-            $judulFile = 'Bulanan';
+            $judulFile = 'Hari_Ini';
         }
 
-        // Eksekusi query
         $orders = $query->orderBy('id', 'desc')->get();
+        $fileName = 'Laporan_UlamSari_' . $judulFile . '.xls';
 
-        // Nama file dinamis sesuai filter
-        $fileName = 'Riwayat_Transaksi_' . $judulFile . '_UlamSari_' . date('Y-m-d') . '.xls';
-
-        // Kita buat kerangka tabel HTML dengan CSS Inline
+        // --- MULAI GENERATE HTML UNTUK EXCEL ---
         $html = '<table border="1" style="border-collapse: collapse; text-align: center; font-family: Arial, sans-serif;">';
-        
-        // --- HEADER TABEL (Warna Merah, Teks Putih) ---
         $html .= '<thead>';
         $html .= '<tr style="background-color: red; color: white; font-weight: bold;">';
-        $html .= '<th style="padding: 5px;">NO</th>';
-        $html .= '<th style="padding: 5px;">Nomer Pesanan</th>';
-        $html .= '<th style="padding: 5px;">Tanggal</th>';
-        $html .= '<th style="padding: 5px; min-width: 300px;">Pesanan</th>';
-        $html .= '<th style="padding: 5px;">No Meja / Takeaway</th>';
-        $html .= '<th style="padding: 5px;">Total Item</th>';
-        $html .= '<th style="padding: 5px;">Total Harga</th>';
-        $html .= '<th style="padding: 5px;">Metode Pembayaran</th>';
-        $html .= '</tr>';
-        $html .= '</thead>';
+        $html .= '<th>NO</th><th>Nomer Pesanan</th><th>Tanggal</th><th style="min-width:300px;">Pesanan</th><th>No Meja / Takeaway</th><th>Total Item</th><th>Total Harga</th><th>Metode Pembayaran</th>';
+        $html .= '</tr></thead><tbody>';
         
-        // --- ISI TABEL ---
-        $html .= '<tbody>';
         $no = 1;
         foreach ($orders as $order) {
             $lokasi = $order->table_id == '0' ? 'Takeaway' : $order->table_id;
-            $totalItem = $order->orderItems->sum('quantity');
-
-            // Menggabungkan nama menu dan jumlahnya
             $pesananArr = [];
             foreach ($order->orderItems as $item) {
                 $namaMenu = $item->menu ? $item->menu->name : 'Item'; 
                 $pesananArr[] = $namaMenu . ':' . $item->quantity;
             }
-            $pesananStr = implode(', ', $pesananArr); 
-
+            
             $html .= '<tr>';
             $html .= '<td>' . $no++ . '</td>';
             $html .= '<td>' . $order->order_number . '</td>';
             $html .= '<td>' . $order->created_at->format('d/m/Y') . '</td>';
-            $html .= '<td>' . $pesananStr . '</td>';
+            $html .= '<td>' . implode(', ', $pesananArr) . '</td>';
             $html .= '<td>' . $lokasi . '</td>';
-            $html .= '<td>' . $totalItem . '</td>';
+            $html .= '<td>' . $order->orderItems->sum('quantity') . '</td>';
             $html .= '<td style="background-color: yellow;">Rp. ' . number_format($order->total_price, 0, ',', '.') . '</td>';
             $html .= '<td>' . $order->payment_method . '</td>';
             $html .= '</tr>';
         }
-        $html .= '</tbody>';
-        $html .= '</table>';
+        $html .= '</tbody></table>';
 
-        $headers = array(
-            "Content-type"        => "application/vnd.ms-excel",
-            "Content-Disposition" => "attachment; filename=$fileName",
-            "Pragma"              => "no-cache",
-            "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
-            "Expires"             => "0"
-        );
-
-        return response($html, 200, $headers);
+        return response($html, 200, [
+            "Content-type" => "application/vnd.ms-excel",
+            "Content-Disposition" => "attachment; filename=$fileName"
+        ]);
     }
 }
