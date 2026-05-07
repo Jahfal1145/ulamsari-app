@@ -12,27 +12,19 @@
 </head>
 <body class="bg-[#f8f9fa] text-gray-800 min-h-screen font-sans antialiased">
     
-    <!-- Navbar / Header -->
     <header class="bg-white border-b border-gray-200 px-8 py-5 flex justify-between items-center sticky top-0 z-10 shadow-sm">
         <div class="flex items-center gap-4">
             <h1 class="text-3xl font-serif font-bold text-gray-900 italic tracking-tight">Ulam Sari</h1>
             <span class="text-xl font-bold text-gray-500 border-l-2 border-gray-300 pl-4">Dapur</span>
         </div>
 
-        <!-- Tabs Filter -->
         <div class="flex bg-gray-100 rounded-full p-1.5">
             <a href="{{ route('dapur.index', ['jenis' => 'semua']) }}" 
-               class="px-8 py-2 rounded-full text-base font-bold transition-all {{ $jenis == 'semua' ? 'bg-white shadow-md text-gray-900' : 'text-gray-500 hover:text-gray-700' }}">
-                Semua
-            </a>
+               class="px-8 py-2 rounded-full text-base font-bold transition-all {{ $jenis == 'semua' ? 'bg-white shadow-md text-gray-900' : 'text-gray-500 hover:text-gray-700' }}">Semua</a>
             <a href="{{ route('dapur.index', ['jenis' => 'dine-in']) }}" 
-               class="px-8 py-2 rounded-full text-base font-bold transition-all {{ $jenis == 'dine-in' ? 'bg-white shadow-md text-gray-900' : 'text-gray-500 hover:text-gray-700' }}">
-                Dine In
-            </a>
+               class="px-8 py-2 rounded-full text-base font-bold transition-all {{ $jenis == 'dine-in' ? 'bg-white shadow-md text-gray-900' : 'text-gray-500 hover:text-gray-700' }}">Dine In</a>
             <a href="{{ route('dapur.index', ['jenis' => 'take-away']) }}" 
-               class="px-8 py-2 rounded-full text-base font-bold transition-all {{ $jenis == 'take-away' ? 'bg-white shadow-md text-gray-900' : 'text-gray-500 hover:text-gray-700' }}">
-                Take Away
-            </a>
+               class="px-8 py-2 rounded-full text-base font-bold transition-all {{ $jenis == 'take-away' ? 'bg-white shadow-md text-gray-900' : 'text-gray-500 hover:text-gray-700' }}">Take Away</a>
         </div>
 
         <div class="flex items-center gap-6">
@@ -49,39 +41,32 @@
         </div>
     </header>
 
-    <!-- Grid Pesanan Utama (DIKASIH GAP & UKURAN LEBIH GEDE) -->
     <main class="p-8">
-        <!-- Kolom dikurangi jadi 3 maksimal agar kartu lebih lebar -->
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
             @forelse($orders as $order)
             
             @php
                 $isCooking = $order->order_status_id == 2;
-                $cardBorder = $isCooking ? 'border-green-500 ring-4 ring-green-100 shadow-lg shadow-green-100/50' : 'border-gray-200 shadow-md';
+                $cardBorder = $isCooking ? 'border-green-500 ring-4 ring-green-100 shadow-lg' : 'border-gray-200 shadow-md';
                 $headerBg = $isCooking ? 'bg-green-50' : 'bg-gray-50';
                 $headerText = $isCooking ? 'text-green-700' : 'text-gray-800';
             @endphp
 
-            <div class="bg-white rounded-2xl border-2 {{ $cardBorder }} flex flex-col h-[500px] overflow-hidden transition-all">
+            <div class="bg-white rounded-2xl border-2 {{ $cardBorder }} flex flex-col h-fit overflow-hidden transition-all">
                 
-                <!-- Card Header -->
                 <div class="{{ $headerBg }} border-b border-gray-200 px-6 py-4">
                     <div class="flex justify-between items-start">
                         <div>
-                            <!-- Ukuran Meja Diperbesar -->
-                            <h2 class="font-black text-4xl {{ $headerText }}">Meja {{ $order->table_id }}</h2>
-                            
-                            <!-- Label Dine-In / Take Away Biar Jelas -->
+                            <h2 class="font-black text-4xl {{ $headerText }}">
+                                {{ $order->jenis_pesanan == 'dine-in' ? 'Meja ' . $order->table_id : 'Take Away' }}
+                            </h2>
                             <div class="mt-2">
-                                @if($order->order_type == 'dine-in')
-                                    <span class="bg-blue-100 text-blue-800 text-sm font-bold px-3 py-1 rounded-md border border-blue-200 tracking-wide">DINE IN</span>
-                                @elseif($order->order_type == 'take-away')
-                                    <span class="bg-orange-100 text-orange-800 text-sm font-bold px-3 py-1 rounded-md border border-orange-200 tracking-wide">TAKE AWAY</span>
-                                @endif
+                                <span class="text-sm font-bold px-3 py-1 rounded-md border tracking-wide uppercase {{ $order->jenis_pesanan == 'dine-in' ? 'bg-blue-100 text-blue-800 border-blue-200' : 'bg-orange-100 text-orange-800 border-orange-200' }}">
+                                    {{ str_replace('-', ' ', $order->jenis_pesanan) }}
+                                </span>
                             </div>
                         </div>
 
-                        <!-- Waktu -->
                         <div class="text-right">
                             <span class="text-lg font-mono font-bold text-gray-600 block">
                                 {{ $order->created_at->setTimezone('Asia/Jakarta')->format('H:i') }}
@@ -91,41 +76,34 @@
                     </div>
                 </div>
 
-                <!-- Card Body (List Menu) -->
-                <div class="p-6 flex-1 overflow-y-auto hide-scrollbar">
-                    <ul class="space-y-5">
-                        @foreach($order->detail_pesanan as $item)
-                        <li class="flex items-start gap-4 pb-4 border-b border-gray-100 last:border-0">
-                            <!-- QTY Diperbesar -->
-                            <div class="bg-gray-100 px-3 py-1 rounded-lg">
-                                <span class="font-black text-2xl text-gray-900">{{ $item->qty }}x</span>
+                <div class="p-6 overflow-y-auto hide-scrollbar">
+                    <ul class="space-y-4">
+                        @foreach($order->orderItems as $item)
+                        <li class="flex flex-col bg-gray-50 p-3 rounded-xl border border-gray-100">
+                            <div class="flex justify-between items-center">
+                                <span class="text-xl font-bold text-gray-800">{{ $item->menu->name ?? 'Menu Terhapus' }}</span>
+                                <span class="bg-gray-800 text-white font-black px-3 py-1 rounded-lg text-sm">x{{ $item->quantity }}</span>
                             </div>
-                            <div class="pt-1">
-                                <!-- Nama Menu Diperbesar -->
-                                <p class="font-bold text-xl text-gray-800 leading-tight">{{ $item->name }}</p>
-                                @if(isset($item->notes) && $item->notes != '')
-                                    <p class="text-base text-orange-600 italic mt-1 font-medium bg-orange-50 inline-block px-2 py-0.5 rounded">
-                                        Catatan: {{ $item->notes }}
-                                    </p>
-                                @endif
+                            @if($item->notes)
+                            <div class="mt-2 flex items-center gap-1 text-red-600 italic text-sm font-medium">
+                                <span>Note:</span>
+                                <span>{{ $item->notes }}</span>
                             </div>
+                            @endif
                         </li>
                         @endforeach
                     </ul>
                 </div>
 
-                <!-- Card Footer (Tombol) -->
-                <div class="p-6 pt-0 mt-auto bg-white">
-                    <form action="{{ route('dapur.update', $order->id) }}" method="POST">
+                <div class="p-6 pt-2 mt-auto bg-white">
+                    <form action="{{ route('dapur.update-status', $order->id) }}" method="POST">
                         @csrf
                         @if($order->order_status_id == 1)
-                            <!-- Tombol Merah Diperbesar -->
-                            <button type="submit" class="w-full bg-[#d32f2f] hover:bg-red-700 text-white font-black text-xl py-4 rounded-xl transition-transform active:scale-95 shadow-md">
+                            <button type="submit" class="w-full bg-[#d32f2f] hover:bg-red-700 text-white font-black text-xl py-4 rounded-xl transition-transform active:scale-95 shadow-md uppercase">
                                 MULAI MASAK
                             </button>
                         @elseif($order->order_status_id == 2)
-                            <!-- Tombol Hijau Diperbesar -->
-                            <button type="submit" class="w-full bg-green-500 hover:bg-green-600 text-white font-black text-xl py-4 rounded-xl transition-transform active:scale-95 shadow-md">
+                            <button type="submit" class="w-full bg-green-500 hover:bg-green-600 text-white font-black text-xl py-4 rounded-xl transition-transform active:scale-95 shadow-md uppercase">
                                 SELESAI
                             </button>
                         @endif
@@ -138,8 +116,8 @@
                 <svg class="w-24 h-24 mb-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
                 </svg>
-                <h3 class="text-3xl font-black text-gray-400">Belum ada pesanan</h3>
-                <p class="text-lg font-medium mt-2">Dapur masih aman terkendali.</p>
+                <h3 class="text-3xl font-black text-gray-400 uppercase">Dapur Kosong</h3>
+                <p class="text-lg font-medium mt-2">Belum ada pesanan yang perlu dimasak.</p>
             </div>
             @endforelse
         </div>
@@ -160,13 +138,7 @@
                 const createdAt = parseInt(el.dataset.createdAt);
                 const diff = now - createdAt;
                 const minutes = Math.floor(diff / 60);
-                
-                // Ganti warna teks kalau udah kelamaan (contoh: lebih dari 15 menit)
-                if (minutes >= 15) {
-                    el.classList.add('text-red-600');
-                    el.classList.remove('text-red-500');
-                }
-                
+                if (minutes >= 15) { el.classList.add('animate-pulse'); }
                 el.innerText = `(+${minutes}m)`; 
             });
         }
@@ -174,11 +146,9 @@
         updateClock();
         updateElapsedTimes();
         setInterval(updateClock, 1000);
-        setInterval(updateElapsedTimes, 60000); 
-        
-        setInterval(() => {
-            window.location.reload();
-        }, 15000);
+        setInterval(updateElapsedTimes, 30000); 
+
+        setInterval(() => { window.location.reload(); }, 15000);
     </script>
 </body>
 </html>

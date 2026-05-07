@@ -7,6 +7,7 @@ use App\Http\Controllers\PelangganController;
 use App\Http\Controllers\Auth\PinController;
 use App\Http\Controllers\MenuController;
 
+
 // 1. Home / Landing
 Route::get('/', function () {
     return redirect()->route('pin.index'); // Diarahkan ke login PIN dulu agar aman
@@ -22,7 +23,11 @@ Route::prefix('kasir')->group(function () {
     Route::post('/pesan', [CashierController::class, 'store'])->name('kasir.store');
 });
 
+Route::get('/kasir/export', [App\Http\Controllers\CashierController::class, 'export'])->name('kasir.export');
+
+// 3. Route Pelanggan (Scan QR)     
 // 4. Route Pelanggan (Scan QR)
+
 Route::prefix('pesan')->group(function () {
     Route::get('/{meja}', [PelangganController::class, 'index'])->name('pelanggan.index');
     Route::post('/store', [PelangganController::class, 'store'])->name('pelanggan.store');
@@ -44,3 +49,7 @@ Route::prefix('admin/menu')->group(function () {
 });
 
 // Penutup kurung kurawal yang error tadi sudah dihapus karena tidak ada pasangannya
+
+// Pastikan baris ini ada dan namanya 'dapur.update-status'
+Route::post('/dapur/update-status/{id}', [DapurController::class, 'updateStatus'])->name('dapur.update-status');
+
