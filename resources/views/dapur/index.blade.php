@@ -94,23 +94,6 @@
                 <!-- Card Body (List Menu) -->
                 <div class="p-6 flex-1 overflow-y-auto hide-scrollbar">
                     <ul class="space-y-5">
-                        @foreach($order->detail_pesanan as $item)
-                        <li class="flex items-start gap-4 pb-4 border-b border-gray-100 last:border-0">
-                            <!-- QTY Diperbesar -->
-                            <div class="bg-gray-100 px-3 py-1 rounded-lg">
-                                <span class="font-black text-2xl text-gray-900">{{ $item->qty }}x</span>
-                            </div>
-                            <div class="pt-1">
-                                <!-- Nama Menu Diperbesar -->
-                                <p class="font-bold text-xl text-gray-800 leading-tight">{{ $item->name }}</p>
-                                @if(isset($item->notes) && $item->notes != '')
-                                    <p class="text-base text-orange-600 italic mt-1 font-medium bg-orange-50 inline-block px-2 py-0.5 rounded">
-                                        Catatan: {{ $item->notes }}
-                                    </p>
-                                @endif
-                            </div>
-                        </li>
-                        @endforeach
                     </ul>
                 </div>
 

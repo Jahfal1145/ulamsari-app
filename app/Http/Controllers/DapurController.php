@@ -12,7 +12,7 @@ class DapurController extends Controller
     {
         $jenis = $request->query('jenis', 'semua'); // Default 'semua'
 
-        $query = Order::with('detail_pesanan'); // Sesuaikan dengan modelmu
+        $query = Order::with('orderItems'); // Sesuaikan dengan modelmu
 
         if ($jenis == 'dine-in') {
             // Pastikan 'jenis_pesanan' sesuai dengan nama kolom di database kamu

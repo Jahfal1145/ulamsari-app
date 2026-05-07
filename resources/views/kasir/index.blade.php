@@ -62,9 +62,9 @@
                     class="menu-card bg-white dark:bg-gray-800 rounded-2xl shadow-sm border dark:border-gray-700 overflow-hidden transition hover:shadow-xl hover:border-orange-400 flex flex-col h-full cursor-pointer group"
                     data-category="{{ $menu->category_name }}" data-name="{{ strtolower($menu->name) }}">
                     @if($menu->image)
-                        <img src="{{ asset('storage/' . $menu->image) }}" alt="{{ $menu->name }}" class="h-40 w-full object-cover">
+                        <img src="{{ asset('storage/' . $menu->image) }}" alt="{{ $menu->name }}" class="h-64 w-full object-cover object-center border-b dark:border-gray-700">
                     @else
-                        <div class="h-40 bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-gray-400 text-sm italic font-medium uppercase text-center p-2">FOTO<br>{{ $menu->name }}</div>
+                        <div class="h-64 bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-gray-400 text-sm italic font-medium uppercase text-center p-2">FOTO<br>{{ $menu->name }}</div>
                     @endif
                     <div class="p-5 flex flex-col flex-1 relative bg-white dark:bg-gray-800 border-t dark:border-gray-700">
                         <h3 class="font-bold text-xl leading-tight mb-2 text-gray-800 dark:text-gray-100">{{ $menu->name }}</h3>
@@ -157,18 +157,24 @@
                 <div class="flex items-center justify-between mb-4">
                     <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100 uppercase tracking-tight">Riwayat Terakhir</h2>
                     
-                    {{-- Filter & Export Excel (Tanpa Form) --}}
+                    {{-- Filter & Export Excel (Versi Kalender) --}}
                     <div class="flex gap-2 items-center">
-                        <select id="exportFilter" class="bg-green-50 border border-green-600 text-green-700 text-[10px] font-bold px-2 py-2 rounded-xl outline-none uppercase cursor-pointer">
-                            <option value="hari_ini">Harian</option>
-                            <option value="minggu_ini">Mingguan</option>
-                            <option value="bulan_ini">Bulanan</option>
-                        </select>
-                        <button type="button" onclick="exportExcel()" class="bg-green-600 hover:bg-green-700 text-white text-[10px] font-bold px-3 py-2 rounded-xl uppercase transition flex items-center gap-1 shadow-md cursor-pointer">
+                        <div class="flex items-center gap-1 bg-white dark:bg-gray-700 p-1 px-2 rounded-xl border dark:border-gray-600 shadow-sm">
+                            <div class="flex flex-col">
+                                <span class="text-[7px] font-bold text-gray-400 uppercase">Mulai</span>
+                                <input type="date" id="start_date" class="bg-transparent text-[10px] font-bold text-orange-600 dark:text-orange-400 outline-none cursor-pointer">
+                            </div>
+                            <div class="h-6 w-px bg-gray-200 dark:bg-gray-600 mx-1"></div>
+                            <div class="flex flex-col">
+                                <span class="text-[7px] font-bold text-gray-400 uppercase">Selesai</span>
+                                <input type="date" id="end_date" class="bg-transparent text-[10px] font-bold text-orange-600 dark:text-orange-400 outline-none cursor-pointer">
+                            </div>
+                        </div>
+                        
+                        <button type="button" onclick="exportExcel()" class="bg-green-600 hover:bg-green-700 text-white text-[10px] font-bold px-3 py-3 rounded-xl uppercase transition flex items-center gap-1 shadow-md">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                             Excel
                         </button>
-                        <span class="bg-green-100 text-green-700 text-xs font-bold px-3 py-2 rounded-xl uppercase hidden sm:block">Selesai</span>
                     </div>
                 </div>
                 
@@ -705,14 +711,19 @@
         }
 
         // =====================
-        // EXPORT EXCEL
+        // EXPORT EXCEL (KALENDER)
         // =====================
         function exportExcel() {
-            // Ambil nilai filter yang dipilih dari dropdown
-            const filterValue = document.getElementById('exportFilter').value;
+            const start = document.getElementById('start_date').value;
+            const end = document.getElementById('end_date').value;
             
-            // Redirect untuk mendownload file Excel
-            window.location.href = "{{ route('kasir.export') }}?filter=" + filterValue;
+            if (!start || !end) {
+                alert('Pilih rentang tanggal (Mulai & Selesai) dulu rek!');
+                return;
+            }
+            
+            // Redirect dengan parameter tanggal
+            window.location.href = "{{ route('kasir.export') }}?start_date=" + start + "&end_date=" + end;
         }
     </script>
 </body>
