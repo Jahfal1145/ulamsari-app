@@ -7,6 +7,7 @@ use App\Http\Controllers\PelangganController;
 use App\Http\Controllers\Auth\PinController;
 use App\Http\Controllers\MenuController;
 
+
 // 1. Home / Landing
 Route::get('/', function () {
     return redirect()->route('pin.index'); // Diarahkan ke login PIN dulu agar aman
@@ -48,3 +49,7 @@ Route::prefix('admin/menu')->group(function () {
 });
 
 // Penutup kurung kurawal yang error tadi sudah dihapus karena tidak ada pasangannya
+
+// Pastikan baris ini ada dan namanya 'dapur.update-status'
+Route::post('/dapur/update-status/{id}', [DapurController::class, 'updateStatus'])->name('dapur.update-status');
+
