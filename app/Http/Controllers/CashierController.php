@@ -20,13 +20,12 @@ class CashierController extends Controller
         
         $tables = Table::all();
 
-        // Ambil pesanan yang masih Pending (1)
+        // KUNCI GERBANG: Sudah diisi dengan array
         $pendingOrders = Order::with(['orderItems.menu'])
-                        ->where('order_status_id', 1)
-                        ->get()
-                        ->groupBy('table_id'); 
+                ->whereIn('order_status_id', [1,2])
+                ->get()
+                ->groupBy('table_id');
 
-        // AMBIL DATA RIWAYAT (Patokannya: payment_method BUKAN 'Belum Bayar')
         $historyOrders = Order::with(['orderItems.menu'])
                         ->where('payment_method', '!=', 'Belum Bayar')
                         ->orderBy('id', 'desc')
@@ -83,24 +82,19 @@ class CashierController extends Controller
             return back()->with('error', 'Gagal simpan: ' . $e->getMessage());
         }
     }
-    // FUNGSI UNTUK EXPORT RIWAYAT KE EXCEL (CSV)
-// FUNGSI UNTUK EXPORT RIWAYAT KE EXCEL DENGAN STYLE (HTML to XLS)
-    // FUNGSI UNTUK EXPORT RIWAYAT DENGAN FILTER KALENDER (START - END)
+
     public function export(Request $request)
     {
         $start_date = $request->query('start_date');
         $end_date = $request->query('end_date');
 
-        // Query dasar: Ambil yang lunas
         $query = Order::with(['orderItems.menu'])
                       ->where('payment_method', '!=', 'Belum Bayar');
 
-        // Filter berdasarkan tanggal yang dipilih di kalender
         if ($start_date && $end_date) {
             $query->whereBetween('created_at', [$start_date . ' 00:00:00', $end_date . ' 23:59:59']);
             $judulFile = $start_date . '_sd_' . $end_date;
         } else {
-            // Jika tidak pilih tanggal, default tampilkan hari ini
             $query->whereDate('created_at', now()->format('Y-m-d'));
             $judulFile = 'Hari_Ini';
         }
@@ -108,7 +102,6 @@ class CashierController extends Controller
         $orders = $query->orderBy('id', 'desc')->get();
         $fileName = 'Laporan_UlamSari_' . $judulFile . '.xls';
 
-        // --- MULAI GENERATE HTML UNTUK EXCEL ---
         $html = '<table border="1" style="border-collapse: collapse; text-align: center; font-family: Arial, sans-serif;">';
         $html .= '<thead>';
         $html .= '<tr style="background-color: red; color: white; font-weight: bold;">';
@@ -141,5 +134,20 @@ class CashierController extends Controller
             "Content-type" => "application/vnd.ms-excel",
             "Content-Disposition" => "attachment; filename=$fileName"
         ]);
+    }
+
+    public function konfirmasi($id)
+    {
+        $order = \App\Models\Order::findOrFail($id);
+        
+        $order->order_status_id = 1; 
+        
+        if ($order->payment_method == 'Belum Bayar' || $order->payment_method == 'Tunai') {
+            $order->payment_method = 'Tunai';
+        }
+        
+        $order->save();
+
+        return redirect()->back()->with('success', 'Pembayaran Lunas! Pesanan otomatis masuk ke Dapur.');
     }
 }

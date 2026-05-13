@@ -446,25 +446,33 @@
             if (isOrder) loadOrderPanel();
         }
 
+        // FUNGSI LOAD ORDER PANEL YANG SUDAH DIPERBAIKI (ANTI FREEZE)
         function loadOrderPanel() {
             const tableId = document.getElementById('selected_table_id').value;
             const container = document.getElementById('order-container');
             const totalEl = document.getElementById('order-total-price');
             const rawOrder = pendingOrders[tableId];
 
-            if (!rawOrder || (Array.isArray(rawOrder) ? rawOrder.length === 0 : Object.keys(rawOrder).length === 0)) {
-                container.innerHTML = `<div class="flex flex-col items-center justify-center h-full text-gray-300 dark:text-gray-600 italic font-bold text-center"><p>TIDAK ADA PESANAN<br>AKTIF DI MEJA INI</p></div>`;
+            // PENGAMAN: Jika meja kosong atau undefined, langsung hentikan fungsi (Jangan dihitung)
+            if (!rawOrder || rawOrder === null || rawOrder === undefined) {
+                container.innerHTML = `<div class="flex flex-col items-center justify-center h-full text-gray-400 italic font-bold text-center"><p>TIDAK ADA PESANAN AKTIF</p></div>`;
                 totalEl.innerText = 'Rp 0';
                 return;
             }
 
+            // Ubah data menjadi Array agar mudah dilooping
             let list = [];
             if (Array.isArray(rawOrder)) {
                 list = [...rawOrder];
-            } else if (rawOrder.hasOwnProperty('order_items') || rawOrder.hasOwnProperty('order_number')) {
-                list = [rawOrder];
-            } else {
+            } else if (typeof rawOrder === 'object') {
                 list = Object.values(rawOrder);
+            }
+
+            // PENGAMAN 2: Jika setelah diubah jadi array ternyata isinya 0
+            if (list.length === 0) {
+                container.innerHTML = `<div class="flex flex-col items-center justify-center h-full text-gray-400 italic font-bold text-center"><p>TIDAK ADA PESANAN AKTIF</p></div>`;
+                totalEl.innerText = 'Rp 0';
+                return;
             }
 
             container.innerHTML = '';
@@ -473,21 +481,43 @@
 
             list.forEach((ord, idx) => {
                 gTotal += parseInt(ord.total_price);
+                
+                let statusBadge = '';
+                let btnKonfirmasi = '';
+                
+                if (ord.order_status_id == 4) {
+                    statusBadge = `<span class="bg-red-100 text-red-600 text-[10px] font-bold px-2 py-1 rounded uppercase">Belum Bayar</span>`;
+                    btnKonfirmasi = `
+                    <div class="mt-3 border-t border-orange-200 dark:border-orange-800 pt-3">
+                        <form action="/kasir/konfirmasi/${ord.id}" method="POST">
+                            <input type="hidden" name="_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-xl text-xs uppercase shadow-md">
+                                Terima Uang & ACC ke Dapur
+                            </button>
+                        </form>
+                    </div>`;
+                } else {
+                    statusBadge = `<span class="bg-green-100 text-green-600 text-[10px] font-bold px-2 py-1 rounded uppercase">Masuk Dapur</span>`;
+                }
+
                 container.insertAdjacentHTML('beforeend', `
-                    <div class="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-2xl p-3 mt-2">
-                        <p class="text-[10px] font-bold text-orange-600 tracking-widest uppercase">Pesanan #${list.length - idx} • ${ord.order_number}</p>
+                    <div class="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-2xl p-4 mt-2 mb-4">
+                        <div class="flex justify-between items-center mb-3">
+                            <p class="text-xs font-bold text-orange-600 uppercase">Pesanan #${list.length - idx}</p>
+                            ${statusBadge}
+                        </div>
+                        <div id="order-items-${ord.id}" class="space-y-2"></div>
+                        ${btnKonfirmasi}
                     </div>
                 `);
+
+                const itemContainer = document.getElementById(`order-items-${ord.id}`);
                 ord.order_items.forEach(item => {
                     const itemName = item.menu ? item.menu.name : (item.name || 'Menu');
-                    container.insertAdjacentHTML('beforeend', `
-                        <div class="bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-4 shadow-sm">
-                            <h4 class="font-bold uppercase dark:text-white">${itemName}</h4>
-                            <p class="text-[10px] font-bold text-orange-500 italic uppercase mt-1">${item.notes || '-'}</p>
-                            <div class="flex justify-between items-center mt-2">
-                                <span class="bg-black dark:bg-orange-600 text-white px-2 py-0.5 rounded-lg text-xs font-bold">x${item.quantity}</span>
-                                <span class="font-bold dark:text-white">${formatRupiah(item.subtotal)}</span>
-                            </div>
+                    itemContainer.insertAdjacentHTML('beforeend', `
+                        <div class="bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 shadow-sm flex justify-between items-center">
+                            <h4 class="font-bold uppercase text-sm dark:text-white">${itemName}</h4>
+                            <div class="flex gap-4"><span class="bg-black text-white px-2 rounded font-bold">x${item.quantity}</span><span class="font-bold dark:text-white">${formatRupiah(item.subtotal)}</span></div>
                         </div>
                     `);
                 });

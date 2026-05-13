@@ -21,6 +21,7 @@ Route::post('/login-pin', [PinController::class, 'verify'])->name('pin.verify');
 Route::prefix('kasir')->group(function () {
     Route::get('/', [CashierController::class, 'index'])->name('kasir.index');
     Route::post('/pesan', [CashierController::class, 'store'])->name('kasir.store');
+    Route::post('/kasir/konfirmasi/{id}', [App\Http\Controllers\KasirController::class, 'konfirmasi'])->name('kasir.konfirmasi');
 });
 
 Route::get('/kasir/export', [App\Http\Controllers\CashierController::class, 'export'])->name('kasir.export');
@@ -52,4 +53,7 @@ Route::prefix('admin/menu')->group(function () {
 
 // Pastikan baris ini ada dan namanya 'dapur.update-status'
 Route::post('/dapur/update-status/{id}', [DapurController::class, 'updateStatus'])->name('dapur.update-status');
+
+Route::post('/pesan/store', [PelangganController::class, 'store'])->name('pelanggan.store');
+Route::get('/pesan/success/{id}', [PelangganController::class, 'success'])->name('pelanggan.success');
 
