@@ -26,8 +26,10 @@ class CashierController extends Controller
                 ->get()
                 ->groupBy('table_id');
 
+        // SEBELUMNYA: ->where('payment_method', '!=', 'Belum Bayar')
+        // UBAH MENJADI: Jangan tampilkan pesanan yang masih tertahan (status 4) di riwayat
         $historyOrders = Order::with(['orderItems.menu'])
-                        ->where('payment_method', '!=', 'Belum Bayar')
+                        ->where('order_status_id', '!=', 4) 
                         ->orderBy('id', 'desc')
                         ->limit(30)
                         ->get();

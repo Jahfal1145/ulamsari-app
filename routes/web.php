@@ -34,6 +34,8 @@ Route::prefix('pesan')->group(function () {
     Route::post('/store', [PelangganController::class, 'store'])->name('pelanggan.store');
 });
 
+Route::post('/pelanggan/store', [App\Http\Controllers\PelangganController::class, 'store'])->name('pelanggan.store');
+
 // 5. Route Dapur
 Route::prefix('dapur')->group(function () {
     Route::get('/', [DapurController::class, 'index'])->name('dapur.index');
@@ -56,4 +58,7 @@ Route::post('/dapur/update-status/{id}', [DapurController::class, 'updateStatus'
 
 Route::post('/pesan/store', [PelangganController::class, 'store'])->name('pelanggan.store');
 Route::get('/pesan/success/{id}', [PelangganController::class, 'success'])->name('pelanggan.success');
+
+// Rute untuk Kasir ACC pesanan dari pelanggan
+Route::post('/kasir/konfirmasi/{id}', [App\Http\Controllers\CashierController::class, 'konfirmasi'])->name('kasir.konfirmasi');
 
