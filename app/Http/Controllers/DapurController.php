@@ -11,9 +11,12 @@ class DapurController extends Controller
     {
         $jenis = $request->query('jenis', 'semua'); 
 
-        // KUNCI GERBANG: Sudah diisi dengan array
+        // JURUS ANTI WHERE-IN: Pakai where dan orWhere
         $query = Order::with(['orderItems.menu'])
-              ->whereIn('order_status_id', [1,2]);
+                      ->where(function ($q) {
+                          $q->where('order_status_id', 1)
+                            ->orWhere('order_status_id', 2);
+                      });
 
         if ($jenis == 'dine-in') {
             $query->where('jenis_pesanan', 'dine-in'); 

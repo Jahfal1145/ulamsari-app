@@ -15,29 +15,28 @@
 <body class="bg-gray-100 dark:bg-gray-900 font-sans text-gray-800 dark:text-gray-100 relative">
 
     @if(session('error'))
-        <div id="alert-error" class="fixed top-5 left-1/2 -translate-x-1/2 z- bg-red-600 text-white px-6 py-3 rounded-2xl font-bold shadow-2xl animate-bounce">
+        <div id="alert-error" class="fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-red-600 text-white px-6 py-3 rounded-2xl font-bold shadow-2xl animate-bounce">
             {{ session('error') }}
         </div>
         <script>setTimeout(() => document.getElementById('alert-error').remove(), 3000);</script>
     @endif
     @if(session('success'))
-        <div id="alert-success" class="fixed top-5 left-1/2 -translate-x-1/2 z- bg-black text-white px-6 py-3 rounded-2xl font-bold shadow-2xl border-l-8 border-orange-500">
+        <div id="alert-success" class="fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-black text-white px-6 py-3 rounded-2xl font-bold shadow-2xl border-l-8 border-green-500">
             {{ session('success') }}
         </div>
         <script>setTimeout(() => document.getElementById('alert-success').remove(), 3000);</script>
     @endif
 
+    {{-- FORM UTAMA KASIR --}}
     <form action="{{ route('kasir.store') }}" method="POST" id="orderForm" class="flex h-screen overflow-hidden">
         @csrf
         <input type="hidden" name="cart_data" id="cart_data_input">
         <input type="hidden" name="customer_name" id="customer_name_input">
-        
         <input type="hidden" name="payment_type" id="payment_type">
         <input type="hidden" name="payment_method" id="payment_method" value="Belum Bayar">
 
         {{-- ===== LEFT PANEL: MENU ===== --}}
-        <div class="w-3/5 p-6 overflow-y-auto flex flex-col relative z-0 border-r dark:border-gray-700">
-            
+        <div class="w-3/5 p-6 overflow-y-auto flex flex-col relative border-r dark:border-gray-700">
             <div class="flex justify-between items-center mb-6 flex-shrink-0">
                 <h2 class="text-3xl font-bold text-orange-600 tracking-tight uppercase">Pilih Menu</h2>
                 <div class="relative w-64">
@@ -69,80 +68,50 @@
                     <div class="p-5 flex flex-col flex-1 relative bg-white dark:bg-gray-800 border-t dark:border-gray-700">
                         <h3 class="font-bold text-xl leading-tight mb-2 text-gray-800 dark:text-gray-100">{{ $menu->name }}</h3>
                         <p class="text-orange-500 font-bold text-lg">Rp {{ number_format($menu->price, 0, ',', '.') }}</p>
-                        <div class="absolute bottom-4 right-4 bg-orange-100 dark:bg-orange-900/30 p-3 rounded-full text-orange-600 group-hover:bg-orange-500 group-hover:text-white transition shadow-sm">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
-                        </div>
                     </div>
                 </div>
                 @endforeach
             </div>
-
-            <button type="button" onclick="toggleDarkMode()" class="fixed bottom-6 left-6 p-4 bg-white dark:bg-gray-800 rounded-full shadow-2xl border dark:border-gray-700 z-50 hover:scale-110 transition active:scale-95">
-                <svg id="sun-icon" class="w-6 h-6 text-orange-500 hidden" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"/></svg>
-                <svg id="moon-icon" class="w-6 h-6 text-indigo-600" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/></svg>
-            </button>
         </div>
 
         {{-- ===== RIGHT PANEL ===== --}}
         <div class="w-2/5 bg-white dark:bg-gray-800 p-6 shadow-2xl flex flex-col border-l dark:border-gray-700">
-
             <div class="mb-4 border-b-2 border-gray-100 dark:border-gray-700 pb-4">
                 <input type="hidden" name="table_id" id="selected_table_id">
                 <button type="button" onclick="openTableModal()"
                         class="w-full bg-white dark:bg-gray-800 text-black dark:text-white border-2 border-gray-100 dark:border-gray-700 p-4 rounded-2xl font-bold text-xl hover:border-orange-500 transition flex justify-center items-center shadow-sm relative group">
                     <span id="table_label" class="uppercase">Nomor Meja</span>
-                    <svg class="w-6 h-6 text-orange-500 absolute right-4 group-hover:translate-y-1 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"/></svg>
                 </button>
             </div>
 
             <div id="panel-tabs" class="flex gap-2 mb-4">
                 <button type="button" onclick="switchPanel('cart')" id="tab-cart"
-                    class="flex-1 py-2 rounded-xl font-bold text-[11px] uppercase border-2 border-orange-500 bg-orange-500 text-white transition">
-                    Pesanan Baru
-                </button>
+                    class="flex-1 py-2 rounded-xl font-bold text-[11px] uppercase border-2 border-orange-500 bg-orange-500 text-white transition">Pesanan Baru</button>
                 <button type="button" onclick="switchPanel('order')" id="tab-order"
-                    class="flex-1 py-2 rounded-xl font-bold text-[11px] uppercase border-2 border-gray-100 dark:border-gray-700 text-gray-400 transition">
-                    Cek Meja
-                </button>
+                    class="flex-1 py-2 rounded-xl font-bold text-[11px] uppercase border-2 border-gray-100 dark:border-gray-700 text-gray-400 transition">Cek Meja</button>
                 <button type="button" onclick="switchPanel('history')" id="tab-history"
-                    class="flex-1 py-2 rounded-xl font-bold text-[11px] uppercase border-2 border-gray-100 dark:border-gray-700 text-gray-400 transition">
-                    Riwayat
-                </button>
+                    class="flex-1 py-2 rounded-xl font-bold text-[11px] uppercase border-2 border-gray-100 dark:border-gray-700 text-gray-400 transition">Riwayat</button>
             </div>
 
             {{-- CART PANEL --}}
             <div id="panel-cart" class="flex flex-col flex-1 overflow-hidden">
-                <h2 class="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-100 uppercase tracking-tight">Detail Pesanan</h2>
                 <div id="cart-container" class="flex-1 overflow-y-auto pr-2 space-y-3">
-                    <div class="flex flex-col items-center justify-center h-full text-gray-300 dark:text-gray-600 italic font-bold">
-                        <p>BELUM ADA MENU DIPILIH</p>
-                    </div>
+                    <div class="flex flex-col items-center justify-center h-full text-gray-300 dark:text-gray-600 italic font-bold"><p>BELUM ADA MENU DIPILIH</p></div>
                 </div>
-                
                 <div class="border-t-2 border-gray-100 dark:border-gray-700 pt-4 mt-4">
                     <div class="flex justify-between items-center mb-4">
                         <span class="text-gray-500 text-lg uppercase font-bold tracking-wider">Total</span>
                         <span id="total-price" class="text-orange-600 text-3xl font-black">Rp 0</span>
                     </div>
                     <div class="grid grid-cols-2 gap-3">
-                        <button type="button" onclick="validateAndSubmit('later')" 
-                                class="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 py-4 rounded-2xl font-bold text-sm hover:bg-gray-300 dark:hover:bg-gray-600 transition uppercase tracking-widest">
-                            Bayar Nanti
-                        </button>
-                        <button type="button" onclick="validateAndSubmit('now')" 
-                                class="bg-orange-500 text-white py-4 rounded-2xl font-bold text-sm hover:bg-black dark:hover:bg-orange-600 shadow-lg transition transform active:scale-95 uppercase tracking-widest">
-                            Bayar Sekarang
-                        </button>
+                        <button type="button" onclick="validateAndSubmit('later')" class="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 py-4 rounded-2xl font-bold text-sm transition uppercase">Bayar Nanti</button>
+                        <button type="button" onclick="validateAndSubmit('now')" class="bg-orange-500 text-white py-4 rounded-2xl font-bold text-sm shadow-lg transition uppercase">Bayar Sekarang</button>
                     </div>
                 </div>
             </div>
 
             {{-- ORDER VIEW PANEL --}}
             <div id="panel-order" class="flex-col flex-1 overflow-hidden hidden">
-                <div class="flex items-center justify-between mb-4">
-                    <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100 uppercase tracking-tight">Pesanan Aktif</h2>
-                    <span class="bg-yellow-100 text-yellow-700 text-xs font-bold px-3 py-1 rounded-full uppercase">Aktif</span>
-                </div>
                 <div id="order-container" class="flex-1 overflow-y-auto pr-2 space-y-3"></div>
                 <div class="border-t-2 border-gray-100 dark:border-gray-700 pt-4 mt-4">
                     <div class="flex justify-between items-center">
@@ -154,28 +123,19 @@
 
             {{-- HISTORY VIEW PANEL --}}
             <div id="panel-history" class="flex-col flex-1 overflow-hidden hidden">
-                <div class="flex items-center justify-between mb-4">
-                    <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100 uppercase tracking-tight">Riwayat Terakhir</h2>
-                    
-                    {{-- Filter & Export Excel (Versi Kalender) --}}
-                    <div class="flex gap-2 items-center">
-                        <div class="flex items-center gap-1 bg-white dark:bg-gray-700 p-1 px-2 rounded-xl border dark:border-gray-600 shadow-sm">
-                            <div class="flex flex-col">
-                                <span class="text-[7px] font-bold text-gray-400 uppercase">Mulai</span>
-                                <input type="date" id="start_date" class="bg-transparent text-[10px] font-bold text-orange-600 dark:text-orange-400 outline-none cursor-pointer">
-                            </div>
-                            <div class="h-6 w-px bg-gray-200 dark:bg-gray-600 mx-1"></div>
-                            <div class="flex flex-col">
-                                <span class="text-[7px] font-bold text-gray-400 uppercase">Selesai</span>
-                                <input type="date" id="end_date" class="bg-transparent text-[10px] font-bold text-orange-600 dark:text-orange-400 outline-none cursor-pointer">
-                            </div>
+                <div class="flex gap-2 items-center mb-4">
+                    <div class="flex items-center gap-1 bg-white dark:bg-gray-700 p-1 px-2 rounded-xl border dark:border-gray-600 shadow-sm">
+                        <div class="flex flex-col">
+                            <span class="text-[7px] font-bold text-gray-400 uppercase">Mulai</span>
+                            <input type="date" id="start_date" class="bg-transparent text-[10px] font-bold text-orange-600 outline-none">
                         </div>
-                        
-                        <button type="button" onclick="exportExcel()" class="bg-green-600 hover:bg-green-700 text-white text-[10px] font-bold px-3 py-3 rounded-xl uppercase transition flex items-center gap-1 shadow-md">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                            Excel
-                        </button>
+                        <div class="h-6 w-px bg-gray-200 dark:bg-gray-600 mx-1"></div>
+                        <div class="flex flex-col">
+                            <span class="text-[7px] font-bold text-gray-400 uppercase">Selesai</span>
+                            <input type="date" id="end_date" class="bg-transparent text-[10px] font-bold text-orange-600 outline-none">
+                        </div>
                     </div>
+                    <button type="button" onclick="exportExcel()" class="bg-green-600 text-white text-[10px] font-bold px-3 py-3 rounded-xl uppercase transition shadow-md">Excel</button>
                 </div>
                 
                 <div class="flex-1 overflow-y-auto pr-2 space-y-3">
@@ -197,181 +157,83 @@
                             </div>
                         </div>
                     @empty
-                        <div class="flex flex-col items-center justify-center h-full text-gray-300 dark:text-gray-600 italic font-bold text-center">
-                            <p>BELUM ADA TRANSAKSI<br>YANG SELESAI</p>
-                        </div>
+                        <div class="flex flex-col items-center justify-center h-full text-gray-300 dark:text-gray-600 italic font-bold text-center"><p>BELUM ADA TRANSAKSI</p></div>
                     @endforelse
                 </div>
             </div>
-
         </div>
     </form>
 
-    {{-- ===== PAYMENT MODAL ===== --}}
-    <div id="paymentModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z- backdrop-blur-sm p-4">
-        <div class="bg-white dark:bg-gray-800 w-full max-w-md rounded-[2.5rem] shadow-2xl p-8">
-            <h3 class="text-2xl font-black text-center mb-6 uppercase italic dark:text-white">Pilih Pembayaran</h3>
+    {{-- PAYMENT MODAL --}}
+    <div id="paymentModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50 p-4">
+        <div class="bg-white dark:bg-gray-800 w-full max-w-md rounded-3xl p-8">
+            <h3 class="text-2xl font-black text-center mb-6 uppercase dark:text-white">Pilih Pembayaran</h3>
             <div class="grid grid-cols-1 gap-3 mb-6">
-                <button type="button" onclick="submitFinal('Tunai')" class="flex items-center justify-between p-4 border-2 border-gray-100 dark:border-gray-700 rounded-2xl hover:border-orange-500 dark:text-white font-bold transition group">
-                    <span>Tunai / Cash</span>
-                    <svg class="w-6 h-6 text-green-500 group-hover:scale-110 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" stroke-width="2"/></svg>
-                </button>
-                <button type="button" onclick="submitFinal('QRIS')" class="flex items-center justify-between p-4 border-2 border-gray-100 dark:border-gray-700 rounded-2xl hover:border-orange-500 dark:text-white font-bold transition group">
-                    <span>QRIS</span>
-                    <svg class="w-6 h-6 text-blue-500 group-hover:scale-110 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v1m4 2v1m3 12v1m-6-1v1m-3-1v1m-4-10v1m-2 10v1m1-10V4m1 10V4m1 4h1.5m2 0h.5m-8 4h.5m2 0h1.5m2 0h.5" stroke-width="2"/></svg>
-                </button>
-                <button type="button" onclick="submitFinal('Transfer')" class="flex items-center justify-between p-4 border-2 border-gray-100 dark:border-gray-700 rounded-2xl hover:border-orange-500 dark:text-white font-bold transition group">
-                    <span>Transfer Bank</span>
-                    <svg class="w-6 h-6 text-purple-500 group-hover:scale-110 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" stroke-width="2"/></svg>
-                </button>
+                <button type="button" onclick="submitFinal('Tunai')" class="p-4 border-2 border-gray-100 dark:border-gray-700 rounded-2xl font-bold dark:text-white text-left hover:border-orange-500 transition">Tunai / Cash</button>
+                <button type="button" onclick="submitFinal('QRIS')" class="p-4 border-2 border-gray-100 dark:border-gray-700 rounded-2xl font-bold dark:text-white text-left hover:border-orange-500 transition">QRIS</button>
+                <button type="button" onclick="submitFinal('Transfer')" class="p-4 border-2 border-gray-100 dark:border-gray-700 rounded-2xl font-bold dark:text-white text-left hover:border-orange-500 transition">Transfer Bank</button>
             </div>
-            <button type="button" onclick="closePaymentModal()" class="w-full text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 font-bold uppercase text-xs transition">Batal</button>
+            <button type="button" onclick="closePaymentModal()" class="w-full text-gray-400 font-bold uppercase text-xs transition">Batal</button>
         </div>
     </div>
 
-    {{-- ===== TABLE MODAL ===== --}}
-    <div id="tableModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50 backdrop-blur-sm p-4">
-        <div class="bg-white dark:bg-gray-800 w-full max-w-md rounded-3xl shadow-2xl p-8">
+    {{-- TABLE MODAL --}}
+    <div id="tableModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50 p-4">
+        <div class="bg-white dark:bg-gray-800 w-full max-w-md rounded-3xl p-8">
             <h2 class="text-2xl font-bold text-center mb-6 uppercase dark:text-white">Denah Meja</h2>
             <div class="grid grid-cols-4 gap-3 mb-6">
                 @for ($i = 1; $i <= 12; $i++)
-                    @php
-                        // Cek langsung dari server, apakah meja ini ada di daftar pendingOrders
-                        $hasOrder = isset($pendingOrders[$i]) && count($pendingOrders[$i]) > 0;
-                    @endphp
-                    <button type="button" onclick="selectTable('{{ $i }}')" id="btn-meja-{{ $i }}"
-                            class="relative meja-option aspect-square flex flex-col items-center justify-center rounded-2xl border-2 border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-orange-500 transition-all font-bold group">
-                        <span class="text-[10px] text-gray-300 group-hover:text-orange-400 uppercase">MEJA</span>
-                        <span class="text-xl text-black dark:text-white group-hover:text-orange-600">{{ $i }}</span>
-                        
-                        @if($hasOrder)
-                            <span class="absolute top-2 right-2 w-3 h-3 bg-red-500 rounded-full shadow-[0_0_8px_rgba(239,68,68,0.8)] animate-pulse"></span>
-                        @endif
+                    @php $hasOrder = isset($pendingOrders[$i]) && count($pendingOrders[$i]) > 0; @endphp
+                    <button type="button" onclick="selectTable('{{ $i }}')" id="btn-meja-{{ $i }}" class="meja-option aspect-square flex flex-col items-center justify-center rounded-2xl border-2 border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 font-bold relative hover:border-orange-500 transition">
+                        <span class="text-[10px] text-gray-400">MEJA</span>
+                        <span class="text-xl dark:text-white">{{ $i }}</span>
+                        @if($hasOrder) <span class="absolute top-2 right-2 w-3 h-3 bg-red-500 rounded-full animate-pulse"></span> @endif
                     </button>
                 @endfor
             </div>
-
-            <button type="button" onclick="selectTakeaway()" id="btn-takeaway-ui"
-                    class="w-full mb-4 flex items-center justify-center gap-3 border-2 border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 py-4 rounded-2xl font-bold text-lg transition hover:border-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/20 dark:text-white hover:text-orange-600">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 7H4l1-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
-                TAKEAWAY
-            </button>
-
-            <div id="takeaway-input-container" class="hidden mb-4">
-                <input type="text" id="takeaway_name_field" onkeyup="syncCustomerName()" placeholder="Atas Nama Pelanggan..."
-                    class="w-full p-4 border-2 border-orange-500 rounded-xl outline-none font-bold dark:bg-gray-700 dark:text-white">
-            </div>
-
-            <button type="button" onclick="closeTableModal()" class="w-full bg-black dark:bg-orange-600 text-white py-3 rounded-xl font-bold uppercase transition hover:bg-orange-600">Tutup</button>
+            <button type="button" onclick="selectTakeaway()" id="btn-takeaway-ui" class="w-full mb-4 py-4 border-2 border-gray-100 dark:border-gray-700 rounded-2xl font-bold dark:text-white hover:border-orange-500 transition">TAKEAWAY</button>
+            <div id="takeaway-input-container" class="hidden mb-4"><input type="text" id="takeaway_name_field" onkeyup="syncCustomerName()" placeholder="Nama Pelanggan..." class="w-full p-4 border-2 border-orange-500 rounded-xl font-bold outline-none"></div>
+            <button type="button" onclick="closeTableModal()" class="w-full bg-black text-white py-3 rounded-xl font-bold transition active:scale-95">Tutup</button>
         </div>
     </div>
 
-    {{-- ===== ITEM MODAL ===== --}}
-    <div id="itemModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50 backdrop-blur-sm">
-        <div class="bg-white dark:bg-gray-800 w-[420px] rounded-[2.5rem] shadow-2xl p-8 max-h-[90vh] overflow-y-auto scrollbar-hide">
+    {{-- ITEM MODAL --}}
+    <div id="itemModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50">
+        <div class="bg-white dark:bg-gray-800 w-[420px] rounded-3xl p-8">
             <div class="flex justify-between items-start mb-6 border-b dark:border-gray-700 pb-4">
-                <div>
-                    <h2 id="modalItemName" class="text-2xl font-bold text-gray-800 dark:text-white uppercase">Nama Item</h2>
-                    <p id="modalItemPrice" class="text-orange-500 font-bold text-xl">Rp 0</p>
-                </div>
-                <button type="button" onclick="closeModal()" class="text-gray-400 hover:text-red-500 p-2 transition">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"/></svg>
-                </button>
+                <div><h2 id="modalItemName" class="text-2xl font-bold dark:text-white">Nama Item</h2><p id="modalItemPrice" class="text-orange-500 font-bold">Rp 0</p></div>
+                <button type="button" onclick="closeModal()" class="text-gray-400 hover:text-red-500 font-bold">X</button>
             </div>
-
             <input type="hidden" id="modalItemId">
-            <input type="hidden" id="modalEditIndex" value="-1">
-
-            <div class="space-y-6">
-                <div id="chickenPartContainer" class="hidden">
-                    <label class="block font-bold text-gray-600 dark:text-gray-400 text-sm mb-2 uppercase italic">Bagian Ayam:</label>
-                    <select id="chickenPart" class="w-full border-2 border-gray-100 dark:border-gray-700 p-3 rounded-xl font-bold bg-gray-50 dark:bg-gray-700 dark:text-white outline-none">
-                        <option value="Bebas">Bebas</option>
-                        <option value="Dada">Dada</option>
-                        <option value="Paha">Paha</option>
-                        <option value="Sayap">Sayap</option>
-                    </select>
-                </div>
-
-                <div id="spicyLevelContainer" class="hidden">
-                    <label class="block font-bold text-gray-600 dark:text-gray-400 text-sm mb-2 uppercase italic">Pedas:</label>
-                    <select id="spicyLevel" class="w-full border-2 border-gray-100 dark:border-gray-700 p-3 rounded-xl font-bold bg-gray-50 dark:bg-gray-700 dark:text-white outline-none">
-                        <option value="Tidak Pedas">Tidak Pedas</option>
-                        <option value="Sedang">Sedang</option>
-                        <option value="Pedas">Pedas</option>
-                    </select>
-                </div>
-
-                <div id="iceLevelContainer" class="hidden">
-                    <label class="block font-bold text-gray-600 dark:text-gray-400 text-sm mb-2 uppercase italic">Es:</label>
-                    <select id="iceLevel" class="w-full border-2 border-gray-100 dark:border-gray-700 p-3 rounded-xl font-bold bg-gray-50 dark:bg-gray-700 dark:text-white outline-none">
-                        <option value="Es Normal">Es Normal</option>
-                        <option value="Less Ice">Less Ice</option>
-                        <option value="Tanpa Es">Tanpa Es</option>
-                    </select>
-                </div>
-
-                <div id="sugarLevelContainer" class="hidden">
-                    <label class="block font-bold text-gray-600 dark:text-gray-400 text-sm mb-2 uppercase italic">Gula:</label>
-                    <select id="sugarLevel" class="w-full border-2 border-gray-100 dark:border-gray-700 p-3 rounded-xl font-bold bg-gray-50 dark:bg-gray-700 dark:text-white outline-none">
-                        <option value="Gula Normal">Gula Normal</option>
-                        <option value="Less Sugar">Less Sugar</option>
-                        <option value="Tanpa Gula">Tanpa Gula</option>
-                    </select>
-                </div>
-
+            <div class="space-y-4">
                 <div>
-                    <label class="block font-bold text-gray-600 dark:text-gray-400 text-sm mb-2 uppercase italic">Jumlah:</label>
-                    <div class="flex items-center gap-4 bg-gray-50 dark:bg-gray-700 p-2 rounded-2xl w-fit border dark:border-gray-600">
-                        <button type="button" onclick="changeQty(-1)" class="w-10 h-10 bg-white dark:bg-gray-800 dark:text-white rounded-xl shadow-sm font-black text-xl hover:bg-orange-500 hover:text-white transition">-</button>
-                        <input type="number" id="modalQty" value="1" min="1" class="w-12 text-center font-bold text-xl bg-transparent outline-none dark:text-white" readonly>
-                        <button type="button" onclick="changeQty(1)" class="w-10 h-10 bg-white dark:bg-gray-800 dark:text-white rounded-xl shadow-sm font-black text-xl hover:bg-orange-500 hover:text-white transition">+</button>
+                    <label class="block font-bold text-gray-600 dark:text-gray-400 text-sm mb-2">Jumlah</label>
+                    <div class="flex items-center gap-4 bg-gray-50 dark:bg-gray-700 p-2 rounded-2xl w-fit">
+                        <button type="button" onclick="changeQty(-1)" class="w-10 h-10 font-black dark:text-white hover:bg-gray-200 dark:hover:bg-gray-600 rounded-xl transition">-</button>
+                        <input type="number" id="modalQty" value="1" class="w-12 text-center font-bold bg-transparent outline-none dark:text-white" readonly>
+                        <button type="button" onclick="changeQty(1)" class="w-10 h-10 font-black dark:text-white hover:bg-gray-200 dark:hover:bg-gray-600 rounded-xl transition">+</button>
                     </div>
                 </div>
-
-                <div class="pt-4 border-t dark:border-gray-700">
-                    <label class="block font-bold text-gray-600 dark:text-gray-400 text-sm mb-3 uppercase italic">Tipe:</label>
-                    <div class="flex gap-4">
-                        <label id="label-dinein" class="flex-1 border-2 border-orange-500 bg-orange-50 dark:bg-orange-900/20 text-orange-600 p-3 rounded-xl cursor-pointer text-center font-bold transition-all">
-                            <input type="radio" name="orderType" value="Dine In" class="hidden" checked onchange="toggleServiceUI()"> Dine In
-                        </label>
-                        <label id="label-takeaway" class="flex-1 border-2 border-gray-100 dark:border-gray-700 text-gray-500 dark:bg-gray-800 p-3 rounded-xl cursor-pointer text-center font-bold transition-all">
-                            <input type="radio" name="orderType" value="Takeaway" class="hidden" onchange="toggleServiceUI()"> Takeaway
-                        </label>
-                    </div>
+                <div class="pt-4 border-t dark:border-gray-700 flex gap-4">
+                    <label id="label-dinein" class="flex-1 border-2 border-orange-500 bg-orange-50 text-orange-600 p-3 rounded-xl text-center font-bold cursor-pointer transition"><input type="radio" name="orderType" value="Dine In" class="hidden" checked onchange="toggleTypeUI()"> Dine In</label>
+                    <label id="label-takeaway" class="flex-1 border-2 border-gray-100 text-gray-500 p-3 rounded-xl text-center font-bold cursor-pointer transition"><input type="radio" name="orderType" value="Takeaway" class="hidden" onchange="toggleTypeUI()"> Takeaway</label>
                 </div>
-
-                <button type="button" onclick="saveToCart()" id="btn-submit-modal"
-                    class="w-full bg-black dark:bg-orange-600 text-white py-4 rounded-2xl font-bold text-lg shadow-lg hover:bg-orange-600 transition uppercase tracking-widest">
-                    Tambahkan
-                </button>
+                <button type="button" onclick="saveToCart()" class="w-full bg-black text-white py-4 rounded-2xl font-bold shadow-lg hover:scale-105 transition active:scale-95">Tambahkan</button>
             </div>
         </div>
     </div>
 
+    {{-- JAVASCRIPT UTAMA --}}
     <script>
         let cart = [];
         const formatRupiah = (n) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n);
         const pendingOrders = @json($pendingOrders ?? []);
 
-        // =====================
-        // DARK MODE
-        // =====================
         function toggleDarkMode() {
             const isDark = document.documentElement.classList.toggle('dark');
             localStorage.theme = isDark ? 'dark' : 'light';
-            document.getElementById('sun-icon').classList.toggle('hidden', !isDark);
-            document.getElementById('moon-icon').classList.toggle('hidden', isDark);
-        }
-        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-            document.documentElement.classList.add('dark');
-            document.getElementById('sun-icon').classList.remove('hidden');
-            document.getElementById('moon-icon').classList.add('hidden');
         }
 
-        // =====================
-        // TABLE MODAL
-        // =====================
         function openTableModal() { document.getElementById('tableModal').classList.replace('hidden', 'flex'); }
         function closeTableModal() { document.getElementById('tableModal').classList.replace('flex', 'hidden'); }
 
@@ -379,66 +241,31 @@
             document.getElementById('selected_table_id').value = num;
             document.getElementById('table_label').innerText = "MEJA " + num;
             document.getElementById('takeaway-input-container').classList.add('hidden');
-
-            document.querySelectorAll('.meja-option').forEach(b => {
-                b.classList.remove('border-orange-500', 'bg-orange-50');
-                b.classList.add('border-gray-100');
-            });
-            document.getElementById('btn-meja-' + num).classList.add('border-orange-500', 'bg-orange-50');
-            document.getElementById('btn-takeaway-ui').classList.remove('border-orange-500', 'bg-orange-50', 'text-orange-600');
-
-            const tabs = document.getElementById('panel-tabs');
-            tabs.classList.remove('hidden');
-            tabs.classList.add('flex');
-
-            const order = pendingOrders[num];
-            const hasOrder = order && (Array.isArray(order) ? order.length > 0 : Object.keys(order).length > 0);
-            switchPanel(hasOrder ? 'order' : 'cart');
-            setTimeout(closeTableModal, 300);
+            const tabs = document.getElementById('panel-tabs'); tabs.classList.remove('hidden'); tabs.classList.add('flex');
+            switchPanel(pendingOrders[num] ? 'order' : 'cart');
+            closeTableModal();
         }
 
         function selectTakeaway() {
             document.getElementById('selected_table_id').value = "0";
             document.getElementById('table_label').innerText = "TAKEAWAY";
             document.getElementById('takeaway-input-container').classList.remove('hidden');
-            document.getElementById('takeaway_name_field').focus();
-
-            document.querySelectorAll('.meja-option').forEach(b => {
-                b.classList.remove('border-orange-500', 'bg-orange-50');
-                b.classList.add('border-gray-100');
-            });
-            document.getElementById('btn-takeaway-ui').classList.add('border-orange-500', 'bg-orange-50', 'text-orange-600');
-
-            const tabs = document.getElementById('panel-tabs');
-            tabs.classList.remove('hidden');
-            tabs.classList.add('flex');
             switchPanel('cart');
         }
 
-        function syncCustomerName() {
-            document.getElementById('customer_name_input').value = document.getElementById('takeaway_name_field').value;
-        }
+        function syncCustomerName() { document.getElementById('customer_name_input').value = document.getElementById('takeaway_name_field').value; }
 
-        // =====================
-        // PANEL SWITCH
-        // =====================
         function switchPanel(p) {
-            const isCart = p === 'cart';
-            const isOrder = p === 'order';
-            const isHistory = p === 'history';
-
+            const isCart = p === 'cart', isOrder = p === 'order', isHistory = p === 'history';
             document.getElementById('panel-cart').classList.toggle('hidden', !isCart);
             document.getElementById('panel-cart').classList.toggle('flex', isCart);
-            
             document.getElementById('panel-order').classList.toggle('hidden', !isOrder);
             document.getElementById('panel-order').classList.toggle('flex', isOrder);
-            
             document.getElementById('panel-history').classList.toggle('hidden', !isHistory);
             document.getElementById('panel-history').classList.toggle('flex', isHistory);
-
-            const activeClass = 'flex-1 py-2 rounded-xl font-bold text-[11px] uppercase border-2 border-orange-500 bg-orange-500 text-white transition';
-            const inactiveClass = 'flex-1 py-2 rounded-xl font-bold text-[11px] uppercase border-2 border-gray-100 dark:border-gray-700 text-gray-400 transition';
-
+            
+            const activeClass = 'flex-1 py-2 rounded-xl font-bold text-[11px] uppercase border-2 border-orange-500 bg-orange-500 text-white';
+            const inactiveClass = 'flex-1 py-2 rounded-xl font-bold text-[11px] uppercase border-2 border-gray-100 dark:border-gray-700 text-gray-400';
             document.getElementById('tab-cart').className = isCart ? activeClass : inactiveClass;
             document.getElementById('tab-order').className = isOrder ? activeClass : inactiveClass;
             document.getElementById('tab-history').className = isHistory ? activeClass : inactiveClass;
@@ -446,189 +273,93 @@
             if (isOrder) loadOrderPanel();
         }
 
-        // FUNGSI LOAD ORDER PANEL YANG SUDAH DIPERBAIKI (ANTI FREEZE)
-        // GANTI FUNGSI INI
-function loadOrderPanel() {
-    const tableId = document.getElementById('selected_table_id').value;
-    const container = document.getElementById('order-container');
-    const totalEl = document.getElementById('order-total-price');
-    const rawOrder = pendingOrders[tableId];
+        function loadOrderPanel() {
+            const tableId = document.getElementById('selected_table_id').value;
+            const container = document.getElementById('order-container');
+            const totalEl = document.getElementById('order-total-price');
+            const rawOrder = pendingOrders[tableId];
 
-    if (!rawOrder || rawOrder === null || rawOrder === undefined) {
-        container.innerHTML = `<div class="flex flex-col items-center justify-center h-full text-gray-400 italic font-bold text-center"><p>TIDAK ADA PESANAN AKTIF</p></div>`;
-        totalEl.innerText = 'Rp 0';
-        return;
-    }
+            if (!rawOrder || (Array.isArray(rawOrder) && rawOrder.length === 0)) {
+                container.innerHTML = `<div class="flex flex-col items-center justify-center h-full text-gray-400 italic font-bold text-center"><p>TIDAK ADA PESANAN AKTIF</p></div>`;
+                totalEl.innerText = 'Rp 0';
+                return;
+            }
 
-    let list = [];
-    if (Array.isArray(rawOrder)) {
-        list = [...rawOrder];
-    } else if (typeof rawOrder === 'object') {
-        list = Object.values(rawOrder);
-    }
+            let list = Array.isArray(rawOrder) ? [...rawOrder] : Object.values(rawOrder);
+            container.innerHTML = '';
+            let gTotal = 0;
+            list.reverse();
 
-    if (list.length === 0) {
-        container.innerHTML = `<div class="flex flex-col items-center justify-center h-full text-gray-400 italic font-bold text-center"><p>TIDAK ADA PESANAN AKTIF</p></div>`;
-        totalEl.innerText = 'Rp 0';
-        return;
-    }
+            list.forEach((ord, idx) => {
+                gTotal += parseInt(ord.total_price);
+                
+                let statusBadge = '';
+                let btnKonfirmasi = '';
+                
+                // MUNCULKAN TOMBOL ACC (TIPE BUTTON BIASA, BUKAN FORM)
+                if (ord.order_status_id == 4) {
+                    statusBadge = `<span class="bg-red-100 text-red-600 text-[10px] font-bold px-2 py-1 rounded uppercase animate-pulse">Belum Bayar</span>`;
+                    btnKonfirmasi = `
+                    <div class="mt-3 border-t border-orange-200 dark:border-orange-800 pt-3">
+                        <button type="button" onclick="accPesanan(${ord.id})" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-xl text-xs uppercase shadow-md transition active:scale-95">
+                            Terima Uang & ACC ke Dapur
+                        </button>
+                    </div>`;
+                } else {
+                    statusBadge = `<span class="bg-green-100 text-green-600 text-[10px] font-bold px-2 py-1 rounded uppercase">Proses Dapur</span>`;
+                }
 
-    container.innerHTML = '';
-    let gTotal = 0;
-    list.reverse();
+                container.insertAdjacentHTML('beforeend', `
+                    <div class="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-2xl p-4 mt-2 mb-4 shadow-sm">
+                        <div class="flex justify-between items-center mb-3">
+                            <p class="text-xs font-bold text-orange-600 uppercase">Pesanan #${list.length - idx} <br><span class="text-gray-500 text-[10px]">${ord.order_number}</span></p>
+                            ${statusBadge}
+                        </div>
+                        <div id="order-items-${ord.id}" class="space-y-2"></div>
+                        ${btnKonfirmasi}
+                    </div>
+                `);
 
-    list.forEach((ord, idx) => {
-        gTotal += parseInt(ord.total_price);
-        
-        let statusBadge = '';
-        let btnKonfirmasi = '';
-        
-        // LOGIKA TOMBOL ACC MUNCUL DI SINI
-        if (ord.order_status_id == 4) {
-            statusBadge = `<span class="bg-red-100 text-red-600 text-[10px] font-bold px-2 py-1 rounded uppercase">Belum Bayar</span>`;
-            
-            // TOMBOL ACC KE DAPUR
-            btnKonfirmasi = `
-            <div class="mt-3 border-t border-orange-200 dark:border-orange-800 pt-3">
-                <form action="/kasir/konfirmasi/${ord.id}" method="POST">
-                    <input type="hidden" name="_token" value="{{ csrf_token() }}">
-                    <button type="submit" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-xl text-xs uppercase shadow-md">
-                        Terima Uang & ACC ke Dapur
-                    </button>
-                </form>
-            </div>`;
-        } else {
-            statusBadge = `<span class="bg-green-100 text-green-600 text-[10px] font-bold px-2 py-1 rounded uppercase">Masuk Dapur</span>`;
+                const itemContainer = document.getElementById(`order-items-${ord.id}`);
+                ord.order_items.forEach(item => {
+                    const itemName = item.menu ? item.menu.name : (item.name || 'Menu');
+                    itemContainer.insertAdjacentHTML('beforeend', `
+                        <div class="bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 shadow-sm flex justify-between items-center">
+                            <h4 class="font-bold uppercase text-sm dark:text-white">${itemName}</h4>
+                            <div class="flex gap-4"><span class="bg-black text-white px-2 rounded font-bold">x${item.quantity}</span><span class="font-bold dark:text-white">${formatRupiah(item.subtotal)}</span></div>
+                        </div>
+                    `);
+                });
+            });
+            totalEl.innerText = formatRupiah(gTotal);
         }
 
-        container.insertAdjacentHTML('beforeend', `
-            <div class="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-2xl p-4 mt-2 mb-4">
-                <div class="flex justify-between items-center mb-3">
-                    <p class="text-xs font-bold text-orange-600 uppercase">Pesanan #${list.length - idx}</p>
-                    ${statusBadge}
-                </div>
-                <div id="order-items-${ord.id}" class="space-y-2"></div>
-                ${btnKonfirmasi}
-            </div>
-        `);
-
-        const itemContainer = document.getElementById(`order-items-${ord.id}`);
-        ord.order_items.forEach(item => {
-            const itemName = item.menu ? item.menu.name : (item.name || 'Menu');
-            itemContainer.insertAdjacentHTML('beforeend', `
-                <div class="bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 shadow-sm flex justify-between items-center">
-                    <h4 class="font-bold uppercase text-sm dark:text-white">${itemName}</h4>
-                    <div class="flex gap-4"><span class="bg-black text-white px-2 rounded font-bold">x${item.quantity}</span><span class="font-bold dark:text-white">${formatRupiah(item.subtotal)}</span></div>
-                </div>
-            `);
-        });
-    });
-    totalEl.innerText = formatRupiah(gTotal);
-}
-
-        // =====================
-        // ITEM MODAL
-        // =====================
         function openAddModal(id, name, price, cat) {
-            resetModal();
+            document.getElementById('modalQty').value = 1;
             document.getElementById('modalItemId').value = id;
-            document.getElementById('modalEditIndex').value = -1;
             document.getElementById('modalItemName').innerText = name;
             document.getElementById('modalItemPrice').innerText = formatRupiah(price);
             document.getElementById('modalItemPrice').dataset.rawPrice = price;
-            document.getElementById('btn-submit-modal').innerText = "Tambahkan";
-
-            const isAyam = name.toLowerCase().includes('ayam');
-            const isMinuman = cat === 'Minuman';
-            document.getElementById('chickenPartContainer').classList.toggle('hidden', !isAyam);
-            document.getElementById('spicyLevelContainer').classList.toggle('hidden', isMinuman);
-            document.getElementById('iceLevelContainer').classList.toggle('hidden', !isMinuman);
-            document.getElementById('sugarLevelContainer').classList.toggle('hidden', !isMinuman);
-
-            document.getElementById('itemModal').classList.replace('hidden', 'flex');
-        }
-
-        function openEditModal(index) {
-            const item = cart[index];
-            resetModal();
-            document.getElementById('modalItemId').value = item.menu_id;
-            document.getElementById('modalEditIndex').value = index;
-            document.getElementById('modalItemName').innerText = item.name;
-            document.getElementById('modalItemPrice').innerText = formatRupiah(item.price);
-            document.getElementById('modalItemPrice').dataset.rawPrice = item.price;
-            document.getElementById('modalQty').value = item.qty;
-            document.getElementById('btn-submit-modal').innerText = "Update Item";
             document.getElementById('itemModal').classList.replace('hidden', 'flex');
         }
 
         function closeModal() { document.getElementById('itemModal').classList.replace('flex', 'hidden'); }
+        function changeQty(v) { const q = document.getElementById('modalQty'); if (parseInt(q.value) + v >= 1) q.value = parseInt(q.value) + v; }
 
-        function changeQty(v) {
-            const q = document.getElementById('modalQty');
-            if (parseInt(q.value) + v >= 1) q.value = parseInt(q.value) + v;
+        function toggleTypeUI() {
+            const isDineIn = document.querySelector('input[name="orderType"]:checked').value === 'Dine In';
+            document.getElementById('label-dinein').className = isDineIn ? 'flex-1 border-2 border-orange-500 bg-orange-50 text-orange-600 p-3 rounded-xl text-center font-bold cursor-pointer transition' : 'flex-1 border-2 border-gray-100 text-gray-500 p-3 rounded-xl text-center font-bold cursor-pointer transition';
+            document.getElementById('label-takeaway').className = !isDineIn ? 'flex-1 border-2 border-orange-500 bg-orange-50 text-orange-600 p-3 rounded-xl text-center font-bold cursor-pointer transition' : 'flex-1 border-2 border-gray-100 text-gray-500 p-3 rounded-xl text-center font-bold cursor-pointer transition';
         }
 
-        function resetModal() {
-            document.getElementById('modalQty').value = 1;
-            document.getElementById('modalEditIndex').value = -1;
-            document.getElementById('chickenPart').value = 'Bebas';
-            document.getElementById('spicyLevel').value = 'Tidak Pedas';
-            document.getElementById('iceLevel').value = 'Es Normal';
-            document.getElementById('sugarLevel').value = 'Gula Normal';
-            document.getElementById('chickenPartContainer').classList.add('hidden');
-            document.getElementById('spicyLevelContainer').classList.add('hidden');
-            document.getElementById('iceLevelContainer').classList.add('hidden');
-            document.getElementById('sugarLevelContainer').classList.add('hidden');
-            document.querySelector('input[name="orderType"][value="Dine In"]').checked = true;
-            toggleServiceUI();
-        }
-
-        // =====================
-        // CART
-        // =====================
         function saveToCart() {
-            const editIndex = parseInt(document.getElementById('modalEditIndex').value);
             const id = document.getElementById('modalItemId').value;
             const name = document.getElementById('modalItemName').innerText;
             const price = parseInt(document.getElementById('modalItemPrice').dataset.rawPrice);
             const qty = parseInt(document.getElementById('modalQty').value);
             const type = document.querySelector('input[name="orderType"]:checked').value;
 
-            if (!id || isNaN(price) || price <= 0) {
-                alert('Terjadi kesalahan data. Coba pilih menu lagi.');
-                return;
-            }
-
-            let notes = [type];
-            if (!document.getElementById('chickenPartContainer').classList.contains('hidden')) {
-                const part = document.getElementById('chickenPart').value;
-                if (part !== 'Bebas') notes.push(part);
-            }
-            if (!document.getElementById('spicyLevelContainer').classList.contains('hidden')) {
-                notes.push(document.getElementById('spicyLevel').value);
-            }
-            if (!document.getElementById('iceLevelContainer').classList.contains('hidden')) {
-                notes.push(document.getElementById('iceLevel').value);
-            }
-            if (!document.getElementById('sugarLevelContainer').classList.contains('hidden')) {
-                notes.push(document.getElementById('sugarLevel').value);
-            }
-
-            const noteStr = notes.join(' • ');
-            const itemData = { menu_id: id, name, price, qty, subtotal: price * qty, notes: noteStr };
-
-            if (editIndex > -1) {
-                cart[editIndex] = itemData;
-            } else {
-                const dup = cart.findIndex(i => i.menu_id === id && i.notes === noteStr);
-                if (dup > -1) {
-                    cart[dup].qty += qty;
-                    cart[dup].subtotal = cart[dup].qty * price;
-                } else {
-                    cart.unshift(itemData);
-                }
-            }
-
+            cart.unshift({ menu_id: id, name, price, qty, subtotal: price * qty, notes: type });
             closeModal();
             updateCartUI();
         }
@@ -636,11 +367,10 @@ function loadOrderPanel() {
         function updateCartUI() {
             const container = document.getElementById('cart-container');
             const totalEl = document.getElementById('total-price');
-            container.innerHTML = '';
-            let total = 0;
+            container.innerHTML = ''; let total = 0;
 
             if (cart.length === 0) {
-                container.innerHTML = `<div class="flex flex-col items-center justify-center h-full text-gray-300 dark:text-gray-600 italic font-bold"><p>BELUM ADA MENU DIPILIH</p></div>`;
+                container.innerHTML = `<div class="flex flex-col items-center justify-center h-full text-gray-300 italic font-bold"><p>BELUM ADA MENU DIPILIH</p></div>`;
                 totalEl.innerText = 'Rp 0';
                 document.getElementById('cart_data_input').value = '[]';
                 return;
@@ -649,22 +379,11 @@ function loadOrderPanel() {
             cart.forEach((item, i) => {
                 total += item.subtotal;
                 container.insertAdjacentHTML('beforeend', `
-                    <div class="bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-4 flex justify-between items-center shadow-sm hover:border-orange-400 transition">
-                        <div class="flex-1 cursor-pointer" onclick="openEditModal(${i})">
-                            <h4 class="font-bold text-black dark:text-white uppercase">${item.name}</h4>
-                            <p class="text-[10px] font-bold text-orange-500 tracking-widest mt-1 mb-2 uppercase italic">${item.notes}</p>
-                            <div class="flex items-center gap-2">
-                                <span class="bg-black dark:bg-orange-600 text-white px-2 py-0.5 rounded-lg text-xs font-bold">x${item.qty}</span>
-                                <span class="text-black dark:text-white font-bold">${formatRupiah(item.subtotal)}</span>
-                            </div>
-                        </div>
-                        <div class="flex flex-col gap-2 ml-3">
-                            <button type="button" onclick="openEditModal(${i})" class="text-gray-300 hover:text-orange-500 transition p-1">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"/></svg>
-                            </button>
-                            <button type="button" onclick="removeItem(${i})" class="text-gray-300 hover:text-red-500 transition p-1">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"/></svg>
-                            </button>
+                    <div class="bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-xl p-4 flex justify-between items-center shadow-sm">
+                        <div><h4 class="font-bold dark:text-white uppercase">${item.name}</h4><p class="text-xs font-bold text-orange-500 mt-1">${item.notes}</p></div>
+                        <div class="flex items-center gap-4">
+                            <span class="font-bold dark:text-white">${formatRupiah(item.subtotal)}</span>
+                            <button type="button" onclick="removeItem(${i})" class="text-red-500 hover:scale-110 transition font-bold">X</button>
                         </div>
                     </div>
                 `);
@@ -674,87 +393,41 @@ function loadOrderPanel() {
             document.getElementById('cart_data_input').value = JSON.stringify(cart);
         }
 
-        function removeItem(i) {
-            cart.splice(i, 1);
-            updateCartUI();
-        }
+        function removeItem(i) { cart.splice(i, 1); updateCartUI(); }
 
-        // =====================
-        // SUBMIT & PAYMENT LOGIC 
-        // =====================
         function validateAndSubmit(type) {
-            const tableId = document.getElementById('selected_table_id').value;
-            const customerName = document.getElementById('customer_name_input').value;
-            
-            if (!tableId) { alert("Pilih Meja dulu rek!"); openTableModal(); return; }
-            if (tableId === "0" && !customerName.trim()) { alert("Isi nama pelanggan dulu untuk Takeaway!"); openTableModal(); return; }
-            if (cart.length === 0) { alert("Keranjang masih kosong!"); return; }
-            
-            document.getElementById('cart_data_input').value = JSON.stringify(cart);
+            if (!document.getElementById('selected_table_id').value) { alert("Pilih Meja dulu rek!"); openTableModal(); return; }
+            if (cart.length === 0) { alert("Keranjang kosong!"); return; }
             document.getElementById('payment_type').value = type;
-
-            if (type === 'now') {
-                document.getElementById('paymentModal').classList.replace('hidden', 'flex');
-            } else {
-                document.getElementById('payment_method').value = "Belum Bayar";
-                document.getElementById('orderForm').submit();
-            }
+            if (type === 'now') { document.getElementById('paymentModal').classList.replace('hidden', 'flex'); } 
+            else { document.getElementById('payment_method').value = "Belum Bayar"; document.getElementById('orderForm').submit(); }
         }
 
-        function closePaymentModal() {
-            document.getElementById('paymentModal').classList.replace('flex', 'hidden');
-        }
-
-        function submitFinal(method) {
-            document.getElementById('payment_method').value = method;
-            document.getElementById('orderForm').submit();
-        }
-
-        // =====================
-        // SEARCH & FILTER
-        // =====================
-        function searchMenu() {
-            const val = document.getElementById('searchInput').value.toLowerCase();
-            document.querySelectorAll('.menu-card').forEach(c => c.style.display = c.dataset.name.includes(val) ? 'flex' : 'none');
-        }
-
-        function filterMenu(k) {
-            document.querySelectorAll('.menu-card').forEach(c => c.style.display = (k === 'semua' || c.dataset.category === k) ? 'flex' : 'none');
-            document.querySelectorAll('.filter-btn').forEach(btn => {
-                const active = btn.innerText === (k === 'semua' ? 'Menu' : k);
-                btn.className = active
-                    ? 'filter-btn bg-orange-500 text-white px-6 py-2 rounded-full font-semibold shadow-md transition'
-                    : 'filter-btn bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 px-6 py-2 rounded-full font-semibold border dark:border-gray-700 hover:bg-orange-50 hover:text-orange-500 transition';
-            });
-        }
-
-        // =====================
-        // ORDER TYPE UI
-        // =====================
-        function toggleServiceUI() {
-            const isDineIn = document.querySelector('input[name="orderType"]:checked').value === 'Dine In';
-            document.getElementById('label-dinein').className = isDineIn
-                ? 'flex-1 border-2 border-orange-500 bg-orange-50 dark:bg-orange-900/20 text-orange-600 p-3 rounded-xl cursor-pointer text-center font-bold transition-all'
-                : 'flex-1 border-2 border-gray-100 dark:border-gray-700 text-gray-500 dark:bg-gray-800 p-3 rounded-xl cursor-pointer text-center font-bold transition-all';
-            document.getElementById('label-takeaway').className = !isDineIn
-                ? 'flex-1 border-2 border-orange-500 bg-orange-50 dark:bg-orange-900/20 text-orange-600 p-3 rounded-xl cursor-pointer text-center font-bold transition-all'
-                : 'flex-1 border-2 border-gray-100 dark:border-gray-700 text-gray-500 dark:bg-gray-800 p-3 rounded-xl cursor-pointer text-center font-bold transition-all';
-        }
-
-        // =====================
-        // EXPORT EXCEL (KALENDER)
-        // =====================
+        function closePaymentModal() { document.getElementById('paymentModal').classList.replace('flex', 'hidden'); }
+        function submitFinal(method) { document.getElementById('payment_method').value = method; document.getElementById('orderForm').submit(); }
+        
+        function searchMenu() { const val = document.getElementById('searchInput').value.toLowerCase(); document.querySelectorAll('.menu-card').forEach(c => c.style.display = c.dataset.name.includes(val) ? 'flex' : 'none'); }
+        function filterMenu(k) { document.querySelectorAll('.menu-card').forEach(c => c.style.display = (k === 'semua' || c.dataset.category === k) ? 'flex' : 'none'); }
+        
         function exportExcel() {
             const start = document.getElementById('start_date').value;
             const end = document.getElementById('end_date').value;
-            
-            if (!start || !end) {
-                alert('Pilih rentang tanggal (Mulai & Selesai) dulu rek!');
-                return;
-            }
-            
-            // Redirect dengan parameter tanggal
+            if (!start || !end) { alert('Pilih tanggal Mulai & Selesai dulu!'); return; }
             window.location.href = "{{ route('kasir.export') }}?start_date=" + start + "&end_date=" + end;
+        }
+    </script>
+
+    {{-- FORM RAHASIA UNTUK ACC PESANAN (DI LUAR FORM UTAMA) --}}
+    <form id="formKonfirmasiRahasia" method="POST" class="hidden">
+        @csrf
+    </form>
+    
+    <script>
+        // FUNGSI UNTUK MENEKAN TOMBOL ACC MENGGUNAKAN FORM RAHASIA
+        function accPesanan(orderId) {
+            const formACC = document.getElementById('formKonfirmasiRahasia');
+            formACC.action = `/kasir/konfirmasi/${orderId}`;
+            formACC.submit();
         }
     </script>
 </body>

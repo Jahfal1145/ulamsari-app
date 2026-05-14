@@ -20,14 +20,15 @@ class CashierController extends Controller
         
         $tables = Table::all();
 
-        // KUNCI GERBANG: Sudah diisi dengan array
+        // JURUS ANTI WHERE-IN: Pakai where dan orWhere agar tidak ada error kurung siku lagi
         $pendingOrders = Order::with(['orderItems.menu'])
-                ->whereIn('order_status_id', [1,2])
-                ->get()
-                ->groupBy('table_id');
+                        ->where(function($q) {
+                            $q->where('order_status_id', 1)
+                              ->orWhere('order_status_id', 4);
+                        })
+                        ->get()
+                        ->groupBy('table_id'); 
 
-        // SEBELUMNYA: ->where('payment_method', '!=', 'Belum Bayar')
-        // UBAH MENJADI: Jangan tampilkan pesanan yang masih tertahan (status 4) di riwayat
         $historyOrders = Order::with(['orderItems.menu'])
                         ->where('order_status_id', '!=', 4) 
                         ->orderBy('id', 'desc')
