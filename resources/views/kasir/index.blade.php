@@ -227,7 +227,7 @@
     <script>
         let cart = [];
         const formatRupiah = (n) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n);
-        const pendingOrders = @json($pendingOrders ?? []);
+        let pendingOrders = @json($pendingOrders ?? []);
 
         function toggleDarkMode() {
             const isDark = document.documentElement.classList.toggle('dark');
@@ -429,6 +429,48 @@
             formACC.action = `/kasir/konfirmasi/${orderId}`;
             formACC.submit();
         }
+
+        // ==========================================
+        // RADAR OTOMATIS (AJAX POLLING SETIAP 5 DETIK)
+        // ==========================================
+        setInterval(() => {
+            fetch('/kasir/api/pending-orders')
+                .then(response => {
+                    if (!response.ok) throw new Error("Server error " + response.status);
+                    return response.json();
+                })
+                .then(data => {
+                    console.log("RADAR BERHASIL CATCH DATA BARU: ", data); // <--- CCTV kita
+                    
+                    // 1. Update data di memori JavaScript
+                    pendingOrders = data;
+
+                    // 2. Update titik merah berkedip di Denah Meja
+                    for(let i = 1; i <= 12; i++) {
+                        const btnMeja = document.getElementById('btn-meja-' + i);
+                        if(!btnMeja) continue;
+                        
+                        // Cek apakah ada pesanan di meja i
+                        const adaPesanan = data[i] && Object.keys(data[i]).length > 0;
+                        let titikMerah = btnMeja.querySelector('.indicator-dot');
+                        
+                        if(adaPesanan && !titikMerah) {
+                            // Munculkan titik merah kalau ada pesanan baru
+                            btnMeja.insertAdjacentHTML('beforeend', '<span class="absolute top-2 right-2 w-3 h-3 bg-red-500 rounded-full animate-pulse indicator-dot"></span>');
+                        } else if (!adaPesanan && titikMerah) {
+                            // Hilangkan titik merah kalau pesanan sudah beres
+                            titikMerah.remove();
+                        }
+                    }
+
+                    // 3. Jika kasir sedang membuka layar "Cek Meja", otomatis refresh tampilannya!
+                    const orderPanel = document.getElementById('panel-order');
+                    if (!orderPanel.classList.contains('hidden')) {
+                        loadOrderPanel();
+                    }
+                })
+                .catch(err => console.error("RADAR ERROR/TERPUTUS: ", err));
+        }, 5000);
     </script>
 </body>
 </html>

@@ -62,3 +62,5 @@ Route::get('/pesan/success/{id}', [PelangganController::class, 'success'])->name
 // Rute untuk Kasir ACC pesanan dari pelanggan
 Route::post('/kasir/konfirmasi/{id}', [App\Http\Controllers\CashierController::class, 'konfirmasi'])->name('kasir.konfirmasi');
 
+Route::get('/kasir/api/pending-orders', [App\Http\Controllers\CashierController::class, 'apiPendingOrders'])->name('kasir.api.pending');
+

@@ -153,4 +153,18 @@ class CashierController extends Controller
 
         return redirect()->back()->with('success', 'Pembayaran Lunas! Pesanan otomatis masuk ke Dapur.');
     }
+
+    // FUNGSI UNTUK DIAM-DIAM DIAMBIL OLEH JAVASCRIPT (AJAX) - VERSI ANTI ERROR
+    public function apiPendingOrders()
+    {
+        $pendingOrders = Order::with(['orderItems.menu'])
+                        ->where(function($q) {
+                            $q->where('order_status_id', 1)
+                              ->orWhere('order_status_id', 4); // Status 4 = Pelanggan dari HP
+                        })
+                        ->get()
+                        ->groupBy('table_id'); 
+                        
+        return response()->json($pendingOrders);
+    }
 }
