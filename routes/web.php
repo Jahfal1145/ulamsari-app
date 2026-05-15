@@ -56,6 +56,9 @@ Route::prefix('admin/menu')->group(function () {
 // Pastikan baris ini ada dan namanya 'dapur.update-status'
 Route::post('/dapur/update-status/{id}', [DapurController::class, 'updateStatus'])->name('dapur.update-status');
 
+// Tambahkan baris ini di file routes/web.php
+Route::post('/dapur/update-status/{id}', [App\Http\Controllers\DapurController::class, 'updateStatus'])->name('dapur.updateStatus');
+
 Route::post('/pesan/store', [PelangganController::class, 'store'])->name('pelanggan.store');
 Route::get('/pesan/success/{id}', [PelangganController::class, 'success'])->name('pelanggan.success');
 

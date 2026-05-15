@@ -28,8 +28,8 @@
         {{-- HEADER --}}
         <div class="bg-white dark:bg-gray-800 sticky top-0 z-10 px-4 pt-6 pb-4 border-b dark:border-gray-700 flex justify-between items-center">
             <div>
-                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Selamat Datang di</p>
-                <h1 class="text-2xl font-black text-orange-600">Ulam Sari</h1>
+                {{-- LOGO RESMI ULAM SARI --}}
+<img src="{{ asset('img/logo_ulam_sari.png') }}" alt="Logo Ulam Sari" class="h-10 w-auto object-contain">
             </div>
             <div class="bg-orange-100 text-orange-600 px-3 py-1 rounded-xl flex flex-col items-center justify-center border border-orange-200">
                 <span class="text-[8px] font-bold uppercase">Meja</span>

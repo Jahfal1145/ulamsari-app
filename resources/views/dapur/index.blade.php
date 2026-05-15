@@ -14,7 +14,7 @@
     
     <header class="bg-white border-b border-gray-200 px-8 py-5 flex justify-between items-center sticky top-0 z-10 shadow-sm">
         <div class="flex items-center gap-4">
-            <h1 class="text-3xl font-serif font-bold text-gray-900 italic tracking-tight">Ulam Sari</h1>
+            <img src="{{ asset('img/Logo_ulam_sari.png') }}" alt="Logo Ulam Sari" class="h-14 w-auto object-contain">
             <span class="text-xl font-bold text-gray-500 border-l-2 border-gray-300 pl-4">Dapur</span>
         </div>
 
@@ -33,7 +33,7 @@
                 <span id="clock" class="font-mono font-bold text-lg"></span>
             </div>
             
-            <form action="{{ route('pin.index') }}" method="GET">
+            <form action="{{ route('pin.index') ?? '#' }}" method="GET">
                 <button type="submit" class="text-gray-400 hover:text-red-500 transition-colors p-2 bg-gray-100 rounded-lg hover:bg-red-50">
                     <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
                 </button>
@@ -50,6 +50,28 @@
                 $cardBorder = $isCooking ? 'border-green-500 ring-4 ring-green-100 shadow-lg' : 'border-gray-200 shadow-md';
                 $headerBg = $isCooking ? 'bg-green-50' : 'bg-gray-50';
                 $headerText = $isCooking ? 'text-green-700' : 'text-gray-800';
+
+                // ========================================================
+                // LOGIKA PENGURUTAN: Pisahkan Dine In dan Takeaway
+                // ========================================================
+                $hasDineIn = false;
+                $hasTakeaway = false;
+                
+                $dineInItems = [];
+                $takeawayItems = [];
+
+                foreach($order->orderItems as $item) {
+                    if(strtolower($item->notes) == 'takeaway' || strtolower($item->notes) == 'take-away' || strtolower($item->notes) == 'bungkus') {
+                        $hasTakeaway = true;
+                        $takeawayItems[] = $item;
+                    } else {
+                        $hasDineIn = true;
+                        $dineInItems[] = $item;
+                    }
+                }
+
+                // Gabungkan: array Dine In di atas, array Takeaway di bawah
+                $sortedItems = array_merge($dineInItems, $takeawayItems);
             @endphp
 
             <div class="bg-white rounded-2xl border-2 {{ $cardBorder }} flex flex-col h-fit overflow-hidden transition-all">
@@ -58,12 +80,21 @@
                     <div class="flex justify-between items-start">
                         <div>
                             <h2 class="font-black text-4xl {{ $headerText }}">
-                                {{ $order->jenis_pesanan == 'dine-in' ? 'Meja ' . $order->table_id : 'Take Away' }}
+                                {{ $order->table_id == '0' ? 'Takeaway' : 'Meja ' . $order->table_id }}
                             </h2>
-                            <div class="mt-2">
-                                <span class="text-sm font-bold px-3 py-1 rounded-md border tracking-wide uppercase {{ $order->jenis_pesanan == 'dine-in' ? 'bg-blue-100 text-blue-800 border-blue-200' : 'bg-orange-100 text-orange-800 border-orange-200' }}">
-                                    {{ str_replace('-', ' ', $order->jenis_pesanan) }}
-                                </span>
+                            
+                            {{-- LABEL KESIMPULAN DINE IN & BUNGKUS --}}
+                            <div class="mt-2 flex gap-2">
+                                @if($hasDineIn)
+                                    <span class="bg-blue-100 text-blue-800 border-blue-200 border text-[11px] font-black px-2.5 py-1 rounded-md tracking-wide uppercase">
+                                        DINE IN
+                                    </span>
+                                @endif
+                                @if($hasTakeaway)
+                                    <span class="bg-[#d32f2f] text-white text-[11px] font-black px-2.5 py-1 rounded-md tracking-wide uppercase shadow-sm">
+                                        BUNGKUS
+                                    </span>
+                                @endif
                             </div>
                         </div>
 
@@ -78,36 +109,39 @@
 
                 <div class="p-6 overflow-y-auto hide-scrollbar">
                     <ul class="space-y-4">
-                        @foreach($order->orderItems as $item)
+                        {{-- KITA LOOPING ARRAY YANG SUDAH DIURUTKAN ($sortedItems) BUKAN ARRAY ASLI --}}
+                        @foreach($sortedItems as $item)
                         <li class="flex flex-col bg-gray-50 p-3 rounded-xl border border-gray-100">
-                            <div class="flex justify-between items-center">
-                                <span class="text-xl font-bold text-gray-800">{{ $item->menu->name ?? 'Menu Terhapus' }}</span>
-                                <span class="bg-gray-800 text-white font-black px-3 py-1 rounded-lg text-sm">x{{ $item->quantity }}</span>
+                            
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <span class="text-lg font-bold text-[#1a202c] block">{{ $item->menu->name ?? 'Menu Terhapus' }}</span>
+                                    <span class="text-xs font-bold text-gray-500 uppercase">{{ $item->menu->name ?? 'Menu' }} X{{ $item->quantity }}</span>
+                                </div>
+                                <div class="flex flex-col items-end gap-2">
+                                    <span class="bg-[#1a202c] text-white font-black px-3 py-1 rounded-lg text-xs shadow-sm">x{{ $item->quantity }}</span>
+                                    
+                                    @if(strtolower($item->notes) == 'takeaway' || strtolower($item->notes) == 'take-away' || strtolower($item->notes) == 'bungkus')
+                                        <span class="bg-[#d32f2f] text-white text-[10px] px-2 py-0.5 rounded font-black uppercase tracking-wider shadow-sm">BUNGKUS</span>
+                                    @else
+                                        <span class="bg-blue-500 text-white text-[10px] px-2 py-0.5 rounded font-black uppercase tracking-wider shadow-sm">DINE IN</span>
+                                    @endif
+                                </div>
                             </div>
-                            <div class="flex justify-between items-center">
-    <span class="font-bold uppercase text-sm">{{ $item->menu->name }} x{{ $item->quantity }}</span>
-    
-    {{-- Label bungkus atau makan sini --}}
-    @if($item->notes == 'Takeaway')
-        <span class="bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-md font-black">BUNGKUS</span>
-    @else
-        <span class="bg-blue-500 text-white text-[10px] px-2 py-0.5 rounded-md font-black">DINE IN</span>
-    @endif
-</div>
                             
                             @if($item->notes)
-                            <div class="mt-2 flex items-center gap-1 text-red-600 italic text-sm font-medium">
-                                <span>Note:</span>
-                                <span>{{ $item->notes }}</span>
+                            <div class="mt-1 flex items-center text-[#d32f2f] italic text-[13px] font-medium">
+                                <span>Note: {{ $item->notes }}</span>
                             </div>
                             @endif
+
                         </li>
                         @endforeach
                     </ul>
                 </div>
 
                 <div class="p-6 pt-2 mt-auto bg-white">
-                    <form action="{{ route('dapur.update-status', $order->id) }}" method="POST">
+                    <form action="{{ route('dapur.updateStatus', $order->id) }}" method="POST">
                         @csrf
                         @if($order->order_status_id == 1)
                             <button type="submit" class="w-full bg-[#d32f2f] hover:bg-red-700 text-white font-black text-xl py-4 rounded-xl transition-transform active:scale-95 shadow-md uppercase">
