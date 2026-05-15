@@ -66,7 +66,7 @@
                     data-category="{{ $menu->category_name }}" data-name="{{ strtolower($menu->name) }}">
                     <div class="relative pb-[100%]">
                         @if($menu->image)
-                            <img src="{{ asset('storage/' . $menu->image) }}" alt="{{ $menu->name }}" class="absolute inset-0 w-full h-full object-cover">
+                            <img src="{{ asset('storage/' . $menu->image) }}" alt="{{ $menu->name }}" class="w-full h-40 object-contain bg-gray-100 dark:bg-gray-800 rounded-t-2xl p-2">
                         @else
                             <div class="absolute inset-0 bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-400 text-xs font-bold">FOTO</div>
                         @endif
