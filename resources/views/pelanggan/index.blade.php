@@ -108,6 +108,17 @@
                     <h2 id="modalItemName" class="text-xl font-bold text-gray-800 dark:text-white leading-tight">Nama Item</h2>
                     <p id="modalItemPrice" class="text-orange-500 font-bold text-lg">Rp 0</p>
                 </div>
+                {{-- PILIHAN DINE IN / TAKEAWAY PER ITEM --}}
+                <div class="pt-4 border-t dark:border-gray-700 flex gap-4">
+                    <label id="label-dinein" class="flex-1 border-2 border-orange-500 bg-orange-50 text-orange-600 p-3 rounded-xl text-center font-bold cursor-pointer transition">
+                        <input type="radio" name="orderType" value="Dine In" class="hidden" checked onchange="toggleTypeUI()"> 
+                        🍽️ Dine In
+                    </label>
+                    <label id="label-takeaway" class="flex-1 border-2 border-gray-100 text-gray-500 p-3 rounded-xl text-center font-bold cursor-pointer transition">
+                        <input type="radio" name="orderType" value="Takeaway" class="hidden" onchange="toggleTypeUI()"> 
+                        🛍️ Takeaway
+                    </label>
+                </div>
                 <button type="button" onclick="closeModal('itemModal')" class="bg-gray-100 dark:bg-gray-700 p-2 rounded-full text-gray-500 hover:text-red-500 transition">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
@@ -208,6 +219,17 @@
                 : 'relative border-2 border-gray-100 dark:border-gray-700 p-3 rounded-2xl cursor-pointer flex flex-col items-center transition-all';
         }
 
+        // FUNGSI ANIMASI TOMBOL DINE IN / TAKEAWAY
+        function toggleTypeUI() {
+            const isDineIn = document.querySelector('input[name="orderType"]:checked').value === 'Dine In';
+            document.getElementById('label-dinein').className = isDineIn 
+                ? 'flex-1 border-2 border-orange-500 bg-orange-50 text-orange-600 p-3 rounded-xl text-center font-bold cursor-pointer transition' 
+                : 'flex-1 border-2 border-gray-100 text-gray-500 p-3 rounded-xl text-center font-bold cursor-pointer transition';
+            document.getElementById('label-takeaway').className = !isDineIn 
+                ? 'flex-1 border-2 border-orange-500 bg-orange-50 text-orange-600 p-3 rounded-xl text-center font-bold cursor-pointer transition' 
+                : 'flex-1 border-2 border-gray-100 text-gray-500 p-3 rounded-xl text-center font-bold cursor-pointer transition';
+        }
+
         function searchMenu() {
             const val = document.getElementById('searchInput').value.toLowerCase();
             document.querySelectorAll('.menu-card').forEach(c => c.style.display = c.dataset.name.includes(val) ? 'flex' : 'none');
@@ -229,6 +251,11 @@
             document.getElementById('modalItemPrice').dataset.rawPrice = price;
             const isAyam = name.toLowerCase().includes('ayam');
             document.getElementById('chickenPartContainer').classList.toggle('hidden', !isAyam);
+            
+            // Reset tombol ke Dine In setiap kali membuka menu baru
+            document.querySelector('input[name="orderType"][value="Dine In"]').checked = true;
+            toggleTypeUI();
+
             document.getElementById('itemModal').classList.replace('hidden', 'flex');
         }
 
@@ -244,7 +271,12 @@
             const name = document.getElementById('modalItemName').innerText;
             const price = parseInt(document.getElementById('modalItemPrice').dataset.rawPrice);
             const qty = parseInt(document.getElementById('modalQty').value);
-            const itemData = { menu_id: id, name, price, qty, subtotal: price * qty, notes: 'Dine In' };
+            
+            // Tangkap hasil klik Dine In atau Takeaway
+            const type = document.querySelector('input[name="orderType"]:checked').value;
+
+            // Masukkan ke keranjang dengan notes sesuai pilihan
+            const itemData = { menu_id: id, name, price, qty, subtotal: price * qty, notes: type };
             cart.unshift(itemData);
             closeModal('itemModal');
             updateCartUI();
@@ -263,8 +295,10 @@
             document.getElementById('cart_data_input').value = JSON.stringify(cart);
             const container = document.getElementById('cart-container');
             container.innerHTML = '';
+            
             cart.forEach((item, i) => {
-                container.insertAdjacentHTML('beforeend', `<div class="bg-white dark:bg-gray-800 p-4 rounded-2xl flex justify-between items-center shadow-sm border dark:border-gray-700"><div><h4 class="font-bold text-sm dark:text-white">${item.name}</h4><p class="text-orange-500 font-bold text-xs">${formatRupiah(item.price)}</p></div><div class="flex items-center gap-4"><span class="bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-lg text-xs font-black">x${item.qty}</span><button type="button" onclick="removeItem(${i})" class="text-xs font-bold text-red-500">Hapus</button></div></div>`);
+                // Tampilkan tulisan (Dine In/Takeaway) di samping harga di keranjang
+                container.insertAdjacentHTML('beforeend', `<div class="bg-white dark:bg-gray-800 p-4 rounded-2xl flex justify-between items-center shadow-sm border dark:border-gray-700"><div><h4 class="font-bold text-sm dark:text-white">${item.name}</h4><p class="text-orange-500 font-bold text-xs">${formatRupiah(item.price)} <span class="text-gray-400 font-black uppercase ml-1">(${item.notes})</span></p></div><div class="flex items-center gap-4"><span class="bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-lg text-xs font-black">x${item.qty}</span><button type="button" onclick="removeItem(${i})" class="text-xs font-bold text-red-500">Hapus</button></div></div>`);
             });
         }
 
@@ -272,5 +306,6 @@
         function removeItem(i) { cart.splice(i, 1); updateCartUI(); if(cart.length === 0) closeModal('cartModal'); }
         function submitCheckout() { if (cart.length === 0) { alert("Pilih menu dulu ya!"); return; } document.getElementById('checkoutForm').submit(); }
     </script>
+    
 </body>
 </html>

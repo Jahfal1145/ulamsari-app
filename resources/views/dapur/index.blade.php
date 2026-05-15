@@ -84,6 +84,17 @@
                                 <span class="text-xl font-bold text-gray-800">{{ $item->menu->name ?? 'Menu Terhapus' }}</span>
                                 <span class="bg-gray-800 text-white font-black px-3 py-1 rounded-lg text-sm">x{{ $item->quantity }}</span>
                             </div>
+                            <div class="flex justify-between items-center">
+    <span class="font-bold uppercase text-sm">{{ $item->menu->name }} x{{ $item->quantity }}</span>
+    
+    {{-- Label bungkus atau makan sini --}}
+    @if($item->notes == 'Takeaway')
+        <span class="bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-md font-black">BUNGKUS</span>
+    @else
+        <span class="bg-blue-500 text-white text-[10px] px-2 py-0.5 rounded-md font-black">DINE IN</span>
+    @endif
+</div>
+                            
                             @if($item->notes)
                             <div class="mt-2 flex items-center gap-1 text-red-600 italic text-sm font-medium">
                                 <span>Note:</span>
