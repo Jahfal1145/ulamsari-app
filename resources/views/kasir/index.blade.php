@@ -38,7 +38,7 @@
         {{-- ===== LEFT PANEL: MENU ===== --}}
         <div class="w-3/5 p-6 overflow-y-auto flex flex-col relative border-r dark:border-gray-700">
             <div class="flex justify-between items-center mb-6 flex-shrink-0">
-                <h2 class="text-3xl font-bold text-orange-600 tracking-tight uppercase">Pilih Menu</h2>
+                <h2 class="text-3xl font-bold text-orange-600 tracking-tight uppercase">KASIR - ULAM SARI</h2>
                 <div class="relative w-64">
                     <span class="absolute inset-y-0 left-0 flex items-center pl-3">
                         <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>

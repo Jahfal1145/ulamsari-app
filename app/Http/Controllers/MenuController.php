@@ -27,6 +27,7 @@ class MenuController extends Controller
             'price' => 'required|numeric|min:0',
             'category_id' => 'required|integer',
             'image' => 'nullable|image|mimes:jpeg,png,jpg|max:10240',
+            'description' => 'nullable|string',
         ]);
 
         $imagePath = null;
@@ -39,6 +40,7 @@ class MenuController extends Controller
             'price' => $request->price,
             'category_id' => $request->category_id,
             'image' => $imagePath,
+            'description' => $request->description,
             'is_active' => true,
         ]);
 
@@ -69,6 +71,7 @@ class MenuController extends Controller
             'price' => 'required|numeric|min:0',
             'category_id' => 'required|integer',
             'image' => 'nullable|image|mimes:jpeg,png,jpg|max:10240',
+            'description' => 'nullable|string',
         ]);
 
         if ($request->hasFile('image')) {
@@ -81,6 +84,7 @@ class MenuController extends Controller
         $menu->name = $request->name;
         $menu->price = $request->price;
         $menu->category_id = $request->category_id;
+        $menu->description = $request->description;
         $menu->save();
 
         return back()->with('success', 'Menu berhasil diperbarui!');
@@ -91,10 +95,6 @@ class MenuController extends Controller
         $menu = Menu::find($id);
         if (!$menu) {
             return back()->with('error', 'Menu tidak ditemukan.');
-        }
-
-        if ($menu->image && Storage::disk('public')->exists($menu->image)) {
-            Storage::disk('public')->delete($menu->image);
         }
 
         $menu->delete();

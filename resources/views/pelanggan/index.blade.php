@@ -64,18 +64,28 @@
                 @foreach($menus as $menu)
                 <div class="menu-card bg-white dark:bg-gray-900 rounded-2xl border dark:border-gray-700 overflow-hidden shadow-sm flex flex-col h-full"
                     data-category="{{ $menu->category_name }}" data-name="{{ strtolower($menu->name) }}">
-                    <div class="relative pb-[100%]">
+                    
+                    {{-- FOTO MENU --}}
+                    <div class="w-full h-48 bg-white dark:bg-gray-800 rounded-t-2xl overflow-hidden relative">
                         @if($menu->image)
-                            <img src="{{ asset('storage/' . $menu->image) }}" alt="{{ $menu->name }}" class="w-full h-40 object-contain bg-gray-100 dark:bg-gray-800 rounded-t-2xl p-2">
+                            <img src="{{ asset('storage/' . $menu->image) }}" alt="{{ $menu->name }}" class="w-full h-full object-cover object-center transition-transform duration-300 hover:scale-105">
                         @else
-                            <div class="absolute inset-0 bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-400 text-xs font-bold">FOTO</div>
+                            <div class="flex w-full h-full items-center justify-center text-gray-400 font-black text-xs uppercase tracking-widest">No Image</div>
                         @endif
                     </div>
+                    
+                    {{-- INFORMASI & DESKRIPSI MENU --}}
                     <div class="p-3 flex flex-col flex-1 justify-between">
                         <div>
                             <h3 class="font-bold text-sm text-gray-800 dark:text-gray-100 leading-tight mb-1">{{ $menu->name }}</h3>
-                            <p class="text-orange-500 font-bold text-xs mb-2">Rp {{ number_format($menu->price, 0, ',', '.') }}</p>
+                            <p class="text-orange-500 font-bold text-xs mb-1">Rp {{ number_format($menu->price, 0, ',', '.') }}</p>
+                            
+                            {{-- TEKS DESKRIPSI (Maksimal 2 baris) --}}
+                            <p class="text-gray-500 dark:text-gray-400 text-[10px] leading-snug line-clamp-2 mb-3 min-h-[28px]">
+                                {{ $menu->description ?? 'Deskripsi menu belum tersedia, hidangan spesial dari Ulam Sari.' }}
+                            </p>
                         </div>
+
                         <button type="button" onclick="openAddModal({{ $menu->id }}, '{{ addslashes($menu->name) }}', {{ $menu->price }}, '{{ addslashes($menu->category_name) }}')"
                             class="w-full bg-black dark:bg-gray-700 text-white text-xs font-bold py-2 rounded-xl mt-auto hover:bg-orange-500 transition">
                             Tambah

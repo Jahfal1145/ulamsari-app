@@ -47,7 +47,7 @@ Route::prefix('admin/menu')->group(function () {
     Route::get('/', [MenuController::class, 'index'])->name('admin.menu.index');
     Route::post('/store', [MenuController::class, 'store'])->name('admin.menu.store');
     Route::post('/toggle/{id}', [MenuController::class, 'toggleActive'])->name('admin.menu.toggle');
-    Route::delete('/destroy/{id}', [MenuController::class, 'destroy'])->name('admin.menu.destroy');
+    Route::get('/destroy/{id}', [MenuController::class, 'destroy'])->name('admin.menu.destroy');
     Route::post('/update/{id}', [MenuController::class, 'update'])->name('admin.menu.update');
 });
 
@@ -69,6 +69,9 @@ Route::get('/kasir/api/pending-orders', [App\Http\Controllers\CashierController:
 
 // Rute untuk proses Edit/Update Menu
 Route::post('/admin/menu/update/{id}', [App\Http\Controllers\MenuController::class, 'update'])->name('admin.menu.update');
+
+// Rute untuk mengubah status Tersedia/Habis
+Route::get('/admin/menu/toggle-active/{id}', [App\Http\Controllers\MenuController::class, 'toggleActive'])->name('admin.menu.toggleActive');
 
 // Rute untuk proses Hapus/Delete Menu (bisa pakai GET untuk kemudahan tombol link, atau DELETE)
 Route::get('/admin/menu/delete/{id}', [App\Http\Controllers\MenuController::class, 'destroy'])->name('admin.menu.destroy');
