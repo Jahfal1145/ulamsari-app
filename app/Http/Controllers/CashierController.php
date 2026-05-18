@@ -167,4 +167,23 @@ class CashierController extends Controller
                         
         return response()->json($pendingOrders);
     }
+
+    public function getNota($id)
+{
+    $order = Order::with('orderItems.menu')->findOrFail($id);
+    return response()->json([
+        'id'             => $order->id,
+        'order_number'   => $order->order_number,
+        'table_id'       => $order->table_id,
+        'customer_name'  => $order->customer_name,
+        'payment_method' => $order->payment_method,
+        'total_price'    => $order->total_price,
+        'created_at'     => $order->created_at,
+        'order_items'    => $order->orderItems->map(fn($item) => [
+            'name'     => $item->menu->name ?? $item->name,
+            'quantity' => $item->quantity,
+            'subtotal' => $item->subtotal,
+        ])
+    ]);
+}
 }

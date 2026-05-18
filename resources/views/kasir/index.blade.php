@@ -6,10 +6,48 @@
     <title>Kasir - Ulam Sari</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>tailwind.config = { darkMode: 'class' }</script>
+
+    {{-- ★ MIDTRANS SNAP JS — ganti SB-Mid-client-xxx dengan Client Key kamu --}}
+    {{-- Kalau belum pakai Midtrans, baris ini bisa dihapus dulu --}}
+    {{-- <script src="https://app.midtrans.com/snap/snap.js" data-client-key="{{ config('midtrans.client_key') }}"></script> --}}
+
     <style>
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
         body { transition: background-color 0.3s, color 0.3s; }
+
+        /* ★ PRINT STYLES — hanya aktif saat window.print() */
+        @media print {
+            body * { visibility: hidden !important; }
+            #nota-printable, #nota-printable * { visibility: visible !important; }
+            #nota-printable {
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                width: 80mm !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+        }
+
+        /* ★ NOTA THERMAL STYLES */
+        #nota-printable {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 11px;
+            line-height: 1.6;
+            color: #000;
+            background: #fff;
+            width: 270px;
+            padding: 6px;
+        }
+        .nota-center { text-align: center; }
+        .nota-bold { font-weight: bold; }
+        .nota-row { display: flex; justify-content: space-between; align-items: flex-start; }
+        .nota-item-name { flex: 1; padding-right: 6px; }
+        .nota-item-price { white-space: nowrap; font-weight: bold; }
+        .nota-divider-solid { border: none; border-top: 1px solid #000; margin: 5px 0; }
+        .nota-divider-dashed { border: none; border-top: 1px dashed #000; margin: 5px 0; }
+        .nota-harga-satuan { padding-left: 14px; color: #444; font-size: 10px; }
     </style>
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 font-sans text-gray-800 dark:text-gray-100 relative">
@@ -223,6 +261,32 @@
         </div>
     </div>
 
+    {{-- ★ MODAL PRINT NOTA (BARU) --}}
+    <div id="printModal" class="fixed inset-0 bg-black/70 hidden items-center justify-center z-50 p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl flex flex-col items-center p-6 w-full max-w-sm">
+            <div class="w-full flex justify-between items-center mb-4">
+                <h3 class="text-lg font-black uppercase dark:text-white">Preview Nota</h3>
+                <button onclick="closePrintModal()" class="text-gray-400 hover:text-red-500 font-bold text-xl">✕</button>
+            </div>
+            <div class="border-2 border-dashed border-gray-200 rounded-xl p-3 mb-4 w-full flex justify-center bg-gray-50 overflow-auto">
+                <div id="nota-printable">
+                    <p style="text-align:center;padding:20px;color:#999;font-family:sans-serif;">Memuat nota...</p>
+                </div>
+            </div>
+            <div class="flex gap-3 w-full">
+                <button onclick="closePrintModal()"
+                    class="flex-1 py-3 border-2 border-gray-200 rounded-2xl font-bold text-gray-500 hover:border-gray-400 transition text-sm">
+                    Tutup
+                </button>
+                <button onclick="window.print()"
+                    class="flex-1 py-3 bg-black text-white rounded-2xl font-bold hover:bg-gray-800 transition text-sm flex items-center justify-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                    Print Nota
+                </button>
+            </div>
+        </div>
+    </div>
+
     {{-- JAVASCRIPT UTAMA --}}
     <script>
         let cart = [];
@@ -273,6 +337,7 @@
             if (isOrder) loadOrderPanel();
         }
 
+        // ★ loadOrderPanel() — SUDAH DITAMBAH TOMBOL PRINT & MIDTRANS
         function loadOrderPanel() {
             const tableId = document.getElementById('selected_table_id').value;
             const container = document.getElementById('order-container');
@@ -296,17 +361,38 @@
                 let statusBadge = '';
                 let btnKonfirmasi = '';
                 
-                // MUNCULKAN TOMBOL ACC (TIPE BUTTON BIASA, BUKAN FORM)
                 if (ord.order_status_id == 4) {
+                    // ── BELUM BAYAR ──
                     statusBadge = `<span class="bg-red-100 text-red-600 text-[10px] font-bold px-2 py-1 rounded uppercase animate-pulse">Belum Bayar</span>`;
                     btnKonfirmasi = `
-                    <div class="mt-3 border-t border-orange-200 dark:border-orange-800 pt-3">
+                    <div class="mt-3 border-t border-orange-200 dark:border-orange-800 pt-3 space-y-2">
+                        {{-- Tombol lama: ACC ke Dapur --}}
                         <button type="button" onclick="accPesanan(${ord.id})" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-xl text-xs uppercase shadow-md transition active:scale-95">
                             Terima Uang & ACC ke Dapur
                         </button>
+                        {{-- ★ TOMBOL BARU: Print Nota --}}
+                        <button type="button" onclick="openPrintModal(${ord.id})" class="w-full bg-gray-800 hover:bg-black text-white font-bold py-3 rounded-xl text-xs uppercase shadow-md transition active:scale-95 flex items-center justify-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                            Cetak Nota
+                        </button>
+                        {{-- ★ TOMBOL BARU: Bayar Online via Midtrans --}}
+                        {{-- Uncomment baris ini kalau sudah setup Midtrans: --}}
+                        {{-- <button type="button" onclick="initMidtrans(${ord.id})" class="w-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold py-3 rounded-xl text-xs uppercase shadow-md transition active:scale-95 flex items-center justify-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+                            Bayar via QRIS / Transfer
+                        </button> --}}
                     </div>`;
                 } else {
+                    // ── SUDAH BAYAR / PROSES DAPUR ──
                     statusBadge = `<span class="bg-green-100 text-green-600 text-[10px] font-bold px-2 py-1 rounded uppercase">Proses Dapur</span>`;
+                    // ★ Tombol print tetap ada meski sudah bayar
+                    btnKonfirmasi = `
+                    <div class="mt-3 border-t border-gray-100 dark:border-gray-700 pt-3">
+                        <button type="button" onclick="openPrintModal(${ord.id})" class="w-full bg-gray-800 hover:bg-black text-white font-bold py-3 rounded-xl text-xs uppercase shadow-md transition active:scale-95 flex items-center justify-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                            Cetak Nota
+                        </button>
+                    </div>`;
                 }
 
                 container.insertAdjacentHTML('beforeend', `
@@ -415,6 +501,151 @@
             if (!start || !end) { alert('Pilih tanggal Mulai & Selesai dulu!'); return; }
             window.location.href = "{{ route('kasir.export') }}?start_date=" + start + "&end_date=" + end;
         }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // ★ FUNGSI PRINT NOTA (BARU)
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+        function closePrintModal() {
+            document.getElementById('printModal').classList.replace('flex', 'hidden');
+        }
+
+        // Buka modal dan fetch data nota dari server
+        async function openPrintModal(orderId) {
+            const modal = document.getElementById('printModal');
+            const notaEl = document.getElementById('nota-printable');
+            modal.classList.replace('hidden', 'flex');
+            notaEl.innerHTML = '<p style="text-align:center;padding:20px;color:#999;font-family:sans-serif;">Memuat nota...</p>';
+
+            try {
+                // Fetch data order dari route: GET /kasir/nota/{id}
+                // Pastikan route ini sudah ada di routes/web.php kamu:
+                // Route::get('/kasir/nota/{id}', [KasirController::class, 'getNota']);
+                const res = await fetch(`/kasir/nota/${orderId}`);
+                if (!res.ok) throw new Error('Gagal ambil data nota (status ' + res.status + ')');
+                const orderData = await res.json();
+                renderNota(orderData);
+            } catch (err) {
+                notaEl.innerHTML = `<p style="text-align:center;padding:20px;color:red;font-family:sans-serif;">Gagal load nota:<br>${err.message}</p>`;
+            }
+        }
+
+        // Render HTML nota sesuai template foto (thermal receipt)
+        function renderNota(order) {
+            const el = document.getElementById('nota-printable');
+
+            // Format waktu: "22:38, 15/05/26"
+            const tgl = new Date(order.created_at);
+            const jam = tgl.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+            const tanggal = tgl.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: '2-digit' });
+            const waktuStr = `${jam}, ${tanggal}`;
+
+            // Tipe pesanan
+            const mejaTxt = (order.table_id == '0' || order.table_id == null)
+                ? 'TAKEAWAY' + (order.customer_name ? ` - ${order.customer_name}` : '')
+                : `Meja ${order.table_id}`;
+
+            // Format rupiah tanpa "Rp" dari Intl — pakai format nota
+            const rp = (n) => 'Rp ' + parseInt(n).toLocaleString('id-ID');
+
+            // Render baris item
+            let itemsHTML = '';
+            for (const item of order.order_items) {
+                const qty = item.quantity;
+                const hargaSatuan = Math.round(item.subtotal / qty);
+
+                itemsHTML += `
+                    <div class="nota-row">
+                        <span class="nota-item-name">${qty}x ${item.name}</span>
+                        <span class="nota-item-price">${rp(item.subtotal)}</span>
+                    </div>
+                    ${qty > 1 ? `<div class="nota-harga-satuan">${rp(hargaSatuan)}</div>` : ''}
+                `;
+            }
+
+            el.innerHTML = `
+                <div class="nota-center">
+                    <div class="nota-bold" style="font-size:13px;letter-spacing:1px;">ULAM SARI</div>
+                    <div>Graha DMP, Jl. Stadion, Kemiri, Kec. Sidoarjo, Kabupaten Sidoarjo, Jawa Timur 61234</div>
+                    <div>+62 0812-5996-2277</div>
+                </div>
+
+                <hr class="nota-divider-solid">
+
+                <div class="nota-row"><span>Order No</span><span class="nota-bold">${order.order_number || '#' + order.id}</span></div>
+                <div class="nota-row"><span>Waktu</span><span>${waktuStr}</span></div>
+                <div class="nota-row"><span>No Meja</span><span>${order.customer_name || mejaTxt}</span></div>
+
+                <hr class="nota-divider-dashed">
+
+                ${itemsHTML}
+
+                <hr class="nota-divider-dashed">
+
+                <div class="nota-row"><span>Total Harga Produk</span><span class="nota-bold">${rp(order.total_price)}</span></div>
+
+                <hr class="nota-divider-solid">
+
+                <div class="nota-row"><span>Subtotal</span><span>${rp(order.total_price)}</span></div>
+                <div class="nota-row nota-bold"><span>TOTAL</span><span>${rp(order.total_price)}</span></div>
+
+                <hr class="nota-divider-dashed">
+
+                <div class="nota-row"><span>Pembayaran</span><span>${order.payment_method || 'Tunai'}</span></div>
+                <div class="nota-row"><span>Uang Pembayaran</span><span>${rp(order.total_price)}</span></div>
+                <div class="nota-row"><span>Kembalian</span><span>Rp 0</span></div>
+
+                <hr class="nota-divider-solid">
+
+                <div class="nota-center" style="margin-top:8px;">
+                    <div>Terima kasih sudah makan di</div>
+                    <div class="nota-bold" style="font-size:13px;">Ulam Sari!</div>
+                </div>
+            `;
+        }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // ★ PAYMENT GATEWAY — MIDTRANS (BARU)
+        // Uncomment dan aktifkan setelah setup Midtrans
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+        /*
+        async function initMidtrans(orderId) {
+            try {
+                const res = await fetch('/kasir/midtrans/token', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value
+                    },
+                    body: JSON.stringify({ order_id: orderId })
+                });
+                if (!res.ok) throw new Error('Gagal ambil token Midtrans');
+                const data = await res.json();
+                if (!data.snap_token) throw new Error('Snap token tidak ditemukan');
+
+                window.snap.pay(data.snap_token, {
+                    onSuccess: function(result) {
+                        alert('Pembayaran berhasil!');
+                        loadOrderPanel();
+                    },
+                    onPending: function(result) {
+                        alert('Menunggu pembayaran...');
+                        loadOrderPanel();
+                    },
+                    onError: function(result) {
+                        alert('Pembayaran gagal. Silakan coba lagi.');
+                    },
+                    onClose: function() {
+                        console.log('Popup Midtrans ditutup');
+                    }
+                });
+            } catch (err) {
+                alert('Error Midtrans: ' + err.message);
+            }
+        }
+        */
+
     </script>
 
     {{-- FORM RAHASIA UNTUK ACC PESANAN (DI LUAR FORM UTAMA) --}}
@@ -423,16 +654,13 @@
     </form>
     
     <script>
-        // FUNGSI UNTUK MENEKAN TOMBOL ACC MENGGUNAKAN FORM RAHASIA
         function accPesanan(orderId) {
             const formACC = document.getElementById('formKonfirmasiRahasia');
             formACC.action = `/kasir/konfirmasi/${orderId}`;
             formACC.submit();
         }
 
-        // ==========================================
         // RADAR OTOMATIS (AJAX POLLING SETIAP 5 DETIK)
-        // ==========================================
         setInterval(() => {
             fetch('/kasir/api/pending-orders')
                 .then(response => {
@@ -440,30 +668,22 @@
                     return response.json();
                 })
                 .then(data => {
-                    console.log("RADAR BERHASIL CATCH DATA BARU: ", data); // <--- CCTV kita
-                    
-                    // 1. Update data di memori JavaScript
                     pendingOrders = data;
 
-                    // 2. Update titik merah berkedip di Denah Meja
                     for(let i = 1; i <= 12; i++) {
                         const btnMeja = document.getElementById('btn-meja-' + i);
                         if(!btnMeja) continue;
                         
-                        // Cek apakah ada pesanan di meja i
                         const adaPesanan = data[i] && Object.keys(data[i]).length > 0;
                         let titikMerah = btnMeja.querySelector('.indicator-dot');
                         
                         if(adaPesanan && !titikMerah) {
-                            // Munculkan titik merah kalau ada pesanan baru
                             btnMeja.insertAdjacentHTML('beforeend', '<span class="absolute top-2 right-2 w-3 h-3 bg-red-500 rounded-full animate-pulse indicator-dot"></span>');
                         } else if (!adaPesanan && titikMerah) {
-                            // Hilangkan titik merah kalau pesanan sudah beres
                             titikMerah.remove();
                         }
                     }
 
-                    // 3. Jika kasir sedang membuka layar "Cek Meja", otomatis refresh tampilannya!
                     const orderPanel = document.getElementById('panel-order');
                     if (!orderPanel.classList.contains('hidden')) {
                         loadOrderPanel();

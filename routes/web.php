@@ -75,3 +75,5 @@ Route::get('/admin/menu/toggle-active/{id}', [App\Http\Controllers\MenuControlle
 
 // Rute untuk proses Hapus/Delete Menu (bisa pakai GET untuk kemudahan tombol link, atau DELETE)
 Route::get('/admin/menu/delete/{id}', [App\Http\Controllers\MenuController::class, 'destroy'])->name('admin.menu.destroy');
+
+Route::get('/kasir/nota/{id}', [CashierController::class, 'getNota']);
