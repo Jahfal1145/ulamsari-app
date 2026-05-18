@@ -141,18 +141,26 @@
                 </div>
 
                 <div class="p-6 pt-2 mt-auto bg-white">
-                    <form action="{{ route('dapur.updateStatus', $order->id) }}" method="POST">
-                        @csrf
-                        @if($order->order_status_id == 1)
-                            <button type="submit" class="w-full bg-[#d32f2f] hover:bg-red-700 text-white font-black text-xl py-4 rounded-xl transition-transform active:scale-95 shadow-md uppercase">
-                                MULAI MASAK
-                            </button>
-                        @elseif($order->order_status_id == 2)
-                            <button type="submit" class="w-full bg-green-500 hover:bg-green-600 text-white font-black text-xl py-4 rounded-xl transition-transform active:scale-95 shadow-md uppercase">
-                                SELESAI
-                            </button>
-                        @endif
-                    </form>
+                    {{-- TOMBOL HANYA MUNCUL DI TAB "SEMUA" --}}
+                    @if($jenis == 'semua')
+                        <form action="{{ route('dapur.updateStatus', $order->id) }}" method="POST">
+                            @csrf
+                            @if($order->order_status_id == 1)
+                                <button type="submit" class="w-full bg-[#d32f2f] hover:bg-red-700 text-white font-black text-xl py-4 rounded-xl transition-transform active:scale-95 shadow-md uppercase">
+                                    MULAI MASAK
+                                </button>
+                            @elseif($order->order_status_id == 2)
+                                <button type="submit" class="w-full bg-green-500 hover:bg-green-600 text-white font-black text-xl py-4 rounded-xl transition-transform active:scale-95 shadow-md uppercase">
+                                    SELESAI
+                                </button>
+                            @endif
+                        </form>
+                    @else
+                        {{-- Tampilan saat Koki buka tab Dine In / Take Away --}}
+                        <div class="w-full bg-gray-100 text-gray-400 font-black text-sm py-4 rounded-xl text-center uppercase tracking-widest border-2 border-dashed border-gray-200">
+                            Pindah Tab "Semua" Untuk Eksekusi
+                        </div>
+                    @endif
                 </div>
             </div>
 
