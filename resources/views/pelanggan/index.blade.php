@@ -187,6 +187,20 @@
                 <input type="hidden" name="table_id" value="{{ $meja }}">
                 <input type="hidden" name="payment_type" value="later">
 
+                {{-- 👇 TAMBAHKAN BLOK INPUT INI 👇 --}}
+                <div class="mb-4 space-y-3">
+                    <div>
+                        <label class="block font-bold text-xs text-gray-400 uppercase mb-1">Nama Pembeli <span class="text-red-500">*</span></label>
+                        <input type="text" name="customer_name" required placeholder="Masukkan nama..." 
+                               class="w-full border-2 border-gray-100 dark:border-gray-700 p-3 rounded-xl font-bold text-sm outline-none focus:border-orange-500 bg-gray-50 dark:bg-gray-900 dark:text-white uppercase transition-colors">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-xs text-gray-400 uppercase mb-1">No. WhatsApp / HP <span class="text-red-500">*</span></label>
+                        <input type="number" name="phone_number" required placeholder="Contoh: 08123456789" 
+                               class="w-full border-2 border-gray-100 dark:border-gray-700 p-3 rounded-xl font-bold text-sm outline-none focus:border-orange-500 bg-gray-50 dark:bg-gray-900 dark:text-white transition-colors">
+                    </div>
+                </div>
+
                 {{-- PEMBAYARAN --}}
                 <div class="mb-6">
                     <label class="block font-bold text-xs text-gray-400 uppercase mb-3 text-center">Pilih Pembayaran</label>

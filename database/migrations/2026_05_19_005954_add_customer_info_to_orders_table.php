@@ -9,10 +9,11 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up(): void
+    public function up()
     {
         Schema::table('orders', function (Blueprint $table) {
-            //
+            $table->string('customer_name')->after('payment_method')->nullable();
+            $table->string('phone_number')->after('customer_name')->nullable();
         });
     }
 

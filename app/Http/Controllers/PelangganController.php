@@ -3,29 +3,31 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Menu; 
-use App\Models\Order; // Pastikan model Order di-import
+use App\Models\Menu;
+use App\Models\Order;
 
 class PelangganController extends Controller
 {
-    // 1. TAMPILAN MENU PELANGGAN
+    // TAMPILAN MENU
     public function index($meja)
     {
         $menus = Menu::join('categories', 'menus.category_id', '=', 'categories.id')
-                    ->select('menus.*', 'categories.name as category_name')
-                    ->where('is_active', true)
-                    ->get();
+            ->select('menus.*', 'categories.name as category_name')
+            ->where('is_active', true)
+            ->get();
 
         return view('pelanggan.index', compact('menus', 'meja'));
     }
 
-    // 2. PROSES SIMPAN PESANAN (CHECKOUT)
-    public function store(Request $request) 
+    // PROSES CHECKOUT
+    public function store(Request $request)
     {
         $request->validate([
             'cart_data' => 'required',
             'table_id' => 'required',
-            'payment_method' => 'required'
+            'payment_method' => 'required',
+            'customer_name' => 'required|string|max:255',
+            'phone_number' => 'required|string|max:20',
         ]);
 
         $orderNumber = 'ORD-' . date('Ymd') . '-' . strtoupper(substr(uniqid(), -4));
@@ -38,9 +40,12 @@ class PelangganController extends Controller
         $order->table_id = $request->table_id;
         $order->total_price = $totalPrice;
         $order->payment_method = $request->payment_method;
-        
-        // KUNCI: Status 0 (Menunggu Bayar) agar belum masuk ke layar dapur koki
-        $order->order_status_id = 4; 
+
+        $order->customer_name = strtoupper($request->customer_name);
+        $order->phone_number = $request->phone_number;
+
+        $order->order_status_id = 4;
+
         $order->save();
 
         foreach ($cart as $item) {
@@ -52,25 +57,38 @@ class PelangganController extends Controller
             ]);
         }
 
-        // LOGIKA PEMBAYARAN ONLINE (WINPAY)
+        // PEMBAYARAN ONLINE
         if ($request->payment_method == 'Winpay') {
+
             $winpayService = new \App\Services\WinpayService();
+
             $paymentUrl = $winpayService->createTransaction($order);
-            
+
             if ($paymentUrl) {
                 return redirect($paymentUrl);
             }
-            return back()->with('error', 'Gagal terhubung ke Winpay.');
+
+            return back()->with(
+                'error',
+                'Gagal terhubung ke Winpay.'
+            );
         }
 
-        // JIKA TUNAI: Arahkan ke halaman sukses/menunggu pembayaran
-        return redirect()->route('pelanggan.success', $order->id);
+        // PEMBAYARAN TUNAI
+        return redirect()->route(
+            'pelanggan.success',
+            $order->id
+        );
     }
 
-    // 3. HALAMAN INSTRUKSI/STATUS BAYAR
+    // HALAMAN SUKSES
     public function success($id)
     {
         $order = Order::findOrFail($id);
-        return view('pelanggan.success', compact('order'));
+
+        return view(
+            'pelanggan.success',
+            compact('order')
+        );
     }
 }
