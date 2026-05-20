@@ -8,6 +8,7 @@ use App\Http\Controllers\Auth\PinController;
 use App\Http\Controllers\MenuController;
 
 Route::get('/', fn() => redirect()->route('pin.index'));
+Route::get('/', [PinController::class, 'index'])->name('login');
 
 Route::get('/login-pin', [PinController::class, 'show'])->name('pin.index');
 Route::post('/login-pin/verify', [PinController::class, 'verify'])->name('pin.verify');
@@ -47,3 +48,23 @@ Route::middleware('pin.auth:admin')->prefix('admin')->group(function () {
     Route::get('/menu/toggle/{id}', [MenuController::class, 'toggleActive'])->name('admin.menu.toggleActive');
     Route::get('/menu/destroy/{id}', [MenuController::class, 'destroy'])->name('admin.menu.destroy');
 });
+
+Route::get('/menu/{id}/variants', [MenuVariantController::class, 'index']);
+    Route::post('/menu/{id}/variants', [MenuVariantController::class, 'store']);
+    Route::post('/menu/variants/{id}/update', [MenuVariantController::class, 'update']);
+    Route::get('/menu/variants/{id}/delete', [MenuVariantController::class, 'destroy']);
+// =========================================================
+// JALUR VVIP VARIAN MENU (Anti 404)
+// =========================================================
+Route::get('/admin/menu/{id}/variants', [App\Http\Controllers\MenuVariantController::class, 'index']);
+Route::post('/admin/menu/{id}/variants', [App\Http\Controllers\MenuVariantController::class, 'store']);
+Route::post('/admin/menu/variants/{id}/update', [App\Http\Controllers\MenuVariantController::class, 'update']);
+Route::get('/admin/menu/variants/{id}/delete', [App\Http\Controllers\MenuVariantController::class, 'destroy']);
+
+// =========================================================
+// OBAT ANTI ERROR "Route [login] not defined"
+// =========================================================
+Route::get('/login-darurat', function() {
+    // Kalau sesi habis, otomatis dilempar balik ke halaman utama
+    return redirect('/'); 
+})->name('login');
