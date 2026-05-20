@@ -40,9 +40,15 @@
         @endif
 
         <div class="flex flex-col gap-2">
-            <button onclick="window.location.reload()" class="w-full bg-gray-200 text-gray-700 py-3 rounded-xl font-bold text-xs uppercase transition active:scale-95">Cek Status Bayar</button>
-            <a href="/" class="text-gray-400 text-[10px] font-bold uppercase mt-2">Pesan Menu Lain</a>
-        </div>
+    <button onclick="window.location.reload()" class="w-full bg-gray-200 text-gray-700 py-3 rounded-xl font-bold text-xs uppercase transition active:scale-95">
+        Cek Status Bayar
+    </button>
+    
+    {{-- Ubah href menjadi route Laravel --}}
+    <a href="{{ route('pelanggan.index', $order->table_id) }}" class="text-gray-400 text-[10px] font-bold uppercase mt-2 hover:text-orange-500 transition">
+        Pesan Menu Lain
+    </a>
+</div>
     </div>
 </body>
 </html>

@@ -168,8 +168,10 @@
 
     {{-- MODAL KERANJANG & CHECKOUT --}}
     <div id="cartModal" class="fixed inset-0 bg-black/60 hidden items-end sm:items-center justify-center z-50 backdrop-blur-sm">
-        <div class="bg-white dark:bg-gray-800 w-full max-w-md h-[90vh] sm:h-[80vh] rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col slide-up">
-            <div class="p-4 border-b dark:border-gray-700 flex justify-between items-center bg-white dark:bg-gray-800 rounded-t-3xl sm:rounded-3xl">
+        <div class="bg-white dark:bg-gray-800 w-full max-w-md h-[92vh] sm:h-[85vh] rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col slide-up overflow-hidden">
+            
+            {{-- HEADER MODAL --}}
+            <div class="p-4 border-b dark:border-gray-700 flex justify-between items-center bg-white dark:bg-gray-800 z-10">
                 <div>
                     <h2 class="text-xl font-black text-gray-800 dark:text-white">Keranjang Anda</h2>
                     <p class="text-xs text-orange-500 font-bold">Meja {{ $meja }}</p>
@@ -178,7 +180,65 @@
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             </div>
-            <div id="cart-container" class="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50 dark:bg-gray-900"></div>
+
+            {{-- FORM BUNGKUS SEMUA --}}
+            <form action="{{ route('pelanggan.store') }}" method="POST" id="checkoutForm" class="flex-1 flex flex-col overflow-hidden relative">
+                @csrf
+                <input type="hidden" name="cart_data" id="cart_data_input">
+                <input type="hidden" name="table_id" value="{{ $meja }}">
+
+                {{-- AREA BISA DI-SCROLL (Menu + Input Form) --}}
+                <div class="flex-1 overflow-y-auto p-4 bg-gray-50 dark:bg-gray-900 space-y-6 scrollbar-hide">
+                    
+                    {{-- 1. DAFTAR PESANAN --}}
+                    <div id="cart-container" class="space-y-3"></div>
+
+                    {{-- 2. FORM DATA PEMBELI --}}
+                    <div class="bg-white dark:bg-gray-800 p-5 rounded-2xl border dark:border-gray-700 shadow-sm space-y-4">
+                        <h3 class="font-black text-sm text-gray-800 dark:text-white uppercase border-b dark:border-gray-100 pb-2">Data Pemesan</h3>
+                        <div>
+                            <label class="block font-bold text-xs text-gray-400 uppercase mb-1">Nama Pembeli <span class="text-red-500">*</span></label>
+                            <input type="text" name="customer_name" required placeholder="Masukkan nama..." 
+                                   class="w-full border-2 border-gray-100 dark:border-gray-700 p-3 rounded-xl font-bold text-sm outline-none focus:border-orange-500 bg-gray-50 dark:bg-gray-900 dark:text-white uppercase transition-colors">
+                        </div>
+                        <div>
+                            <label class="block font-bold text-xs text-gray-400 uppercase mb-1">No. WhatsApp <span class="text-red-500">*</span></label>
+                            <input type="number" name="phone_number" required placeholder="Contoh: 08123456789" 
+                                   class="w-full border-2 border-gray-100 dark:border-gray-700 p-3 rounded-xl font-bold text-sm outline-none focus:border-orange-500 bg-gray-50 dark:bg-gray-900 dark:text-white transition-colors">
+                        </div>
+                    </div>
+
+                    {{-- 3. METODE PEMBAYARAN --}}
+                    <div class="bg-white dark:bg-gray-800 p-5 rounded-2xl border dark:border-gray-700 shadow-sm mb-4">
+                        <h3 class="font-black text-sm text-gray-800 dark:text-white uppercase border-b dark:border-gray-100 pb-2 mb-3">Pilih Pembayaran</h3>
+                        <div class="grid grid-cols-2 gap-3">
+                            <label class="relative border-2 border-orange-500 bg-orange-50 dark:bg-orange-900/20 p-3 rounded-xl cursor-pointer flex flex-col items-center transition-all" id="label-cash">
+                                <input type="radio" name="payment_method" value="Tunai" class="hidden" checked onchange="togglePaymentUI('Tunai')">
+                                <svg class="w-6 h-6 text-orange-600 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" stroke-width="2"/></svg>
+                                <span class="text-[10px] font-black uppercase text-center">Bayar Kasir</span>
+                            </label>
+                            <label class="relative border-2 border-gray-100 dark:border-gray-700 p-3 rounded-xl cursor-pointer flex flex-col items-center transition-all" id="label-winpay">
+                                <input type="radio" name="payment_method" value="Winpay" class="hidden" onchange="togglePaymentUI('Winpay')">
+                                <svg class="w-6 h-6 text-blue-500 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                <span class="text-[10px] font-black uppercase text-center">QRIS / Online</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- AREA BAWAH FIXED (Hanya Total & Tombol) --}}
+                <div class="p-4 border-t dark:border-gray-700 bg-white dark:bg-gray-800 z-10 shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.05)]">
+                    <div class="flex justify-between items-center mb-3">
+                        <span class="text-sm font-bold text-gray-500 uppercase">Total Pesanan</span>
+                        <span id="checkout-total" class="text-2xl font-black text-orange-600">Rp 0</span>
+                    </div>
+                    <button type="submit" onclick="if(cart.length === 0) { alert('Pilih menu dulu!'); return false; } document.getElementById('cart_data_input').value = JSON.stringify(cart);" class="w-full bg-green-500 hover:bg-green-600 text-white py-3.5 rounded-xl font-black text-sm uppercase tracking-widest shadow-lg active:scale-95 transition">
+                        Kirim Pesanan
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 
             {{-- FORM CHECKOUT --}}
             <form action="{{ route('pelanggan.store') }}" method="POST" id="checkoutForm" class="p-4 border-t dark:border-gray-700 bg-white dark:bg-gray-800">
