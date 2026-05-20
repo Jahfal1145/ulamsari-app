@@ -8,17 +8,34 @@
 </head>
 <body class="bg-gray-100 font-sans text-gray-800 p-6 relative min-h-screen">
 
-    <div class="max-w-7xl mx-auto">
-        {{-- HEADER --}}
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-            <div>
-                <h1 class="text-3xl font-black text-orange-600 uppercase tracking-tight">Kelola Data Menu</h1>
-                <p class="text-gray-500 text-sm font-medium mt-1">Halaman manajemen menu makanan, harga, dan deskripsi aplikasi Ulam Sari</p>
-            </div>
-            <a href="{{ route('kasir.index') }}" class="bg-black text-white px-6 py-3 rounded-xl font-bold hover:bg-gray-800 transition shadow-md whitespace-nowrap text-sm uppercase tracking-wider">
-                Ke Halaman Kasir
-            </a>
-        </div>
+<div class="flex justify-between items-center bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-6">
+    
+    {{-- BAGIAN KIRI: Judul & Deskripsi --}}
+    <div>
+        <h1 class="text-3xl font-black text-orange-600 uppercase tracking-tight">Kelola Data Menu</h1>
+        <p class="text-sm text-gray-500 mt-1">Halaman manajemen menu makanan, harga, dan deskripsi aplikasi Ulam Sari</p>
+    </div>
+
+    {{-- BAGIAN KANAN: Kumpulan Tombol (Bungkus pakai div flex biar nggak LDR) --}}
+    <div class="flex items-center gap-4">
+        
+        {{-- Tombol Ke Halaman Kasir (Contoh) --}}
+        <a href="{{ route('kasir.index') }}" class="bg-black text-white font-bold px-6 py-2 rounded-xl text-sm hover:bg-gray-800 transition">
+            KE HALAMAN KASIR
+        </a>
+
+        {{-- Tombol Logout Merah --}}
+        <form action="{{ route('pin.logout', 'admin') }}" method="POST" class="inline">
+            @csrf
+            <button type="submit" class="bg-red-500 hover:bg-red-600 text-white p-2.5 rounded-xl transition-all shadow-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" />
+                </svg>
+            </button>
+        </form>
+
+    </div>
+</div>
 
         {{-- NOTIFIKASI ALERT --}}
         @if(session('success'))

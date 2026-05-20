@@ -16,6 +16,13 @@ return Application::configure(basePath: dirname(__DIR__))
         'api/winpay/callback', 
     ]);
 })
+
+    ->withMiddleware(function (Middleware $middleware) {
+        $middleware->alias([
+            'pin.auth' => \App\Http\Middleware\CheckPinAuth::class,
+        ]);
+    })
+
     ->withExceptions(function (Exceptions $exceptions): void {
         //
     })->create();

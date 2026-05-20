@@ -2,55 +2,77 @@
 
 namespace App\Http\Controllers\Auth;
 
-use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Session;
+use App\Http\Controllers\Controller;
 
 class PinController extends Controller
 {
-    public function index()
+    // 1. Tampilkan Halaman PIN
+    public function show(Request $request)
     {
-        if (Session::has('block_until') && now()->lessThan(Session::get('block_until'))) {
-            $remaining = now()->diffInSeconds(Session::get('block_until'));
-            return view('auth.pin-login', compact('remaining'));
-        }
-        return view('auth.pin-login');
-    }
+        $lockedUntil = session('pin_locked_until');
+        $remaining   = null;
 
-    public function verify(Request $request)
-    {
-        $pin = $request->pin;
-        $pinKasir = "111111"; 
-        $pinDapur = "222222";
-        $maxAttempts = 4;
-        $lockTime = 60;
-
-        if (Session::has('block_until') && now()->lessThan(Session::get('block_until'))) {
-            return back()->with('error', 'Device diblokir sementara.');
-        }
-
-        if ($pin === $pinKasir || $pin === $pinDapur) {
-            Session::forget(['pin_attempts', 'block_until']);
-            
-            if ($pin === $pinKasir) {
-                session(['role' => 'kasir']);
-                return redirect()->route('kasir.index');
-            } else {
-                session(['role' => 'dapur']);
-                return redirect()->route('dapur.index');
+        if ($lockedUntil) {
+            $remaining = $lockedUntil - now()->timestamp;
+            if ($remaining <= 0) {
+                session()->forget(['pin_locked_until', 'pin_attempts']);
+                $remaining = null;
             }
         }
 
-        $attempts = Session::get('pin_attempts', 0) + 1;
-        Session::put('pin_attempts', $attempts);
+        return view('auth.pin', compact('remaining'));
+    }
 
-        if ($attempts >= $maxAttempts) {
-            Session::put('block_until', now()->addSeconds($lockTime));
-            Session::forget('pin_attempts');
-            return back()->with('error', 'Terlalu banyak percobaan. Device diblokir 1 menit.');
+    // 2. Proses Verifikasi (AUTO DETECT ROLE)
+    public function verify(Request $request)
+    {
+        // Cek apakah masih dalam masa blokir
+        $lockedUntil = session('pin_locked_until');
+        if ($lockedUntil && now()->timestamp < $lockedUntil) {
+            $remaining = $lockedUntil - now()->timestamp;
+            return redirect()->route('pin.index')->with('error', "Akses diblokir. Tunggu {$remaining} detik.");
         }
 
-        $sisa = $maxAttempts - $attempts;
-        return back()->with('error', "PIN Salah! Sisa kesempatan: $sisa kali.");
+        $inputPin = $request->input('pin');
+
+        // Cek PIN ke masing-masing role langsung dari .env
+        if ($inputPin === (string) env('PIN_ADMIN')) {
+            return $this->loginSuccess('admin');
+        } elseif ($inputPin === (string) env('PIN_KASIR')) {
+            return $this->loginSuccess('kasir');
+        } elseif ($inputPin === (string) env('PIN_DAPUR')) {
+            return $this->loginSuccess('dapur');
+        }
+
+        // KALAU SALAH SEMUA: Tambah attempt
+        $attempts = session('pin_attempts', 0) + 1;
+        session(['pin_attempts' => $attempts]);
+
+        if ($attempts >= 5) {
+            session([
+                'pin_locked_until' => now()->addSeconds(30)->timestamp,
+                'pin_attempts'     => 0,
+            ]);
+            return redirect()->route('pin.index')->with('error', 'Terlalu banyak percobaan. Diblokir 30 detik.');
+        }
+
+        $sisa = 5 - $attempts;
+        return redirect()->route('pin.index')->with('error', "PIN salah. Sisa percobaan: {$sisa}");
+    }
+
+    // Fungsi bantuan biar kodenya nggak kepanjangan
+    private function loginSuccess($role)
+    {
+        session()->forget(['pin_attempts', 'pin_locked_until']);
+        session(["auth_{$role}" => true]);
+        return redirect()->route("{$role}.index");
+    }
+
+    // 3. Logout
+    public function logout(Request $request, string $role)
+    {
+        session()->forget("auth_{$role}");
+        return redirect()->route('pin.index');
     }
 }
