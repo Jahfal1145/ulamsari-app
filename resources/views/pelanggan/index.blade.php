@@ -29,7 +29,7 @@
         <div class="bg-white dark:bg-gray-800 sticky top-0 z-10 px-4 pt-6 pb-4 border-b dark:border-gray-700 flex justify-between items-center">
             <div>
                 {{-- LOGO RESMI ULAM SARI --}}
-<img src="{{ asset('img/logo_ulam_sari.png') }}" alt="Logo Ulam Sari" class="h-10 w-auto object-contain">
+                <img src="{{ asset('img/logo_ulam_sari.png') }}" alt="Logo Ulam Sari" class="h-10 w-auto object-contain">
             </div>
             <div class="bg-orange-100 text-orange-600 px-3 py-1 rounded-xl flex flex-col items-center justify-center border border-orange-200">
                 <span class="text-[8px] font-bold uppercase">Meja</span>
@@ -240,53 +240,6 @@
         </div>
     </div>
 
-            {{-- FORM CHECKOUT --}}
-            <form action="{{ route('pelanggan.store') }}" method="POST" id="checkoutForm" class="p-4 border-t dark:border-gray-700 bg-white dark:bg-gray-800">
-                @csrf
-                <input type="hidden" name="cart_data" id="cart_data_input">
-                <input type="hidden" name="table_id" value="{{ $meja }}">
-                <input type="hidden" name="payment_type" value="later">
-
-                {{-- 👇 TAMBAHKAN BLOK INPUT INI 👇 --}}
-                <div class="mb-4 space-y-3">
-                    <div>
-                        <label class="block font-bold text-xs text-gray-400 uppercase mb-1">Nama Pembeli <span class="text-red-500">*</span></label>
-                        <input type="text" name="customer_name" required placeholder="Masukkan nama..." 
-                               class="w-full border-2 border-gray-100 dark:border-gray-700 p-3 rounded-xl font-bold text-sm outline-none focus:border-orange-500 bg-gray-50 dark:bg-gray-900 dark:text-white uppercase transition-colors">
-                    </div>
-                    <div>
-                        <label class="block font-bold text-xs text-gray-400 uppercase mb-1">No. WhatsApp / HP <span class="text-red-500">*</span></label>
-                        <input type="number" name="phone_number" required placeholder="Contoh: 08123456789" 
-                               class="w-full border-2 border-gray-100 dark:border-gray-700 p-3 rounded-xl font-bold text-sm outline-none focus:border-orange-500 bg-gray-50 dark:bg-gray-900 dark:text-white transition-colors">
-                    </div>
-                </div>
-
-                {{-- PEMBAYARAN --}}
-                <div class="mb-6">
-                    <label class="block font-bold text-xs text-gray-400 uppercase mb-3 text-center">Pilih Pembayaran</label>
-                    <div class="grid grid-cols-2 gap-3">
-                        <label class="relative border-2 border-orange-500 bg-orange-50 dark:bg-orange-900/20 p-3 rounded-2xl cursor-pointer flex flex-col items-center transition-all" id="label-cash">
-                            <input type="radio" name="payment_method" value="Tunai" class="hidden" checked onchange="togglePaymentUI('Tunai')">
-                            <svg class="w-6 h-6 text-orange-600 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" stroke-width="2"/></svg>
-                            <span class="text-[10px] font-black uppercase">Bayar Kasir</span>
-                        </label>
-                        <label class="relative border-2 border-gray-100 dark:border-gray-700 p-3 rounded-2xl cursor-pointer flex flex-col items-center transition-all" id="label-winpay">
-                            <input type="radio" name="payment_method" value="Winpay" class="hidden" onchange="togglePaymentUI('Winpay')">
-                            <svg class="w-6 h-6 text-blue-500 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                            <span class="text-[10px] font-black uppercase">QRIS / Online</span>
-                        </label>
-                    </div>
-                </div>
-
-                <div class="flex justify-between items-center mb-4">
-                    <span class="text-sm font-bold text-gray-500 uppercase">Total Pesanan</span>
-                    <span id="checkout-total" class="text-2xl font-black text-orange-600">Rp 0</span>
-                </div>
-                <button type="button" onclick="submitCheckout()" class="w-full bg-orange-500 text-white py-4 rounded-2xl font-black text-sm uppercase tracking-widest shadow-lg active:scale-95 transition">Kirim Pesanan</button>
-            </form>
-        </div>
-    </div>
-
     <script>
         let cart = [];
         const formatRupiah = (n) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n);
@@ -388,7 +341,6 @@
 
         function openCartModal() { updateCartUI(); document.getElementById('cartModal').classList.replace('hidden', 'flex'); }
         function removeItem(i) { cart.splice(i, 1); updateCartUI(); if(cart.length === 0) closeModal('cartModal'); }
-        function submitCheckout() { if (cart.length === 0) { alert("Pilih menu dulu ya!"); return; } document.getElementById('checkoutForm').submit(); }
     </script>
     
 </body>

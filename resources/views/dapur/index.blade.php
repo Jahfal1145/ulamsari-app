@@ -96,6 +96,13 @@
                                     </span>
                                 @endif
                             </div>
+
+                            {{-- INFO PELANGGAN --}}
+                            <div class="mt-3 bg-white/70 border border-gray-200 rounded-lg p-2.5 shadow-sm">
+                                <p class="text-[9px] text-gray-500 font-bold uppercase tracking-wider mb-0.5">Pemesan:</p>
+                                <p class="text-sm font-black text-gray-800 uppercase">{{ $order->customer_name ?? 'Tanpa Nama' }}</p>
+                                <p class="text-xs font-bold text-blue-600">{{ $order->phone_number ?? '-' }}</p>
+                            </div>
                         </div>
 
                         <div class="text-right">
