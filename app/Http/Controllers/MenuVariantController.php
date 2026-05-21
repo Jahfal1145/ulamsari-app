@@ -44,22 +44,39 @@ class MenuVariantController extends Controller
     }
 
     public function update(Request $request, $id)
-    {
-        try {
-            $options = is_array($request->options) ? $request->options : [$request->options];
-            
-            DB::table('menu_variants')->where('id', $id)->update([
+{
+    try {
+
+        $options = $request->options;
+
+        // Paksa jadi array bersih
+        if (!is_array($options)) {
+            $options = [$options];
+        }
+
+        $options = array_values(array_filter($options));
+
+        DB::table('menu_variants')
+            ->where('id', $id)
+            ->update([
                 'variant_name'   => $request->variant_name,
                 'options'        => json_encode($options),
-                'default_option' => $request->default_option,
-                'updated_at'     => Carbon::now(),
+                'default_option' => $options[0] ?? null,
+                'updated_at'     => now(),
             ]);
-            
-            return response()->json(['success' => true]);
-        } catch (\Exception $e) {
-            return response()->json(['error' => '🚨 CRASH SQL: ' . $e->getMessage()], 500);
-        }
+
+        return response()->json([
+            'success' => true
+        ]);
+
+    } catch (\Exception $e) {
+
+        return response()->json([
+            'error' => $e->getMessage()
+        ], 500);
+
     }
+}
 
     public function destroy($id)
     {

@@ -292,7 +292,7 @@
 {{-- ═══════════════════════════════════════════════════════════════ --}}
 {{-- ★ MODAL EDIT VARIAN                                            --}}
 {{-- ═══════════════════════════════════════════════════════════════ --}}
-<div id="editVariantModal" class="fixed inset-0 z- bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4">
+<div id="editVariantModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4">
     <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl modal-enter">
         <div class="bg-blue-600 px-6 py-4 text-white flex justify-between items-center rounded-t-2xl">
             <h3 class="text-base font-black uppercase">Edit Varian</h3>
@@ -397,7 +397,7 @@
 {{-- ═══════════════════════════════════════════════════════════════ --}}
 {{-- ★ MODAL EDIT KATEGORI                                          --}}
 {{-- ═══════════════════════════════════════════════════════════════ --}}
-<div id="editCategoryModal" class="fixed inset-0 z- bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4">
+<div id="editCategoryModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4">
     <div class="bg-white rounded-2xl w-full max-w-sm shadow-2xl modal-enter">
         <div class="bg-indigo-600 px-6 py-4 text-white flex justify-between items-center rounded-t-2xl">
             <h3 class="text-base font-black uppercase">Edit Kategori</h3>
@@ -508,31 +508,41 @@ function filterMenuTable() {
 
 // ── Helpers ──────────────────────────────────────────────────────
 async function apiFetch(url, method = 'GET', body = null) {
-    const finalUrl = method === 'GET' ? `${url}?t=${Date.now()}` : url;
+
     const opts = {
         method,
-        headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' },
-        cache: 'no-store'
+        headers: {
+            'X-CSRF-TOKEN': CSRF,
+            'Accept': 'application/json',
+        }
     };
+
     if (body) {
         opts.headers['Content-Type'] = 'application/json';
         opts.body = JSON.stringify(body);
     }
-    const res = await fetch(finalUrl, opts);
-    
-    // Cegah crash kalau server return error HTML bukan JSON
-    const text = await res.text();
-    let data;
-    try { data = JSON.parse(text); } 
-    catch(err) { throw { status: res.status, data: { error: 'Terjadi error di Server (Bukan JSON).' } }; }
-    
-    if (!res.ok) throw { status: res.status, data };
+
+    const res = await fetch(url, opts);
+
+    let data = {};
+
+    try {
+        data = await res.json();
+    } catch (e) {}
+
+    if (!res.ok) {
+        throw {
+            status: res.status,
+            data
+        };
+    }
+
     return data;
 }
 
 function showToast(msg, type = 'success') {
     const el = document.createElement('div');
-    el.className = `fixed bottom-6 right-6 z- px-5 py-3 rounded-xl font-bold text-white text-sm shadow-2xl transition-all ${type === 'error' ? 'bg-red-600' : type === 'warning' ? 'bg-yellow-500' : 'bg-green-600'}`;
+    el.className = `fixed bottom-6 right-6 z-50 px-5 py-3 rounded-xl font-bold text-white text-sm shadow-2xl transition-all ${type === 'error' ? 'bg-red-600' : type === 'warning' ? 'bg-yellow-500' : 'bg-green-600'}`;
     el.innerText = msg;
     document.body.appendChild(el);
     setTimeout(() => { el.style.opacity = '0'; el.style.transform = 'translateY(8px)'; setTimeout(() => el.remove(), 300); }, 2500);
@@ -642,8 +652,6 @@ function renderVariantList(variants, menuId) {
             `<span class="inline-block px-2 py-0.5 rounded-lg text-[11px] font-bold ${opt === v.default_option ? 'bg-purple-500 text-white' : 'bg-white border border-gray-200 text-gray-600'}">${opt}${opt === v.default_option ? ' ★' : ''}</span>`
         ).join('');
 
-        const safeOptsJson = JSON.stringify(optsArr).replace(/'/g, "\\'");
-
         list.insertAdjacentHTML('beforeend', `
             <div class="bg-white border border-gray-200 rounded-2xl p-4 hover:border-purple-300 hover:shadow-sm transition" id="variant-card-${v.id}">
                 <div class="flex justify-between items-start mb-3">
@@ -652,7 +660,11 @@ function renderVariantList(variants, menuId) {
                         <p class="text-gray-400 text-[11px] font-semibold mt-0.5">${optsArr.length} pilihan · Default: <span class="text-purple-600">${v.default_option || optsArr || '-'}</span></p>
                     </div>
                     <div class="flex gap-2 shrink-0 ml-3">
-                        <button onclick="openEditVariantModal(${v.id}, '${v.variant_name.replace(/'/g,"\\'")}', '${safeOptsJson}')"
+                        <button onclick='openEditVariantModal(
+    ${v.id},
+    ${JSON.stringify(v.variant_name)},
+    ${JSON.stringify(optsArr)}
+)'
                                 class="bg-blue-50 hover:bg-blue-100 text-blue-600 px-3 py-1.5 rounded-lg font-bold text-[11px] transition">Edit</button>
                         <button onclick="deleteVariant(${v.id})"
                                 class="bg-red-50 hover:bg-red-500 text-red-500 hover:text-white px-3 py-1.5 rounded-lg font-bold text-[11px] transition">Hapus</button>
@@ -672,9 +684,10 @@ async function saveNewVariant() {
 
     try {
         await apiFetch(`/admin/menu/${activeMenuId}/variants`, 'POST', {
-            variant_name: name, options, default_option: options
+            variant_name: name,
+            options,
+            default_option: options[0]
         });
-        showToast('Varian berhasil ditambahkan!');
 
         // Reset form
         document.getElementById('new_variant_name').value = '';
@@ -689,14 +702,21 @@ async function saveNewVariant() {
 }
 
 // Edit Varian
-function openEditVariantModal(id, name, optsJson) {
-    const optsArr = JSON.parse(optsJson.replace(/&quot;/g, '"'));
+function openEditVariantModal(id, name, optsArr) {
+
     document.getElementById('edit_variant_id').value = id;
     document.getElementById('edit_variant_name').value = name;
+
     const c = document.getElementById('edit_options_container');
     c.innerHTML = '';
-    optsArr.forEach(opt => addOptionRow('edit_options_container', 'blue', opt));
-    document.getElementById('editVariantModal').classList.replace('hidden', 'flex');
+
+    optsArr.forEach(opt => {
+        addOptionRow('edit_options_container', 'blue', opt);
+    });
+
+    document
+        .getElementById('editVariantModal')
+        .classList.replace('hidden', 'flex');
 }
 
 function closeEditVariantModal() {
@@ -713,20 +733,31 @@ async function saveEditVariant() {
 
     try {
         await apiFetch(`/admin/menu/variants/${id}/update`, 'POST', {
-            variant_name: name, options, default_option: options
+            variant_name: name, options, default_option: options[0]
         });
         showToast('Varian berhasil diupdate!');
         closeEditVariantModal();
         await loadVariants(activeMenuId);
     } catch (e) {
-        showToast(e.data?.error || 'Gagal mengupdate varian', 'error');
-    }
+    console.log(e);
+
+    alert(
+        JSON.stringify(e.data ?? e, null, 2)
+    );
+
+    showToast(
+        e.data?.error ||
+        e.message ||
+        'Gagal mengupdate varian',
+        'error'
+    );
+}
 }
 
 async function deleteVariant(variantId) {
     if (!confirm('Hapus varian ini?')) return;
     try {
-        await apiFetch(`/admin/menu/variants/${variantId}/delete`);
+        await apiFetch(`/admin/menu/variants/${variantId}/delete`, 'DELETE');
         showToast('Varian dihapus');
         await loadVariants(activeMenuId);
     } catch (e) {
@@ -784,7 +815,11 @@ function renderCategoryList(categories) {
                     <span class="font-bold text-gray-800 text-sm">${cat.name}</span>
                 </div>
                 <div class="flex gap-2 shrink-0">
-                    <button onclick="openEditCategoryModal(${cat.id}, '${cat.name.replace(/'/g,"\\'")}')"
+                    <button onclick='openEditVariantModal(
+    ${v.id},
+    ${JSON.stringify(v.variant_name)},
+    ${JSON.stringify(optsArr)}
+)'
                             class="bg-blue-50 hover:bg-blue-100 text-blue-600 px-3 py-1.5 rounded-lg font-bold text-[11px] transition">Edit</button>
                     <button onclick="deleteCategory(${cat.id})"
                             class="bg-red-50 hover:bg-red-500 text-red-500 hover:text-white px-3 py-1.5 rounded-lg font-bold text-[11px] transition">Hapus</button>

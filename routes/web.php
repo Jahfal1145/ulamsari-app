@@ -7,6 +7,7 @@ use App\Http\Controllers\PelangganController;
 use App\Http\Controllers\Auth\PinController;
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\MenuVariantController;
 
 Route::get('/', fn() => redirect()->route('pin.index'));
 Route::get('/', [PinController::class, 'index'])->name('login');
@@ -53,8 +54,8 @@ Route::middleware('pin.auth:admin')->prefix('admin')->group(function () {
         // ── Varian Menu (CRUD via AJAX) ──────────────────────────
     Route::get('/menu/{id}/variants', [MenuController::class, 'getVariants'])->name('admin.menu.variants.get');
     Route::post('/menu/{id}/variants', [MenuController::class, 'storeVariant'])->name('admin.menu.variants.store');
-    Route::post('/menu/variants/{variantId}/update', [MenuController::class, 'updateVariant'])->name('admin.menu.variants.update');
-    Route::get('/menu/variants/{variantId}/delete', [MenuController::class, 'destroyVariant'])->name('admin.menu.variants.destroy');
+    Route::post('/menu/variants/{id}/update', [MenuVariantController::class, 'update']);
+    Route::delete('/menu/variants/{id}/delete', [MenuVariantController::class, 'destroy']);
  
 });
 
@@ -65,10 +66,6 @@ Route::get('/menu/{id}/variants', [MenuVariantController::class, 'index']);
 // =========================================================
 // JALUR VVIP VARIAN MENU (Anti 404)
 // =========================================================
-Route::get('/admin/menu/{id}/variants', [App\Http\Controllers\MenuVariantController::class, 'index']);
-Route::post('/admin/menu/{id}/variants', [App\Http\Controllers\MenuVariantController::class, 'store']);
-Route::post('/admin/menu/variants/{id}/update', [App\Http\Controllers\MenuVariantController::class, 'update']);
-Route::get('/admin/menu/variants/{id}/delete', [App\Http\Controllers\MenuVariantController::class, 'destroy']);
 
 // =========================================================
 // OBAT ANTI ERROR "Route [login] not defined"
@@ -77,15 +74,6 @@ Route::get('/login-darurat', function() {
     // Kalau sesi habis, otomatis dilempar balik ke halaman utama
     return redirect('/'); 
 })->name('login');
-
-// Pastikan rute ini berada di luar grup middleware admin
-Route::get('/admin/menu/{id}/variants', [App\Http\Controllers\MenuVariantController::class, 'index']);
-
-    // ── Varian Menu ──────────────────────────────────────────────
-    Route::get('/menu/{id}/variants',                [MenuController::class, 'getVariants'])->name('admin.menu.variants.get');
-    Route::post('/menu/{id}/variants',               [MenuController::class, 'storeVariant'])->name('admin.menu.variants.store');
-    Route::post('/menu/variants/{variantId}/update', [MenuController::class, 'updateVariant'])->name('admin.menu.variants.update');
-    Route::get('/menu/variants/{variantId}/delete',  [MenuController::class, 'destroyVariant'])->name('admin.menu.variants.destroy');
  
     // ── ★ Kategori CRUD ──────────────────────────────────────────
     Route::get('/categories',                        [CategoryController::class, 'index'])->name('admin.categories.index');
@@ -104,3 +92,15 @@ Route::get('/admin/categories/{id}/delete', [App\Http\Controllers\CategoryContro
 
 // Rute publik untuk ambil varian menu di halaman pelanggan
 Route::get('/menu/{id}/variants', [App\Http\Controllers\MenuVariantController::class, 'index']);
+
+Route::middleware('pin.auth:admin')->prefix('admin')->group(function () {
+
+    Route::get('/menu/{id}/variants', [App\Http\Controllers\MenuVariantController::class, 'index']);
+
+    Route::post('/menu/{id}/variants', [App\Http\Controllers\MenuVariantController::class, 'store']);
+
+    Route::post('/menu/variants/{id}/update', [App\Http\Controllers\MenuVariantController::class, 'update']);
+
+    Route::delete('/menu/variants/{id}/delete', [App\Http\Controllers\MenuVariantController::class, 'destroy']);
+
+});
