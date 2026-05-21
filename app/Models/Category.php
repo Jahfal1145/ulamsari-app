@@ -8,4 +8,10 @@ class Category extends Model
 {
     // Tambahin baris sakti ini biar Laravel ngizinin masukin data
     protected $guarded = [];
+    protected $fillable = ['name'];
+ 
+    public function menus()
+    {
+        return $this->hasMany(Menu::class);
+    }
 }

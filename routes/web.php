@@ -6,6 +6,7 @@ use App\Http\Controllers\DapurController;
 use App\Http\Controllers\PelangganController;
 use App\Http\Controllers\Auth\PinController;
 use App\Http\Controllers\MenuController;
+use App\Http\Controllers\CategoryController;
 
 Route::get('/', fn() => redirect()->route('pin.index'));
 Route::get('/', [PinController::class, 'index'])->name('login');
@@ -19,6 +20,8 @@ Route::prefix('pesan')->group(function () {
     Route::post('/store', [PelangganController::class, 'store'])->name('pelanggan.store');
     Route::get('/success/{id}', [PelangganController::class, 'success'])->name('pelanggan.success');
 });
+
+Route::get('/menu/{id}/variants', [MenuController::class, 'getVariants'])->name('menu.variants.public');
 
 Route::middleware('pin.auth:kasir')->prefix('kasir')->group(function () {
     Route::get('/', [CashierController::class, 'index'])->name('kasir.index');
@@ -47,6 +50,12 @@ Route::middleware('pin.auth:admin')->prefix('admin')->group(function () {
     Route::post('/menu/update/{id}', [MenuController::class, 'update'])->name('admin.menu.update');
     Route::get('/menu/toggle/{id}', [MenuController::class, 'toggleActive'])->name('admin.menu.toggleActive');
     Route::get('/menu/destroy/{id}', [MenuController::class, 'destroy'])->name('admin.menu.destroy');
+        // ── Varian Menu (CRUD via AJAX) ──────────────────────────
+    Route::get('/menu/{id}/variants', [MenuController::class, 'getVariants'])->name('admin.menu.variants.get');
+    Route::post('/menu/{id}/variants', [MenuController::class, 'storeVariant'])->name('admin.menu.variants.store');
+    Route::post('/menu/variants/{variantId}/update', [MenuController::class, 'updateVariant'])->name('admin.menu.variants.update');
+    Route::get('/menu/variants/{variantId}/delete', [MenuController::class, 'destroyVariant'])->name('admin.menu.variants.destroy');
+ 
 });
 
 Route::get('/menu/{id}/variants', [MenuVariantController::class, 'index']);
@@ -68,3 +77,27 @@ Route::get('/login-darurat', function() {
     // Kalau sesi habis, otomatis dilempar balik ke halaman utama
     return redirect('/'); 
 })->name('login');
+
+// Pastikan rute ini berada di luar grup middleware admin
+Route::get('/admin/menu/{id}/variants', [App\Http\Controllers\MenuVariantController::class, 'index']);
+
+    // ── Varian Menu ──────────────────────────────────────────────
+    Route::get('/menu/{id}/variants',                [MenuController::class, 'getVariants'])->name('admin.menu.variants.get');
+    Route::post('/menu/{id}/variants',               [MenuController::class, 'storeVariant'])->name('admin.menu.variants.store');
+    Route::post('/menu/variants/{variantId}/update', [MenuController::class, 'updateVariant'])->name('admin.menu.variants.update');
+    Route::get('/menu/variants/{variantId}/delete',  [MenuController::class, 'destroyVariant'])->name('admin.menu.variants.destroy');
+ 
+    // ── ★ Kategori CRUD ──────────────────────────────────────────
+    Route::get('/categories',                        [CategoryController::class, 'index'])->name('admin.categories.index');
+    Route::post('/categories',                       [CategoryController::class, 'store'])->name('admin.categories.store');
+    Route::post('/categories/{id}/update',           [CategoryController::class, 'update'])->name('admin.categories.update');
+    Route::get('/categories/{id}/delete',            [CategoryController::class, 'destroy'])->name('admin.categories.destroy');
+ 
+// ── Route PUBLIK varian untuk halaman pelanggan ──────────────────
+Route::get('/menu/{id}/variants', [MenuController::class, 'getVariants'])->name('menu.variants.public');
+
+// API Kategori (Bisa kamu taruh di dalam middleware admin)
+Route::get('/admin/categories', [App\Http\Controllers\CategoryController::class, 'apiIndex']);
+Route::post('/admin/categories', [App\Http\Controllers\CategoryController::class, 'apiStore']);
+Route::post('/admin/categories/{id}/update', [App\Http\Controllers\CategoryController::class, 'apiUpdate']);
+Route::get('/admin/categories/{id}/delete', [App\Http\Controllers\CategoryController::class, 'apiDestroy']);
