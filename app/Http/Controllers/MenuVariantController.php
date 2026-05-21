@@ -9,25 +9,22 @@ use Carbon\Carbon;
 class MenuVariantController extends Controller
 {
     public function index($id)
-{
-    $variants = DB::table('menu_variants')
-        ->where('menu_id', $id)
-        ->get();
+    {
+        $variants = DB::table('menu_variants')
+            ->where('menu_id', $id)
+            ->get();
 
-    return response()->json([
-        'id_yang_diklik'   => $id,
-        'total_semua_di_db' => DB::table('menu_variants')->count(),
-        'total_yang_cocok' => $variants->count(),
-        'data' => $variants
-    ]);
-}
+        // ★ HARUS RETURN LANGSUNG ARRAY! Jangan dibungkus objek macem-macem
+        // Biar Javascript di pelanggan bisa langsung melakukan looping (forEach)
+        return response()->json($variants);
+    }
+
     public function store(Request $request, $id)
     {
         try {
             $options = is_array($request->options) ? $request->options : [$request->options];
 
-            // Coba maksa simpan data ke database
-            $insertId = DB::table('menu_variants')->insertGetId([
+            DB::table('menu_variants')->insert([
                 'menu_id'        => $id,
                 'variant_name'   => $request->variant_name,
                 'options'        => json_encode($options),
@@ -36,17 +33,13 @@ class MenuVariantController extends Controller
                 'updated_at'     => Carbon::now(),
             ]);
 
-            // 🔥 JEBAKAN BATMAN: Kita sengaja ngelempar 'error' padahal sukses!
-            // Biar notif merah muncul dan ngasih tau ID-nya ke layar kamu.
-            return response()->json([
-                'error' => '✅ ALARM!! BERHASIL SIMPAN! ID di Database: ' . $insertId
-            ]);
+            // ★ JEBAKAN BATMAN DIHAPUS. Kembalikan response sukses normal!
+            return response()->json(['success' => true]);
 
         } catch (\Exception $e) {
-            // Kalau SQL nya nge-crash gara-gara tipe data/tabel, pesannya langsung dikirim ke layar!
             return response()->json([
                 'error' => '🚨 CRASH SQL: ' . $e->getMessage()
-            ]);
+            ], 500); // Tambahkan kode error 500 biar frontend tau ini error
         }
     }
 
@@ -54,21 +47,27 @@ class MenuVariantController extends Controller
     {
         try {
             $options = is_array($request->options) ? $request->options : [$request->options];
+            
             DB::table('menu_variants')->where('id', $id)->update([
                 'variant_name'   => $request->variant_name,
                 'options'        => json_encode($options),
                 'default_option' => $request->default_option,
                 'updated_at'     => Carbon::now(),
             ]);
+            
             return response()->json(['success' => true]);
         } catch (\Exception $e) {
-            return response()->json(['error' => '🚨 CRASH SQL: ' . $e->getMessage()]);
+            return response()->json(['error' => '🚨 CRASH SQL: ' . $e->getMessage()], 500);
         }
     }
 
     public function destroy($id)
     {
-        DB::table('menu_variants')->where('id', $id)->delete();
-        return response()->json(['success' => true]);
+        try {
+            DB::table('menu_variants')->where('id', $id)->delete();
+            return response()->json(['success' => true]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => '🚨 Gagal hapus: ' . $e->getMessage()], 500);
+        }
     }
 }

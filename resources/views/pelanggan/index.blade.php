@@ -32,7 +32,7 @@
             </div>
             <div class="bg-orange-100 text-orange-600 px-3 py-1 rounded-xl flex flex-col items-center justify-center border border-orange-200">
                 <span class="text-[8px] font-bold uppercase">Meja</span>
-                <span class="text-xl font-black leading-none">{{ $meja }}</span>
+                <span class="text-xl font-black leading-none">{{ $meja ?? '0' }}</span>
             </div>
         </div>
 
@@ -47,13 +47,17 @@
             </div>
         </div>
 
-        {{-- KATEGORI --}}
+        {{-- KATEGORI (Sekarang Dinamis dari Database!) --}}
         <div class="px-4 mt-6">
             <div class="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
                 <button type="button" onclick="filterMenu('semua')" class="filter-btn bg-orange-500 text-white px-5 py-2 rounded-full text-xs font-bold whitespace-nowrap shadow-sm transition">Semua</button>
-                <button type="button" onclick="filterMenu('Ter-favorit')" class="filter-btn bg-gray-50 dark:bg-gray-700 text-gray-500 px-5 py-2 rounded-full text-xs font-bold whitespace-nowrap border border-gray-100 dark:border-gray-600 transition">Ter-favorit</button>
-                <button type="button" onclick="filterMenu('Makanan Berat')" class="filter-btn bg-gray-50 dark:bg-gray-700 text-gray-500 px-5 py-2 rounded-full text-xs font-bold whitespace-nowrap border border-gray-100 dark:border-gray-600 transition">Makanan Berat</button>
-                <button type="button" onclick="filterMenu('Minuman')" class="filter-btn bg-gray-50 dark:bg-gray-700 text-gray-500 px-5 py-2 rounded-full text-xs font-bold whitespace-nowrap border border-gray-100 dark:border-gray-600 transition">Minuman</button>
+                @if(isset($categories))
+                    @foreach($categories as $cat)
+                        <button type="button" onclick="filterMenu('{{ $cat->name }}')" class="filter-btn bg-gray-50 dark:bg-gray-700 text-gray-500 px-5 py-2 rounded-full text-xs font-bold whitespace-nowrap border border-gray-100 dark:border-gray-600 transition">
+                            {{ $cat->name }}
+                        </button>
+                    @endforeach
+                @endif
             </div>
         </div>
 
@@ -107,7 +111,7 @@
         </button>
     </div>
 
-    {{-- ★ MODAL TAMBAH ITEM + VARIAN (satu modal, bersih) --}}
+    {{-- ★ MODAL TAMBAH ITEM + VARIAN --}}
     <div id="addModal" class="fixed inset-0 bg-black/60 hidden items-end sm:items-center justify-center z-50 backdrop-blur-sm">
         <div class="bg-white dark:bg-gray-800 w-full max-w-md rounded-t-3xl sm:rounded-3xl shadow-2xl p-6 slide-up max-h-[85vh] overflow-y-auto scrollbar-hide pb-10">
 
@@ -125,7 +129,6 @@
             <input type="hidden" id="modalItemId">
 
             <div class="space-y-5">
-
                 {{-- ★ TEMPAT VARIAN MUNCUL DARI DATABASE --}}
                 <div id="variant-selector-container" class="space-y-4">
                     {{-- Diisi oleh JS saat modal dibuka --}}
@@ -177,7 +180,7 @@
             <div class="p-4 border-b dark:border-gray-700 flex justify-between items-center bg-white dark:bg-gray-800 z-10">
                 <div>
                     <h2 class="text-xl font-black text-gray-800 dark:text-white">Keranjang Anda</h2>
-                    <p class="text-xs text-orange-500 font-bold">Meja {{ $meja }}</p>
+                    <p class="text-xs text-orange-500 font-bold">Meja {{ $meja ?? '0' }}</p>
                 </div>
                 <button type="button" onclick="closeModal('cartModal')" class="bg-gray-100 dark:bg-gray-700 p-2 rounded-full text-gray-500 hover:text-red-500 transition">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
@@ -187,7 +190,7 @@
             <form action="{{ route('pelanggan.store') }}" method="POST" id="checkoutForm" class="flex-1 flex flex-col overflow-hidden">
                 @csrf
                 <input type="hidden" name="cart_data" id="cart_data_input">
-                <input type="hidden" name="table_id" value="{{ $meja }}">
+                <input type="hidden" name="table_id" value="{{ $meja ?? '0' }}">
 
                 <div class="flex-1 overflow-y-auto p-4 bg-gray-50 dark:bg-gray-900 space-y-6 scrollbar-hide">
 
@@ -242,9 +245,7 @@
         </div>
     </div>
 
-    {{-- ═══════════════════════════════════════════════════════ --}}
-    {{-- JAVASCRIPT — bersih, satu versi setiap fungsi           --}}
-    {{-- ═══════════════════════════════════════════════════════ --}}
+    {{-- JAVASCRIPT --}}
     <script>
         let cart = [];
         const formatRupiah = (n) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n);
@@ -262,7 +263,7 @@
                 c.style.display = (k === 'semua' || c.dataset.category === k) ? 'flex' : 'none';
             });
             document.querySelectorAll('.filter-btn').forEach(btn => {
-                const isActive = (k === 'semua' && btn.innerText.trim() === 'Semua') || btn.innerText.trim() === k;
+                const isActive = (k === 'semua' && btn.innerText.trim().toLowerCase() === 'semua') || btn.innerText.trim() === k;
                 btn.className = isActive
                     ? 'filter-btn bg-orange-500 text-white px-5 py-2 rounded-full text-xs font-bold whitespace-nowrap shadow-sm transition'
                     : 'filter-btn bg-gray-50 dark:bg-gray-700 text-gray-500 px-5 py-2 rounded-full text-xs font-bold whitespace-nowrap border border-gray-100 dark:border-gray-600 transition';
@@ -292,22 +293,15 @@
         }
 
         // ── Modal helpers ────────────────────────────────────
-        function closeModal(id) {
-            document.getElementById(id).classList.replace('flex', 'hidden');
-        }
-
-        function closeAddModal() {
-            document.getElementById('addModal').classList.replace('flex', 'hidden');
-        }
-
+        function closeModal(id) { document.getElementById(id).classList.replace('flex', 'hidden'); }
+        function closeAddModal() { document.getElementById('addModal').classList.replace('flex', 'hidden'); }
         function changeQty(v) {
             const q = document.getElementById('modalQty');
             if (parseInt(q.value) + v >= 1) q.value = parseInt(q.value) + v;
         }
 
-        // ── ★ BUKA MODAL + FETCH VARIAN (satu fungsi, fix) ──
+        // ── BUKA MODAL + FETCH VARIAN ────────────────────────
         async function openAddModal(id, name, price, category) {
-            // Isi data dasar
             document.getElementById('modalItemId').value = id;
             document.getElementById('modalItemName').innerText = name;
             document.getElementById('modalItemPrice').innerText = formatRupiah(price);
@@ -315,39 +309,25 @@
             document.getElementById('modalQty').value = 1;
             document.getElementById('modalNotes').value = '';
 
-            // Reset radio ke Dine In
             const dineInRadio = document.querySelector('input[name="orderType"][value="Dine In"]');
             if (dineInRadio) { dineInRadio.checked = true; toggleTypeUI(); }
 
-            // Buka modal
             document.getElementById('addModal').classList.replace('hidden', 'flex');
 
-            // Fetch varian dari route PUBLIK (bukan /admin)
             const container = document.getElementById('variant-selector-container');
-            container.innerHTML = `
-                <div class="flex items-center gap-2 text-gray-400 text-xs font-semibold py-2">
-                    <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-                    </svg>
-                    Memuat pilihan...
-                </div>`;
+            container.innerHTML = `<div class="flex items-center gap-2 text-gray-400 text-xs font-semibold py-2">Memuat pilihan varian...</div>`;
 
             try {
-                // ★ PAKAI ROUTE PUBLIK — bukan /admin/menu
+                // Fetch memanggil rute publik (Pastikan route /menu/{id}/variants sudah ada di web.php)
                 const res = await fetch(`/menu/${id}/variants?t=${Date.now()}`);
-
-                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                
+                if (!res.ok) throw new Error(`Error server`);
 
                 const variants = await res.json();
                 container.innerHTML = '';
 
-                if (!variants || variants.length === 0) {
-                    // Tidak ada varian — tidak perlu tampilkan apa-apa
-                    return;
-                }
+                if (!variants || variants.length === 0) return;
 
-                // Render setiap varian sebagai select
                 variants.forEach(v => {
                     const opts = Array.isArray(v.options) ? v.options : JSON.parse(v.options || '[]');
                     if (opts.length === 0) return;
@@ -365,20 +345,17 @@
                         </div>
                     `);
                 });
-
             } catch (e) {
-                // Kalau gagal fetch, tidak blokir user — langsung kosongkan container
-                console.warn('Varian tidak tersedia:', e.message);
+                console.warn('Gagal memuat varian:', e.message);
                 container.innerHTML = '';
             }
         }
 
-        // Escape HTML untuk keamanan
         function escapeHtml(str) {
             return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
         }
 
-        // ── ★ SAVE TO CART (satu fungsi, fix) ───────────────
+        // ── SAVE TO CART ─────────────────────────────────────
         function saveToCart() {
             const id    = document.getElementById('modalItemId').value;
             const name  = document.getElementById('modalItemName').innerText;
@@ -387,7 +364,6 @@
             const type  = document.querySelector('input[name="orderType"]:checked').value;
             const notes = document.getElementById('modalNotes').value.trim();
 
-            // Kumpulkan pilihan varian
             const variants = {};
             document.querySelectorAll('.variant-group').forEach(group => {
                 const vName = group.dataset.variantName;
@@ -395,21 +371,22 @@
                 if (vName && vVal) variants[vName] = vVal;
             });
 
-            // Buat ringkasan notes: Dine In • Level Pedas: Sedang • Bagian Ayam: Dada
-            const variantSummary = Object.entries(variants)
-                .map(([k, v]) => `${k}: ${v}`)
-                .join(' • ');
-
-            const fullNotes = [type, variantSummary, notes].filter(Boolean).join(' • ');
+            // Format catatan agar varian rapi (Dine In • Pedas: Sedang • Catatan: bungkus plastik)
+            const variantSummary = Object.entries(variants).map(([k, v]) => `${k}: ${v}`).join(' • ');
+            const finalNotesArr = [type];
+            if(variantSummary) finalNotesArr.push(variantSummary);
+            if(notes) finalNotesArr.push(`Catatan: ${notes}`);
+            
+            const fullNotes = finalNotesArr.join(' • ');
 
             cart.unshift({
-                menu_id:  id,
-                name,
-                price,
-                qty,
+                menu_id: id,
+                name: name,
+                price: price,
+                qty: qty,
                 subtotal: price * qty,
-                notes:    fullNotes,
-                variants, // simpan juga sebagai object untuk referensi
+                notes: fullNotes,
+                variants: variants
             });
 
             closeAddModal();
@@ -447,7 +424,7 @@
                         <div class="flex justify-between items-start">
                             <div class="flex-1 pr-2">
                                 <h4 class="font-bold text-sm dark:text-white">${escapeHtml(item.name)}</h4>
-                                <p class="text-orange-500 font-semibold text-xs mt-0.5">${escapeHtml(item.notes)}</p>
+                                <p class="text-orange-500 font-semibold text-[10px] mt-0.5 leading-tight">${escapeHtml(item.notes)}</p>
                             </div>
                             <button type="button" onclick="removeItem(${i})" class="text-xs font-bold text-red-500 hover:text-red-700 ml-2">Hapus</button>
                         </div>
@@ -471,7 +448,6 @@
             if (cart.length === 0) closeModal('cartModal');
         }
 
-        // Validasi sebelum submit
         document.getElementById('checkoutForm').addEventListener('submit', function(e) {
             if (cart.length === 0) {
                 e.preventDefault();
@@ -481,6 +457,5 @@
             document.getElementById('cart_data_input').value = JSON.stringify(cart);
         });
     </script>
-
 </body>
 </html>

@@ -101,3 +101,6 @@ Route::get('/admin/categories', [App\Http\Controllers\CategoryController::class,
 Route::post('/admin/categories', [App\Http\Controllers\CategoryController::class, 'apiStore']);
 Route::post('/admin/categories/{id}/update', [App\Http\Controllers\CategoryController::class, 'apiUpdate']);
 Route::get('/admin/categories/{id}/delete', [App\Http\Controllers\CategoryController::class, 'apiDestroy']);
+
+// Rute publik untuk ambil varian menu di halaman pelanggan
+Route::get('/menu/{id}/variants', [App\Http\Controllers\MenuVariantController::class, 'index']);
