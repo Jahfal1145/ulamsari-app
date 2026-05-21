@@ -88,14 +88,25 @@
                        class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-orange-500 font-semibold text-sm transition">
             </div>
             <div>
-                <label class="block text-gray-600 font-bold mb-1.5 text-xs uppercase">Kategori</label>
-                <select name="category_id" required class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-orange-500 font-semibold text-sm bg-white transition">
-                    <option value="" disabled selected>Pilih Kategori</option>
-                    @foreach($categories as $cat)
-                        <option value="{{ $cat->id }}">{{ $cat->name }}</option>
-                    @endforeach
-                </select>
-            </div>
+    <label class="block text-gray-600 font-bold mb-1.5 text-xs uppercase">
+        Kategori
+    </label>
+
+    <div class="space-y-2 border border-gray-200 rounded-xl p-4 max-h-48 overflow-y-auto">
+        @foreach($categories as $cat)
+            <label class="flex items-center gap-3 cursor-pointer">
+                <input type="checkbox"
+                       name="categories[]"
+                       value="{{ $cat->id }}"
+                       class="w-4 h-4 text-orange-500 rounded border-gray-300 focus:ring-orange-500">
+
+                <span class="font-semibold text-sm text-gray-700">
+                    {{ $cat->name }}
+                </span>
+            </label>
+        @endforeach
+    </div>
+</div>
             <div>
                 <label class="block text-gray-600 font-bold mb-1.5 text-xs uppercase">Foto (Opsional)</label>
                 <input type="file" name="image" accept="image/*"
@@ -145,7 +156,7 @@
                                     Rp {{ number_format($menu->price, 0, ',', '.') }}
                                 </span>
                                 <span class="bg-gray-100 text-gray-600 font-semibold text-[11px] px-2 py-0.5 rounded-md">
-                                    {{ $menu->category_name }}
+                                    {{ $menu->categories->pluck('name')->join(', ') }}
                                 </span>
                                 {{-- ★ Badge varian — diisi JS saat halaman load --}}
                                 <span id="variant-badge-{{ $menu->id }}"
@@ -171,7 +182,7 @@
                                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
                                     Varian
                                 </button>
-                                <button onclick="openEditModal({{ $menu->id }}, '{{ addslashes($menu->name) }}', {{ $menu->price }}, {{ $menu->category_id }}, '{{ addslashes($menu->description) }}')"
+                                <button onclick='openEditModal( {{ $menu->id }}, @json($menu->categories->pluck("id")), "{{ addslashes($menu->name) }}", {{ $menu->price }}, "{{ addslashes($menu->description) }}")'
                                         class="bg-blue-50 hover:bg-blue-500 text-blue-600 hover:text-white px-3 py-2 rounded-xl font-bold text-[11px] transition border border-blue-200 hover:border-blue-500">
                                     Edit
                                 </button>
@@ -438,13 +449,25 @@
                 <input type="number" name="price" id="edit_price" required class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-blue-500 font-semibold text-sm transition">
             </div>
             <div>
-                <label class="block text-gray-600 font-bold mb-1.5 text-xs uppercase">Kategori</label>
-                <select name="category_id" id="edit_category" required class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-blue-500 font-semibold text-sm bg-white transition">
-                    @foreach($categories as $cat)
-                        <option value="{{ $cat->id }}">{{ $cat->name }}</option>
-                    @endforeach
-                </select>
-            </div>
+    <label class="block text-gray-600 font-bold mb-1.5 text-xs uppercase">
+        Kategori
+    </label>
+
+    <div class="space-y-2 border border-gray-200 rounded-xl p-4 max-h-48 overflow-y-auto">
+        @foreach($categories as $cat)
+            <label class="flex items-center gap-3 cursor-pointer">
+                <input type="checkbox"
+                       name="categories[]"
+                       value="{{ $cat->id }}"
+                       class="edit-category-checkbox w-4 h-4 text-blue-500 rounded border-gray-300 focus:ring-blue-500">
+
+                <span class="font-semibold text-sm text-gray-700">
+                    {{ $cat->name }}
+                </span>
+            </label>
+        @endforeach
+    </div>
+</div>
             <div>
                 <label class="block text-gray-600 font-bold mb-1.5 text-xs uppercase">Ganti Foto (Opsional)</label>
                 <input type="file" name="image" accept="image/*"
@@ -823,13 +846,31 @@ async function deleteCategory(id) {
 // ════════════════════════════════════════════════════════════════
 // EDIT MENU MODAL
 // ════════════════════════════════════════════════════════════════
-function openEditModal(id, name, price, category_id, description) {
-    document.getElementById('editMenuForm').action = `/admin/menu/update/${id}`;
+function openEditModal(id, categoryIds, name, price, description) {
+
+    document.getElementById('editMenuForm').action =
+        `/admin/menu/update/${id}`;
+
     document.getElementById('edit_name').value = name;
     document.getElementById('edit_price').value = price;
-    document.getElementById('edit_category').value = category_id;
     document.getElementById('edit_description').value = description;
-    document.getElementById('editMenuModal').classList.replace('hidden', 'flex');
+
+    document.querySelectorAll('.edit-category-checkbox')
+        .forEach(cb => cb.checked = false);
+
+    categoryIds.forEach(id => {
+
+        const checkbox = document.querySelector(
+            `.edit-category-checkbox[value="${id}"]`
+        );
+
+        if (checkbox) {
+            checkbox.checked = true;
+        }
+    });
+
+    document.getElementById('editMenuModal')
+        .classList.replace('hidden', 'flex');
 }
 
 function closeEditModal() {

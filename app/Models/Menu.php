@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory; // <--- INI YANG HILANG TADI
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -10,6 +10,21 @@ class Menu extends Model
 {
     use HasFactory, SoftDeletes;
 
-    // Pastikan semua kolom yang boleh diisi ada di sini
-    protected $fillable = ['name', 'price', 'category_id', 'is_active', 'image', 'description'];
+    protected $fillable = [
+        'name',
+        'price',
+        'is_active',
+        'image',
+        'description'
+    ];
+
+    public function categories()
+    {
+        return $this->belongsToMany(
+            Category::class,
+            'category_menu',
+            'menu_id',
+            'category_id'
+        );
+    }
 }
