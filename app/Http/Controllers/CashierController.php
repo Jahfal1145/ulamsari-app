@@ -20,7 +20,6 @@ class CashierController extends Controller
         
         $tables = Table::all();
 
-        // JURUS ANTI WHERE-IN: Pakai where dan orWhere agar tidak ada error kurung siku lagi
         $pendingOrders = Order::with(['orderItems.menu'])
                         ->where(function($q) {
                             $q->where('order_status_id', 1)
@@ -40,17 +39,19 @@ class CashierController extends Controller
     
     public function store(Request $request)
     {
+        // VALIDASI: Nama Wajib, HP Opsional
+        $request->validate([
+            'cart_data'     => 'required',
+            'table_id'      => 'required',
+            'customer_name' => 'required|string|max:255',
+            'phone_number'  => 'nullable|string|max:20',
+        ]);
+
         $cart = json_decode($request->cart_data, true);
 
         if (!$cart || count($cart) == 0) {
             return back()->with('error', 'Pilih menu dulu rek!');
         }
-
-        if ($request->table_id === null || $request->table_id === '') {
-            return back()->with('error', 'Meja belum dipilih, silakan pilih dulu!');
-        }
-
-        $paymentMethod = $request->payment_method ?? 'Belum Bayar';
 
         DB::beginTransaction();
         try {
@@ -59,7 +60,9 @@ class CashierController extends Controller
                 'order_number' => 'ORD-' . strtoupper(uniqid()),
                 'total_price' => collect($cart)->sum('subtotal'),
                 'order_status_id' => 1,
-                'payment_method' => $paymentMethod,
+                'payment_method' => $request->payment_method ?? 'Tunai',
+                'customer_name' => strtoupper($request->customer_name),
+                'phone_number' => $request->phone_number ?? '-',
             ]);
 
             foreach ($cart as $item) {
@@ -68,21 +71,16 @@ class CashierController extends Controller
                     'menu_id' => $item['menu_id'],
                     'quantity' => $item['qty'],
                     'subtotal' => $item['subtotal'],
-                    'notes' => $item['notes'],
+                    'notes' => $item['notes'] ?? '-',
                 ]);
             }
 
             DB::commit();
-
-            $successMsg = ($paymentMethod !== 'Belum Bayar') 
-                ? 'Pesanan Meja ' . $request->table_id . ' dikirim. LUNAS (' . $paymentMethod . ')' 
-                : 'Pesanan Meja ' . $request->table_id . ' dikirim. (BAYAR NANTI)';
-
-            return back()->with('success', $successMsg);
+            return back()->with('success', 'Pesanan Meja ' . $request->table_id . ' berhasil diproses.');
 
         } catch (\Exception $e) {
             DB::rollback();
-            return back()->with('error', 'Gagal simpan: ' . $e->getMessage());
+            return back()->with('error', 'Gagal: ' . $e->getMessage());
         }
     }
 
@@ -92,112 +90,72 @@ class CashierController extends Controller
         $end_date = $request->query('end_date');
 
         $query = Order::with(['orderItems.menu'])
-                    ->where('payment_method', '!=', 'Belum Bayar');
+                      ->where('payment_method', '!=', 'Belum Bayar');
 
         if ($start_date && $end_date) {
             $query->whereBetween('created_at', [$start_date . ' 00:00:00', $end_date . ' 23:59:59']);
-            $judulFile = $start_date . '_sd_' . $end_date;
         } else {
             $query->whereDate('created_at', now()->format('Y-m-d'));
-            $judulFile = 'Hari_Ini';
         }
 
         $orders = $query->orderBy('id', 'desc')->get();
-        $fileName = 'Laporan_UlamSari_' . $judulFile . '.xls';
-
-        // Variabel penampung total untuk laporan
-        $grandTotalItem = 0;
-        $grandTotalUang = 0;
 
         $html = '<table border="1" style="border-collapse: collapse; text-align: center; font-family: Arial, sans-serif;">';
-        $html .= '<thead>';
-        $html .= '<tr style="background-color: red; color: white; font-weight: bold;">';
-        $html .= '<th>NO</th><th>Nomer Pesanan</th><th>Tanggal</th><th>Nama Pembeli</th><th>No HP</th><th style="min-width:300px;">Pesanan</th><th>No Meja / Takeaway</th><th>Total Item</th><th>Total Harga</th><th>Metode Pembayaran</th>';
+        $html .= '<thead><tr style="background-color: #2563eb; color: white;">';
+        $html .= '<th>NO</th><th>Nomer Pesanan</th><th>Tanggal</th><th>Nama Pembeli</th><th>No HP</th><th>Pesanan</th><th>Total Harga</th><th>Metode</th>';
         $html .= '</tr></thead><tbody>';
         
         $no = 1;
         foreach ($orders as $order) {
-            $lokasi = $order->table_id == '0' ? 'Takeaway' : $order->table_id;
             $pesananArr = [];
-            $totalItemPerOrder = $order->orderItems->sum('quantity');
-            
             foreach ($order->orderItems as $item) {
-                $namaMenu = $item->menu ? $item->menu->name : 'Item'; 
-                $pesananArr[] = $namaMenu . ':' . $item->quantity;
+                $pesananArr[] = ($item->menu->name ?? 'Item') . ' (x' . $item->quantity . ')';
             }
             
-            // Tambahkan ke grand total
-            $grandTotalItem += $totalItemPerOrder;
-            $grandTotalUang += $order->total_price;
-
             $html .= '<tr>';
             $html .= '<td>' . $no++ . '</td>';
             $html .= '<td>' . $order->order_number . '</td>';
-            $html .= '<td>' . $order->created_at->format('d/m/Y') . '</td>';
+            $html .= '<td>' . $order->created_at->format('d/m/Y H:i') . '</td>';
             $html .= '<td>' . ($order->customer_name ?? '-') . '</td>';
+            // MENGUNCI FORMAT HP DI EXCEL
             $html .= '<td style="mso-number-format:\'\@\'">' . ($order->phone_number ?? '-') . '</td>';
             $html .= '<td>' . implode(', ', $pesananArr) . '</td>';
-            $html .= '<td>' . $lokasi . '</td>';
-            $html .= '<td>' . $totalItemPerOrder . '</td>';
-            $html .= '<td style="background-color: yellow;">Rp. ' . number_format($order->total_price, 0, ',', '.') . '</td>';
+            $html .= '<td>' . $order->total_price . '</td>';
             $html .= '<td>' . $order->payment_method . '</td>';
             $html .= '</tr>';
         }
-
-        // PENAMBAHAN BARIS TOTAL DI PALING BAWAH
-        $html .= '<tr style="background-color: #f2f2f2; font-weight: bold;">';
-        $html .= '<td colspan="7" style="text-align: right; padding-right: 10px;">GRAND TOTAL:</td>';
-        $html .= '<td style="background-color: #90ee90;">' . $grandTotalItem . ' Item</td>'; // Total Item
-        $html .= '<td style="background-color: #90ee90;">Rp. ' . number_format($grandTotalUang, 0, ',', '.') . '</td>'; // Total Uang
-        $html .= '<td></td>';
-        $html .= '</tr>';
-
         $html .= '</tbody></table>';
 
         return response($html, 200, [
             "Content-type" => "application/vnd.ms-excel",
-            "Content-Disposition" => "attachment; filename=$fileName"
+            "Content-Disposition" => "attachment; filename=Laporan_UlamSari.xls"
         ]);
     }
 
     public function konfirmasi($id)
     {
-        $order = \App\Models\Order::findOrFail($id);
-        
+        $order = Order::findOrFail($id);
         $order->order_status_id = 1; 
-        
-        if ($order->payment_method == 'Belum Bayar' || $order->payment_method == 'Tunai') {
-            $order->payment_method = 'Tunai';
-        }
-        
         $order->save();
-
-        return redirect()->back()->with('success', 'Pembayaran Lunas! Pesanan otomatis masuk ke Dapur.');
+        return redirect()->back()->with('success', 'Pembayaran Lunas!');
     }
 
-    // FUNGSI UNTUK DIAM-DIAM DIAMBIL OLEH JAVASCRIPT (AJAX) - VERSI ANTI ERROR
     public function apiPendingOrders()
     {
-        $pendingOrders = Order::with(['orderItems.menu'])
-                        ->where(function($q) {
-                            $q->where('order_status_id', 1)
-                              ->orWhere('order_status_id', 4); // Status 4 = Pelanggan dari HP
-                        })
+        return response()->json(Order::with(['orderItems.menu'])
+                        ->whereIn('order_status_id', [1,4])
                         ->get()
-                        ->groupBy('table_id'); 
-                        
-        return response()->json($pendingOrders);
+                        ->groupBy('table_id'));
     }
 
     public function getNota($id)
     {
         $order = Order::with('orderItems.menu')->findOrFail($id);
         return response()->json([
-            'id'             => $order->id,
             'order_number'   => $order->order_number,
             'table_id'       => $order->table_id,
-            'customer_name'  => $order->customer_name ?? 'Tanpa Nama', // PENAMBAHAN DATA
-            'phone_number'   => $order->phone_number ?? '-', // PENAMBAHAN DATA
+            'customer_name'  => $order->customer_name ?? 'Tanpa Nama',
+            'phone_number'   => $order->phone_number ?? '-',
             'payment_method' => $order->payment_method,
             'total_price'    => $order->total_price,
             'created_at'     => $order->created_at,

@@ -7,39 +7,17 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script>tailwind.config = { darkMode: 'class' }</script>
 
-    {{-- ★ MIDTRANS SNAP JS — ganti SB-Mid-client-xxx dengan Client Key kamu --}}
-    {{-- Kalau belum pakai Midtrans, baris ini bisa dihapus dulu --}}
-    {{-- <script src="https://app.midtrans.com/snap/snap.js" data-client-key="{{ config('midtrans.client_key') }}"></script> --}}
-
     <style>
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
         body { transition: background-color 0.3s, color 0.3s; }
 
-        /* ★ PRINT STYLES — hanya aktif saat window.print() */
         @media print {
             body * { visibility: hidden !important; }
             #nota-printable, #nota-printable * { visibility: visible !important; }
-            #nota-printable {
-                position: fixed !important;
-                top: 0 !important;
-                left: 0 !important;
-                width: 80mm !important;
-                padding: 0 !important;
-                margin: 0 !important;
-            }
+            #nota-printable { position: fixed !important; top: 0 !important; left: 0 !important; width: 80mm !important; padding: 0 !important; margin: 0 !important; }
         }
-
-        /* ★ NOTA THERMAL STYLES */
-        #nota-printable {
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 11px;
-            line-height: 1.6;
-            color: #000;
-            background: #fff;
-            width: 270px;
-            padding: 6px;
-        }
+        #nota-printable { font-family: 'Courier New', Courier, monospace; font-size: 11px; line-height: 1.6; color: #000; background: #fff; width: 270px; padding: 6px; }
         .nota-center { text-align: center; }
         .nota-bold { font-weight: bold; }
         .nota-row { display: flex; justify-content: space-between; align-items: flex-start; }
@@ -53,27 +31,23 @@
 <body class="bg-gray-100 dark:bg-gray-900 font-sans text-gray-800 dark:text-gray-100 relative">
 
     @if(session('error'))
-        <div id="alert-error" class="fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-red-600 text-white px-6 py-3 rounded-2xl font-bold shadow-2xl animate-bounce">
-            {{ session('error') }}
-        </div>
+        <div id="alert-error" class="fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-red-600 text-white px-6 py-3 rounded-2xl font-bold shadow-2xl animate-bounce">{{ session('error') }}</div>
         <script>setTimeout(() => document.getElementById('alert-error').remove(), 3000);</script>
     @endif
     @if(session('success'))
-        <div id="alert-success" class="fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-black text-white px-6 py-3 rounded-2xl font-bold shadow-2xl border-l-8 border-green-500">
-            {{ session('success') }}
-        </div>
+        <div id="alert-success" class="fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-black text-white px-6 py-3 rounded-2xl font-bold shadow-2xl border-l-8 border-green-500">{{ session('success') }}</div>
         <script>setTimeout(() => document.getElementById('alert-success').remove(), 3000);</script>
     @endif
 
-    {{-- FORM UTAMA KASIR --}}
     <form action="{{ route('kasir.store') }}" method="POST" id="orderForm" class="flex h-screen overflow-hidden">
         @csrf
         <input type="hidden" name="cart_data" id="cart_data_input">
         <input type="hidden" name="customer_name" id="customer_name_input">
+        <input type="hidden" name="phone_number" id="phone_number_input">
         <input type="hidden" name="payment_type" id="payment_type">
         <input type="hidden" name="payment_method" id="payment_method" value="Belum Bayar">
 
-        {{-- ===== LEFT PANEL: MENU ===== --}}
+        {{-- LEFT PANEL --}}
         <div class="w-3/5 p-6 overflow-y-auto flex flex-col relative border-r dark:border-gray-700">
             <div class="flex justify-between items-center mb-6 flex-shrink-0">
                 <h2 class="text-3xl font-bold text-orange-600 tracking-tight uppercase">KASIR - ULAM SARI</h2>
@@ -81,12 +55,10 @@
                     <span class="absolute inset-y-0 left-0 flex items-center pl-3">
                         <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
                     </span>
-                    <input type="text" id="searchInput" onkeyup="searchMenu()" placeholder="Cari menu..."
-                        class="w-full pl-10 pr-4 py-2 border-2 border-gray-200 dark:border-gray-700 dark:bg-gray-800 rounded-xl focus:border-orange-500 outline-none font-semibold shadow-sm">
+                    <input type="text" id="searchInput" onkeyup="searchMenu()" placeholder="Cari menu..." class="w-full pl-10 pr-4 py-2 border-2 border-gray-200 dark:border-gray-700 dark:bg-gray-800 rounded-xl focus:border-orange-500 outline-none font-semibold shadow-sm">
                 </div>
             </div>
 
-            
             <div class="flex gap-3 mb-6 overflow-x-auto pb-2 scrollbar-hide flex-shrink-0">
                 <button type="button" onclick="filterMenu('semua')" class="filter-btn bg-orange-500 text-white px-6 py-2 rounded-full font-semibold shadow-md transition">Menu</button>
                 <button type="button" onclick="filterMenu('Ter-favorit')" class="filter-btn bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 px-6 py-2 rounded-full font-semibold border dark:border-gray-700 hover:bg-orange-50 hover:text-orange-500 transition">Ter-favorit</button>
@@ -113,26 +85,21 @@
             </div>
         </div>
 
-        {{-- ===== RIGHT PANEL ===== --}}
+        {{-- RIGHT PANEL --}}
         <div class="w-2/5 bg-white dark:bg-gray-800 p-6 shadow-2xl flex flex-col border-l dark:border-gray-700">
             <div class="mb-4 border-b-2 border-gray-100 dark:border-gray-700 pb-4">
                 <input type="hidden" name="table_id" id="selected_table_id">
-                <button type="button" onclick="openTableModal()"
-                        class="w-full bg-white dark:bg-gray-800 text-black dark:text-white border-2 border-gray-100 dark:border-gray-700 p-4 rounded-2xl font-bold text-xl hover:border-orange-500 transition flex justify-center items-center shadow-sm relative group">
+                <button type="button" onclick="openTableModal()" class="w-full bg-white dark:bg-gray-800 text-black dark:text-white border-2 border-gray-100 dark:border-gray-700 p-4 rounded-2xl font-bold text-xl hover:border-orange-500 transition flex justify-center items-center shadow-sm relative group">
                     <span id="table_label" class="uppercase">Nomor Meja</span>
                 </button>
             </div>
 
             <div id="panel-tabs" class="flex gap-2 mb-4">
-                <button type="button" onclick="switchPanel('cart')" id="tab-cart"
-                    class="flex-1 py-2 rounded-xl font-bold text-[11px] uppercase border-2 border-orange-500 bg-orange-500 text-white transition">Pesanan Baru</button>
-                <button type="button" onclick="switchPanel('order')" id="tab-order"
-                    class="flex-1 py-2 rounded-xl font-bold text-[11px] uppercase border-2 border-gray-100 dark:border-gray-700 text-gray-400 transition">Cek Meja</button>
-                <button type="button" onclick="switchPanel('history')" id="tab-history"
-                    class="flex-1 py-2 rounded-xl font-bold text-[11px] uppercase border-2 border-gray-100 dark:border-gray-700 text-gray-400 transition">Riwayat</button>
+                <button type="button" onclick="switchPanel('cart')" id="tab-cart" class="flex-1 py-2 rounded-xl font-bold text-[11px] uppercase border-2 border-orange-500 bg-orange-500 text-white transition">Pesanan Baru</button>
+                <button type="button" onclick="switchPanel('order')" id="tab-order" class="flex-1 py-2 rounded-xl font-bold text-[11px] uppercase border-2 border-gray-100 dark:border-gray-700 text-gray-400 transition">Cek Meja</button>
+                <button type="button" onclick="switchPanel('history')" id="tab-history" class="flex-1 py-2 rounded-xl font-bold text-[11px] uppercase border-2 border-gray-100 dark:border-gray-700 text-gray-400 transition">Riwayat</button>
             </div>
 
-            {{-- CART PANEL --}}
             <div id="panel-cart" class="flex flex-col flex-1 overflow-hidden">
                 <div id="cart-container" class="flex-1 overflow-y-auto pr-2 space-y-3">
                     <div class="flex flex-col items-center justify-center h-full text-gray-300 dark:text-gray-600 italic font-bold"><p>BELUM ADA MENU DIPILIH</p></div>
@@ -149,7 +116,6 @@
                 </div>
             </div>
 
-            {{-- ORDER VIEW PANEL --}}
             <div id="panel-order" class="flex-col flex-1 overflow-hidden hidden">
                 <div id="order-container" class="flex-1 overflow-y-auto pr-2 space-y-3"></div>
                 <div class="border-t-2 border-gray-100 dark:border-gray-700 pt-4 mt-4">
@@ -160,7 +126,6 @@
                 </div>
             </div>
 
-            {{-- HISTORY VIEW PANEL --}}
             <div id="panel-history" class="flex-col flex-1 overflow-hidden hidden">
                 <div class="flex gap-2 items-center mb-4">
                     <div class="flex items-center gap-1 bg-white dark:bg-gray-700 p-1 px-2 rounded-xl border dark:border-gray-600 shadow-sm">
@@ -183,20 +148,14 @@
                             <div class="flex justify-between items-start mb-2 border-b dark:border-gray-700 pb-2">
                                 <div>
                                     <h4 class="font-bold text-black dark:text-white uppercase">{{ $history->order_number }}</h4>
-                                    <p class="text-[10px] font-bold text-gray-400 uppercase mt-1">
-                                        {{ $history->created_at->format('d/m/Y H:i') }} • 
-                                        {{ $history->table_id == '0' ? 'TAKEAWAY' : 'MEJA ' . $history->table_id }}
-                                    </p>
+                                    <p class="text-[10px] font-bold text-gray-400 uppercase mt-1">{{ $history->created_at->format('d/m/Y H:i') }} • {{ $history->table_id == '0' ? 'TAKEAWAY' : 'MEJA ' . $history->table_id }}</p>
                                 </div>
                                 <span class="bg-green-100 text-green-700 px-2 py-1 rounded-lg text-[10px] font-bold uppercase">{{ $history->payment_method }}</span>
                             </div>
-
-                            {{-- ★ TAMBAHAN 1: INFO PELANGGAN DI PANEL RIWAYAT ★ --}}
                             <div class="mt-2 p-2 bg-gray-50 dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600 text-xs">
                                 <p><span class="font-bold text-gray-500">Pemesan:</span> <span class="font-black uppercase">{{ $history->customer_name ?? 'Tanpa Nama' }}</span></p>
                                 <p><span class="font-bold text-gray-500">No. HP:</span> <span class="font-bold text-blue-600">{{ $history->phone_number ?? '-' }}</span></p>
                             </div>
-
                             <div class="flex justify-between items-center mt-3">
                                 <span class="text-xs font-bold text-gray-500 uppercase">{{ $history->orderItems->sum('quantity') }} Item</span>
                                 <span class="font-black text-green-600">Rp {{ number_format($history->total_price, 0, ',', '.') }}</span>
@@ -210,24 +169,34 @@
         </div>
     </form>
 
-    {{-- PAYMENT MODAL --}}
-    <div class="space-y-3 mb-4">
-    <div>
-        <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">
-            Nama Pelanggan <span class="text-red-500">*</span>
-        </label>
-        <input type="text" name="customer_name" required placeholder="Masukkan nama pelanggan" 
-               class="w-full p-2.5 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-orange-500 outline-none">
-    </div>
+    {{-- MODAL CHECKOUT / PEMBAYARAN --}}
+    <div id="paymentModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50 p-4">
+        <div class="bg-white dark:bg-gray-800 w-full max-w-md rounded-3xl p-8">
+            <h3 class="text-2xl font-black text-center mb-6 uppercase dark:text-white">Data Pembeli</h3>
+            
+            <div class="space-y-4 mb-6">
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">Nama Pelanggan <span class="text-red-500">*</span></label>
+                    <input type="text" id="modal_customer_name" required placeholder="Nama wajib diisi" class="w-full p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-orange-500 outline-none uppercase font-bold">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">No. WhatsApp (Opsional)</label>
+                    <input type="text" id="modal_phone_number" placeholder="Contoh: 0812345678" class="w-full p-3 border rounded-xl dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-orange-500 outline-none">
+                </div>
+            </div>
 
-    <div>
-        <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">
-            No. WhatsApp (Opsional)
-        </label>
-        <input type="text" name="phone_number" placeholder="Contoh: 0812345678" 
-               class="w-full p-2.5 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-orange-500 outline-none">
+            <div id="btn-bayar-langsung" class="grid grid-cols-1 gap-3 mb-6">
+                <button type="button" onclick="submitFinal('Tunai')" class="p-4 border-2 border-gray-100 dark:border-gray-700 rounded-2xl font-bold dark:text-white text-left hover:border-orange-500 transition">💵 Tunai / Cash</button>
+                <button type="button" onclick="submitFinal('QRIS')" class="p-4 border-2 border-gray-100 dark:border-gray-700 rounded-2xl font-bold dark:text-white text-left hover:border-orange-500 transition">📱 QRIS / Transfer</button>
+            </div>
+            
+            <div id="btn-bayar-nanti" class="mb-6 hidden">
+                <button type="button" onclick="submitFinal('Belum Bayar')" class="w-full bg-orange-500 hover:bg-orange-600 text-white p-4 rounded-2xl font-bold uppercase tracking-widest shadow-lg transition">Kirim ke Dapur (Bayar Nanti)</button>
+            </div>
+
+            <button type="button" onclick="closePaymentModal()" class="w-full text-gray-400 font-bold uppercase text-xs transition hover:text-red-500">Batal</button>
+        </div>
     </div>
-</div>
 
     {{-- TABLE MODAL --}}
     <div id="tableModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50 p-4">
@@ -279,7 +248,7 @@
         </div>
     </div>
 
-    {{-- ★ MODAL PRINT NOTA (THERMAL) --}}
+    {{-- MODAL PRINT NOTA (THERMAL) --}}
     <div id="printModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50 p-4">
         <div class="bg-white dark:bg-gray-800 rounded-3xl p-6 w-full max-w-sm">
             <div class="w-full flex justify-between items-center mb-4">
@@ -288,19 +257,12 @@
             </div>
             <div class="border-2 border-dashed border-gray-200 rounded-xl p-3 mb-4 w-full flex justify-center bg-gray-50 overflow-auto">
                 <div id="nota-printable-container">
-                    {{-- Ini div bayangan buat nampilin preview aja --}}
-                    <div id="nota-printable">
-                        <p style="text-align:center;padding:20px;color:#999;font-family:sans-serif;">Memuat nota...</p>
-                    </div>
+                    <div id="nota-printable"><p style="text-align:center;padding:20px;color:#999;font-family:sans-serif;">Memuat nota...</p></div>
                 </div>
             </div>
             <div class="flex gap-3 w-full">
-                <button onclick="closePrintModal()" class="flex-1 py-3 border-2 border-gray-200 rounded-2xl font-bold text-gray-500 hover:border-gray-400 transition text-sm">
-                    Tutup
-                </button>
-                <button onclick="window.print()" class="flex-1 py-3 bg-black text-white rounded-2xl font-bold hover:bg-gray-800 transition text-sm flex items-center justify-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg> Cetak Nota
-                </button>
+                <button onclick="closePrintModal()" class="flex-1 py-3 border-2 border-gray-200 rounded-2xl font-bold text-gray-500 hover:border-gray-400 transition text-sm">Tutup</button>
+                <button onclick="window.print()" class="flex-1 py-3 bg-black text-white rounded-2xl font-bold hover:bg-gray-800 transition text-sm flex items-center justify-center gap-2">Cetak Nota</button>
             </div>
         </div>
     </div>
@@ -332,15 +294,10 @@
         function selectTable(id) {
             document.getElementById('selected_table_id').value = id;
             document.getElementById('table_label').innerText = 'MEJA ' + id;
-            
-            document.querySelectorAll('.meja-option').forEach(el => {
-                el.classList.remove('border-orange-500');
-                el.classList.add('border-gray-100');
-            });
+            document.querySelectorAll('.meja-option').forEach(el => { el.classList.remove('border-orange-500'); el.classList.add('border-gray-100'); });
             document.getElementById('btn-takeaway-ui').classList.remove('border-orange-500');
             document.getElementById('btn-meja-' + id).classList.remove('border-gray-100');
             document.getElementById('btn-meja-' + id).classList.add('border-orange-500');
-            
             closeTableModal();
             loadOrderPanel();
         }
@@ -348,13 +305,8 @@
         function selectTakeaway() {
             document.getElementById('selected_table_id').value = '0';
             document.getElementById('table_label').innerText = 'TAKEAWAY';
-            
-            document.querySelectorAll('.meja-option').forEach(el => {
-                el.classList.remove('border-orange-500');
-                el.classList.add('border-gray-100');
-            });
+            document.querySelectorAll('.meja-option').forEach(el => { el.classList.remove('border-orange-500'); el.classList.add('border-gray-100'); });
             document.getElementById('btn-takeaway-ui').classList.add('border-orange-500');
-            
             closeTableModal();
             loadOrderPanel();
         }
@@ -406,37 +358,27 @@
                     statusBadge = `<span class="bg-red-100 text-red-600 text-[10px] font-bold px-2 py-1 rounded uppercase animate-pulse">Belum Bayar</span>`;
                     btnKonfirmasi = `
                     <div class="mt-3 border-t border-orange-200 dark:border-orange-800 pt-3 space-y-2">
-                        <button type="button" onclick="accPesanan(${ord.id})" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-xl text-xs uppercase shadow-md transition active:scale-95">
-                            Terima Uang & ACC ke Dapur
-                        </button>
-                        <button type="button" onclick="openPrintModal(${ord.id})" class="w-full bg-gray-800 hover:bg-black text-white font-bold py-3 rounded-xl text-xs uppercase shadow-md transition active:scale-95 flex items-center justify-center gap-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg> Cetak Nota
-                        </button>
+                        <button type="button" onclick="accPesanan(${ord.id})" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-xl text-xs uppercase shadow-md transition active:scale-95">Terima Uang & ACC ke Dapur</button>
+                        <button type="button" onclick="openPrintModal(${ord.id})" class="w-full bg-gray-800 hover:bg-black text-white font-bold py-3 rounded-xl text-xs uppercase shadow-md transition active:scale-95 flex items-center justify-center gap-2">Cetak Nota</button>
                     </div>`;
                 } else {
                     statusBadge = `<span class="bg-blue-100 text-blue-600 text-[10px] font-bold px-2 py-1 rounded uppercase">Sedang Diproses</span>`;
                     btnKonfirmasi = `
                     <div class="mt-3 border-t border-gray-200 dark:border-gray-700 pt-3">
-                        <button type="button" onclick="openPrintModal(${ord.id})" class="w-full bg-gray-800 hover:bg-black text-white font-bold py-3 rounded-xl text-xs uppercase shadow-md transition active:scale-95 flex items-center justify-center gap-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg> Cetak Nota
-                        </button>
+                        <button type="button" onclick="openPrintModal(${ord.id})" class="w-full bg-gray-800 hover:bg-black text-white font-bold py-3 rounded-xl text-xs uppercase shadow-md transition active:scale-95 flex items-center justify-center gap-2">Cetak Nota</button>
                     </div>`;
                 }
 
                 container.insertAdjacentHTML('beforeend', `
                     <div class="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-2xl p-4 mt-2 mb-4 shadow-sm">
                         <div class="flex justify-between items-center mb-3">
-                            <p class="text-xs font-bold text-orange-600 uppercase">Pesanan #${list.length - idx}
-                            <br><span class="text-gray-500 text-[10px]">${ord.order_number}</span></p>
+                            <p class="text-xs font-bold text-orange-600 uppercase">Pesanan #${list.length - idx}<br><span class="text-gray-500 text-[10px]">${ord.order_number}</span></p>
                             ${statusBadge}
                         </div>
-
-                        {{-- ★ TAMBAHAN 2: INFO PELANGGAN DI KARTU CEK MEJA ★ --}}
                         <div class="mt-2 mb-2 p-2 bg-white dark:bg-gray-800 rounded border border-orange-100 dark:border-gray-700 text-xs text-gray-700 dark:text-gray-300">
                             <p><span class="font-bold text-gray-500">Pemesan:</span> <strong class="uppercase">${ord.customer_name ? ord.customer_name : 'Tanpa Nama'}</strong></p>
                             <p><span class="font-bold text-gray-500">No. HP:</span> <strong class="text-blue-600">${ord.phone_number ? ord.phone_number : '-'}</strong></p>
                         </div>
-
                         <div id="order-items-${ord.id}" class="space-y-2"></div>
                         ${btnKonfirmasi}
                     </div>
@@ -524,6 +466,9 @@
             updateCartUI();
         }
 
+        // ==========================================
+        // LOGIKA PEMBAYARAN & SUBMIT DIPERBAIKI 100%
+        // ==========================================
         function validateAndSubmit(type) {
             if (!document.getElementById('selected_table_id').value) {
                 alert("Pilih Meja dulu rek!");
@@ -537,18 +482,37 @@
 
             document.getElementById('payment_type').value = type;
 
-            if (type === 'now') {
-                document.getElementById('paymentModal').classList.replace('hidden', 'flex');
+            // Sesuaikan isi modal: Bayar Nanti vs Bayar Langsung
+            if (type === 'later') {
+                document.getElementById('btn-bayar-langsung').classList.add('hidden');
+                document.getElementById('btn-bayar-nanti').classList.remove('hidden');
             } else {
-                document.getElementById('payment_method').value = "Belum Bayar";
-                document.getElementById('orderForm').submit();
+                document.getElementById('btn-bayar-langsung').classList.remove('hidden');
+                document.getElementById('btn-bayar-nanti').classList.add('hidden');
             }
+
+            // Buka Modal agar Kasir input Nama
+            document.getElementById('paymentModal').classList.replace('hidden', 'flex');
         }
 
         function closePaymentModal() { document.getElementById('paymentModal').classList.replace('flex', 'hidden'); }
 
         function submitFinal(method) {
+            const customerName = document.getElementById('modal_customer_name').value;
+            const phoneNumber = document.getElementById('modal_phone_number').value;
+
+            if (!customerName) {
+                alert("Nama pelanggan wajib diisi!");
+                document.getElementById('modal_customer_name').focus();
+                return;
+            }
+
+            // Transfer data dari Modal ke Form Utama
+            document.getElementById('customer_name_input').value = customerName;
+            document.getElementById('phone_number_input').value = phoneNumber;
             document.getElementById('payment_method').value = method;
+            
+            // Eksekusi Submit!
             document.getElementById('orderForm').submit();
         }
 
@@ -564,36 +528,24 @@
         function exportExcel() {
             const start = document.getElementById('start_date').value;
             const end = document.getElementById('end_date').value;
-            if (!start || !end) {
-                alert('Pilih tanggal Mulai & Selesai dulu!');
-                return;
-            }
+            if (!start || !end) { alert('Pilih tanggal Mulai & Selesai dulu!'); return; }
             window.location.href = "{{ route('kasir.export') }}?start_date=" + start + "&end_date=" + end;
         }
 
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        // ★ FUNGSI PRINT NOTA (BARU)
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        function closePrintModal() {
-            document.getElementById('printModal').classList.replace('flex', 'hidden');
-        }
+        function closePrintModal() { document.getElementById('printModal').classList.replace('flex', 'hidden'); }
 
-        // Buka modal dan fetch data nota dari server
         async function openPrintModal(orderId) {
             const modal = document.getElementById('printModal');
             const el = document.getElementById('nota-printable');
-            
             modal.classList.replace('hidden', 'flex');
-            el.innerHTML = '<p style="text-align:center;padding:20px;color:#999;font-family:sans-serif;">Memuat nota...</p>';
+            el.innerHTML = '<p style="text-align:center;padding:20px;color:#999;">Memuat nota...</p>';
 
             try {
                 const res = await fetch(`/kasir/nota/${orderId}`);
                 if (!res.ok) throw new Error("Gagal mengambil nota");
                 const order = await res.json();
-
                 const dt = new Date(order.created_at).toLocaleString('id-ID');
                 const mejaTxt = order.table_id == '0' ? 'TAKEAWAY' : 'MEJA ' + order.table_id;
-                
                 const rp = (num) => 'Rp ' + parseInt(num).toLocaleString('id-ID');
 
                 let itemsHTML = '';
@@ -601,83 +553,47 @@
                     let qty = parseInt(item.quantity);
                     let hargaSatuan = Math.round(item.subtotal / qty);
                     itemsHTML += `
-                        <div class="nota-row">
-                            <span class="nota-item-name">${qty}x ${item.name}</span>
-                            <span class="nota-item-price">${rp(item.subtotal)}</span>
-                        </div>
+                        <div class="nota-row"><span class="nota-item-name">${qty}x ${item.name}</span><span class="nota-item-price">${rp(item.subtotal)}</span></div>
                         ${qty > 1 ? `<div class="nota-harga-satuan">${rp(hargaSatuan)}</div>` : ''}
                     `;
                 }
 
                 el.innerHTML = `
-                    <div class="nota-center">
-                        <div class="nota-bold" style="font-size:13px;letter-spacing:1px;">AYAM BAKAR ULAM SARI</div>
-                        <div>Graha DMP, Jl. Stadion, Kemiri, Kec. Sidoarjo, Kabupaten Sidoarjo, Jawa Timur 61234</div>
-                        <div>+62 0812-5996-2277</div>
-                    </div>
+                    <div class="nota-center"><div class="nota-bold" style="font-size:13px;">AYAM BAKAR ULAM SARI</div><div>Graha DMP, Jl. Stadion, Sidoarjo</div><div>+62 0812-5996-2277</div></div>
                     <hr class="nota-divider-solid">
                     <div class="nota-row"><span>Order No</span><span class="nota-bold">${order.order_number || '#' + order.id}</span></div>
                     <div class="nota-row"><span>Waktu</span><span>${dt}</span></div>
                     <div class="nota-row"><span>Meja</span><span>${mejaTxt}</span></div>
-                    <div class="nota-row"><span>Kasir</span><span>Staff</span></div>
                     <hr class="nota-divider-dashed">
-
-                    {{-- ★ TAMBAHAN 3: INFO PELANGGAN DI KERTAS NOTA THERMAL ★ --}}
                     <div class="nota-row"><span>Pemesan</span><span class="nota-bold">${order.customer_name ? order.customer_name.toUpperCase() : 'TANPA NAMA'}</span></div>
                     <div class="nota-row"><span>No. HP</span><span>${order.phone_number ? order.phone_number : '-'}</span></div>
-                    <hr class="nota-divider-solid">
-                    <div style="margin:5px 0;">
-                        ${itemsHTML}
-                    </div>
-                    <hr class="nota-divider-dashed">
-                    <div class="nota-row" style="font-size:13px; margin-top:5px;">
-                        <span>TOTAL AKHIR</span>
-                        <span class="nota-bold">${rp(order.total_price)}</span>
-                    </div>
-                    <div class="nota-row">
-                        <span>METODE BAYAR</span>
-                        <span class="nota-bold" style="text-transform:uppercase;">${order.payment_method}</span>
-                    </div>
+                    <hr class="nota-divider-solid"><div style="margin:5px 0;">${itemsHTML}</div><hr class="nota-divider-dashed">
+                    <div class="nota-row" style="font-size:13px; margin-top:5px;"><span>TOTAL AKHIR</span><span class="nota-bold">${rp(order.total_price)}</span></div>
+                    <div class="nota-row"><span>METODE BAYAR</span><span class="nota-bold" style="text-transform:uppercase;">${order.payment_method}</span></div>
                     <hr class="nota-divider-solid">
                     <div class="nota-center" style="margin-top:10px; font-weight:bold;">TERIMA KASIH</div>
-                    <div class="nota-center" style="margin-top:2px;">Vibe Coding System Active</div>
                 `;
             } catch (err) {
-                console.error(err);
-                el.innerHTML = '<p style="text-align:center;padding:20px;color:red;font-family:sans-serif;">Gagal memuat nota.</p>';
+                el.innerHTML = '<p style="text-align:center;padding:20px;color:red;">Gagal memuat nota.</p>';
             }
         }
 
-        // (RADAR AUTO REFRESH SETIAP 5 DETIK)
         setInterval(() => {
             fetch('/kasir/api/pending-orders')
-                .then(response => {
-                    if (!response.ok) throw new Error("Server error " + response.status);
-                    return response.json();
-                })
+                .then(res => { if (!res.ok) throw new Error("Server error " + res.status); return res.json(); })
                 .then(data => {
                     pendingOrders = data;
-
                     for(let i = 1; i <= 12; i++) {
                         const btnMeja = document.getElementById('btn-meja-' + i);
                         if(!btnMeja) continue;
-                        
                         const adaPesanan = data[i] && Object.keys(data[i]).length > 0;
                         let titikMerah = btnMeja.querySelector('.indicator-dot');
-                        
-                        if(adaPesanan && !titikMerah) {
-                            btnMeja.insertAdjacentHTML('beforeend', '<span class="absolute top-2 right-2 w-3 h-3 bg-red-500 rounded-full animate-pulse indicator-dot"></span>');
-                        } else if (!adaPesanan && titikMerah) {
-                            titikMerah.remove();
-                        }
+                        if(adaPesanan && !titikMerah) btnMeja.insertAdjacentHTML('beforeend', '<span class="absolute top-2 right-2 w-3 h-3 bg-red-500 rounded-full animate-pulse indicator-dot"></span>');
+                        else if (!adaPesanan && titikMerah) titikMerah.remove();
                     }
-
-                    const orderPanel = document.getElementById('panel-order');
-                    if (!orderPanel.classList.contains('hidden')) {
-                        loadOrderPanel();
-                    }
+                    if (!document.getElementById('panel-order').classList.contains('hidden')) loadOrderPanel();
                 })
-                .catch(err => console.error("RADAR ERROR/TERPUTUS: ", err));
+                .catch(err => console.error("RADAR ERROR: ", err));
         }, 5000);
     </script>
 </body>
