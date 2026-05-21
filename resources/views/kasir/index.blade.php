@@ -59,11 +59,14 @@
                 </div>
             </div>
 
+            {{-- ★ KATEGORI DINAMIS DARI DATABASE --}}
             <div class="flex gap-3 mb-6 overflow-x-auto pb-2 scrollbar-hide flex-shrink-0">
-                <button type="button" onclick="filterMenu('semua')" class="filter-btn bg-orange-500 text-white px-6 py-2 rounded-full font-semibold shadow-md transition">Menu</button>
-                <button type="button" onclick="filterMenu('Ter-favorit')" class="filter-btn bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 px-6 py-2 rounded-full font-semibold border dark:border-gray-700 hover:bg-orange-50 hover:text-orange-500 transition">Ter-favorit</button>
-                <button type="button" onclick="filterMenu('Makanan Berat')" class="filter-btn bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 px-6 py-2 rounded-full font-semibold border dark:border-gray-700 hover:bg-orange-50 hover:text-orange-500 transition">Makanan Berat</button>
-                <button type="button" onclick="filterMenu('Minuman')" class="filter-btn bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 px-6 py-2 rounded-full font-semibold border dark:border-gray-700 hover:bg-orange-50 hover:text-orange-500 transition">Minuman</button>
+                <button type="button" onclick="filterMenu('semua')" class="filter-btn bg-orange-500 text-white px-6 py-2 rounded-full font-semibold shadow-md transition">Semua</button>
+                @if(isset($categories))
+                    @foreach($categories as $cat)
+                        <button type="button" onclick="filterMenu('{{ $cat->name }}')" class="filter-btn bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 px-6 py-2 rounded-full font-semibold border dark:border-gray-700 hover:bg-orange-50 hover:text-orange-500 transition">{{ $cat->name }}</button>
+                    @endforeach
+                @endif
             </div>
 
             <div class="grid grid-cols-2 gap-6 pb-20" id="menuGrid">
@@ -169,7 +172,7 @@
         </div>
     </form>
 
-    {{-- MODAL CHECKOUT / PEMBAYARAN (SUDAH DIROMBAK) --}}
+    {{-- MODAL CHECKOUT / PEMBAYARAN --}}
     <div id="paymentModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50 p-4">
         <div class="bg-white dark:bg-gray-800 w-full max-w-md rounded-3xl p-8">
             <h3 class="text-2xl font-black text-center mb-6 uppercase dark:text-white">Data Pembeli</h3>
@@ -185,7 +188,6 @@
                 </div>
             </div>
 
-            {{-- TOMBOL METODE PEMBAYARAN & BAYAR SEKARANG --}}
             <div id="btn-bayar-langsung" class="mb-6">
                 <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Pilih Metode Pembayaran <span class="text-red-500">*</span></label>
                 <div class="grid grid-cols-2 gap-3 mb-4">
@@ -195,7 +197,6 @@
                 <button type="button" onclick="processPayment()" class="w-full bg-green-500 hover:bg-green-600 text-white p-4 rounded-2xl font-black text-sm uppercase tracking-widest shadow-lg transition active:scale-95">💳 BAYAR SEKARANG</button>
             </div>
             
-            {{-- TOMBOL BAYAR NANTI --}}
             <div id="btn-bayar-nanti" class="mb-6 hidden">
                 <button type="button" onclick="submitFinal('Belum Bayar')" class="w-full bg-orange-500 hover:bg-orange-600 text-white p-4 rounded-2xl font-black text-sm uppercase tracking-widest shadow-lg transition active:scale-95">Kirim ke Dapur (Bayar Nanti)</button>
             </div>
@@ -226,7 +227,7 @@
         </div>
     </div>
 
-    {{-- MODAL TAMBAH ITEM (QTY & CATATAN) --}}
+    {{-- ★ MODAL TAMBAH ITEM KASIR (SUDAH ADA VARIAN) --}}
     <div id="addModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50 p-4">
         <div class="bg-white dark:bg-gray-800 w-full max-w-sm rounded-3xl p-6">
             <h3 id="modalName" class="text-xl font-bold mb-1 dark:text-white">Nama Menu</h3>
@@ -242,9 +243,14 @@
                 </div>
             </div>
 
+            {{-- TEMPAT VARIAN MUNCUL --}}
+            <div id="variant-selector-container" class="space-y-4 mb-4">
+                {{-- JS Akan mengisi ini --}}
+            </div>
+
             <div class="mb-6">
                 <label class="block text-xs font-bold text-gray-400 mb-2 uppercase">Catatan Tambahan</label>
-                <input type="text" id="modalNotes" placeholder="Cth: Pedas, Tanpa Daun Bawang..." class="w-full border-2 border-gray-200 dark:border-gray-700 dark:bg-gray-900 rounded-xl p-3 text-sm font-semibold outline-none focus:border-orange-500">
+                <input type="text" id="modalNotes" placeholder="Cth: Pedas, Tanpa Daun Bawang..." class="w-full border-2 border-gray-200 dark:border-gray-700 dark:bg-gray-900 rounded-xl p-3 text-sm font-semibold outline-none focus:border-orange-500 dark:text-white">
             </div>
 
             <div class="flex gap-3">
@@ -273,14 +279,17 @@
         </div>
     </div>
 
-
     <script>
         let cart = [];
         let pendingOrders = @json($pendingOrders ?? []);
         let activePanel = 'cart';
-        let selectedPaymentMethod = null; // Menyimpan status metode pembayaran yang dipilih
+        let selectedPaymentMethod = null;
 
         const formatRupiah = (number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(number);
+        
+        function escapeHtml(str) {
+            return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
 
         function switchPanel(panel) {
             activePanel = panel;
@@ -394,10 +403,18 @@
                 const itemContainer = document.getElementById(`order-items-${ord.id}`);
                 ord.order_items.forEach(item => {
                     const itemName = item.menu ? item.menu.name : (item.name || 'Menu');
+                    const noteHTML = item.notes && item.notes !== '-' ? `<p class="text-[10px] text-orange-500 mt-0.5">${item.notes}</p>` : '';
+                    
                     itemContainer.insertAdjacentHTML('beforeend', `
                         <div class="bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 shadow-sm flex justify-between items-center">
-                            <h4 class="font-bold uppercase text-sm dark:text-white">${itemName}</h4>
-                            <div class="flex gap-4"><span class="bg-black text-white px-2 rounded font-bold">x${item.quantity}</span><span class="font-bold dark:text-white">${formatRupiah(item.subtotal)}</span></div>
+                            <div>
+                                <h4 class="font-bold uppercase text-sm dark:text-white">${itemName}</h4>
+                                ${noteHTML}
+                            </div>
+                            <div class="flex gap-4 items-center">
+                                <span class="bg-black text-white px-2 py-0.5 rounded font-bold text-xs">x${item.quantity}</span>
+                                <span class="font-bold dark:text-white text-sm">${formatRupiah(item.subtotal)}</span>
+                            </div>
                         </div>
                     `);
                 });
@@ -406,7 +423,8 @@
             totalEl.innerText = formatRupiah(gTotal);
         }
 
-        function openAddModal(id, name, price, cat) {
+        // ★ BUKA MODAL + FETCH VARIAN (KASIR)
+        async function openAddModal(id, name, price, cat) {
             document.getElementById('modalQty').value = 1;
             document.getElementById('modalItemId').value = id;
             document.getElementById('modalName').innerText = name;
@@ -414,6 +432,39 @@
             document.getElementById('modalPrice').dataset.rawPrice = price;
             document.getElementById('modalNotes').value = "";
             document.getElementById('addModal').classList.replace('hidden', 'flex');
+
+            const container = document.getElementById('variant-selector-container');
+            container.innerHTML = `<div class="text-gray-400 text-xs font-semibold py-2">Memuat pilihan varian...</div>`;
+
+            try {
+                // Fetch memanggil rute publik
+                const res = await fetch(`/menu/${id}/variants?t=${Date.now()}`);
+                if (!res.ok) throw new Error(`Error server`);
+                
+                const variants = await res.json();
+                container.innerHTML = '';
+
+                if (!variants || variants.length === 0) return;
+
+                variants.forEach(v => {
+                    const opts = Array.isArray(v.options) ? v.options : JSON.parse(v.options || '[]');
+                    if (opts.length === 0) return;
+
+                    let optionHTML = opts.map(opt => `<option value="${opt}" ${opt === v.default_option ? 'selected' : ''}>${opt}</option>`).join('');
+
+                    container.insertAdjacentHTML('beforeend', `
+                        <div class="variant-group" data-variant-name="${escapeHtml(v.variant_name)}">
+                            <label class="block font-bold text-xs text-gray-400 uppercase mb-1.5">${escapeHtml(v.variant_name)}</label>
+                            <select class="variant-select w-full border-2 border-gray-100 dark:border-gray-700 dark:bg-gray-900 p-3 rounded-xl font-bold text-sm outline-none focus:border-orange-500 dark:text-white bg-gray-50">
+                                ${optionHTML}
+                            </select>
+                        </div>
+                    `);
+                });
+            } catch (e) {
+                console.warn('Gagal memuat varian:', e.message);
+                container.innerHTML = '';
+            }
         }
 
         function closeAddModal() { document.getElementById('addModal').classList.replace('flex', 'hidden'); }
@@ -423,14 +474,30 @@
             if (parseInt(q.value) + v >= 1) q.value = parseInt(q.value) + v;
         }
 
+        // ★ SAVE TO CART (KASIR - DENGAN VARIAN)
         function saveToCart() {
             const id = document.getElementById('modalItemId').value;
             const name = document.getElementById('modalName').innerText;
             const price = parseInt(document.getElementById('modalPrice').dataset.rawPrice);
             const qty = parseInt(document.getElementById('modalQty').value);
-            const notes = document.getElementById('modalNotes').value || '-';
+            const notesInput = document.getElementById('modalNotes').value.trim();
 
-            cart.push({ menu_id: id, name, price, qty, subtotal: price * qty, notes });
+            const variants = {};
+            document.querySelectorAll('.variant-group').forEach(group => {
+                const vName = group.dataset.variantName;
+                const vVal  = group.querySelector('.variant-select')?.value || '';
+                if (vName && vVal) variants[vName] = vVal;
+            });
+
+            const variantSummary = Object.entries(variants).map(([k, v]) => `${k}: ${v}`).join(' • ');
+            
+            const finalNotesArr = [];
+            if(variantSummary) finalNotesArr.push(variantSummary);
+            if(notesInput) finalNotesArr.push(`Catatan: ${notesInput}`);
+            
+            const fullNotes = finalNotesArr.length > 0 ? finalNotesArr.join(' | ') : '-';
+
+            cart.push({ menu_id: id, name, price, qty, subtotal: price * qty, notes: fullNotes });
             closeAddModal();
             updateCartUI();
         }
@@ -453,12 +520,12 @@
                     <div class="bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-4 shadow-sm flex flex-col gap-2 relative group hover:border-orange-500 transition">
                         <div class="flex justify-between items-start pr-8">
                             <div>
-                                <h4 class="font-bold text-sm leading-tight dark:text-white uppercase">${item.name}</h4>
+                                <h4 class="font-bold text-sm leading-tight dark:text-white uppercase">${escapeHtml(item.name)}</h4>
                                 <p class="text-orange-500 font-bold text-sm mt-1">${formatRupiah(item.price)}</p>
                             </div>
                             <span class="bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-xl text-sm font-black dark:text-white">x${item.qty}</span>
                         </div>
-                        ${item.notes !== '-' ? `<div class="bg-orange-50 dark:bg-orange-900/20 text-orange-600 px-3 py-2 rounded-xl text-xs font-semibold">Catatan: ${item.notes}</div>` : ''}
+                        ${item.notes !== '-' ? `<div class="bg-orange-50 dark:bg-orange-900/20 text-orange-600 px-3 py-2 rounded-xl text-xs font-semibold">${item.notes}</div>` : ''}
                         <button type="button" onclick="removeItem(${i})" class="absolute top-4 right-4 text-gray-300 hover:text-red-500 transition font-bold text-xl">✕</button>
                     </div>
                 `);
@@ -489,7 +556,6 @@
 
             document.getElementById('payment_type').value = type;
 
-            // Reset UI Modal setiap dibuka
             selectedPaymentMethod = null;
             const btnTunai = document.getElementById('btn-method-tunai');
             const btnQris = document.getElementById('btn-method-qris');
@@ -515,11 +581,9 @@
             const btnTunai = document.getElementById('btn-method-tunai');
             const btnQris = document.getElementById('btn-method-qris');
             
-            // Reset gaya tombol
             btnTunai.className = "p-4 border-2 border-gray-100 dark:border-gray-700 rounded-2xl font-bold dark:text-white text-center hover:border-orange-500 transition";
             btnQris.className = "p-4 border-2 border-gray-100 dark:border-gray-700 rounded-2xl font-bold dark:text-white text-center hover:border-orange-500 transition";
             
-            // Terapkan gaya aktif pada yang dipilih
             if(method === 'Tunai') {
                 btnTunai.className = "p-4 border-2 border-orange-500 bg-orange-50 dark:bg-orange-900/20 rounded-2xl font-bold text-orange-600 dark:text-orange-400 text-center transition";
             } else if(method === 'QRIS') {
@@ -560,7 +624,15 @@
         }
 
         function filterMenu(k) {
-            document.querySelectorAll('.menu-card').forEach(c => c.style.display = (k === 'semua' || c.dataset.category === k) ? 'flex' : 'none');
+            document.querySelectorAll('.menu-card').forEach(c => {
+                c.style.display = (k === 'semua' || c.dataset.category === k) ? 'flex' : 'none';
+            });
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                const isActive = (k === 'semua' && btn.innerText.trim().toLowerCase() === 'semua') || btn.innerText.trim() === k;
+                btn.className = isActive
+                    ? 'filter-btn bg-orange-500 text-white px-6 py-2 rounded-full font-semibold shadow-md transition'
+                    : 'filter-btn bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 px-6 py-2 rounded-full font-semibold border dark:border-gray-700 hover:bg-orange-50 hover:text-orange-500 transition';
+            });
         }
 
         function exportExcel() {
@@ -590,8 +662,10 @@
                 for (let item of order.order_items) {
                     let qty = parseInt(item.quantity);
                     let hargaSatuan = Math.round(item.subtotal / qty);
+                    let noteHTML = item.notes && item.notes !== '-' ? `<br><span style="font-size:9px;color:#555;">${item.notes}</span>` : '';
+                    
                     itemsHTML += `
-                        <div class="nota-row"><span class="nota-item-name">${qty}x ${item.name}</span><span class="nota-item-price">${rp(item.subtotal)}</span></div>
+                        <div class="nota-row"><span class="nota-item-name">${qty}x ${item.name} ${noteHTML}</span><span class="nota-item-price">${rp(item.subtotal)}</span></div>
                         ${qty > 1 ? `<div class="nota-harga-satuan">${rp(hargaSatuan)}</div>` : ''}
                     `;
                 }

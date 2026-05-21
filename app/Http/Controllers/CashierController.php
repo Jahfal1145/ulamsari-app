@@ -20,6 +20,9 @@ class CashierController extends Controller
         
         $tables = Table::all();
 
+        // ★ AMBIL DATA KATEGORI UNTUK FILTER DI HALAMAN KASIR
+        $categories = DB::table('categories')->get();
+
         $pendingOrders = Order::with(['orderItems.menu'])
                         ->where(function($q) {
                             $q->where('order_status_id', 1)
@@ -34,7 +37,7 @@ class CashierController extends Controller
                         ->limit(30)
                         ->get();
 
-        return view('kasir.index', compact('menus', 'tables', 'pendingOrders', 'historyOrders'));
+        return view('kasir.index', compact('menus', 'tables', 'pendingOrders', 'historyOrders', 'categories'));
     }
     
     public function store(Request $request)
@@ -143,7 +146,7 @@ class CashierController extends Controller
     public function apiPendingOrders()
     {
         return response()->json(Order::with(['orderItems.menu'])
-                        ->whereIn('order_status_id', [1,4])
+                        ->whereIn('order_status_id',)
                         ->get()
                         ->groupBy('table_id'));
     }
@@ -163,6 +166,7 @@ class CashierController extends Controller
                 'name'     => $item->menu->name ?? $item->name,
                 'quantity' => $item->quantity,
                 'subtotal' => $item->subtotal,
+                'notes'    => $item->notes, // Biar note/varian muncul di Nota
             ])
         ]);
     }
