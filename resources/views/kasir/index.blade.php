@@ -169,7 +169,7 @@
         </div>
     </form>
 
-    {{-- MODAL CHECKOUT / PEMBAYARAN --}}
+    {{-- MODAL CHECKOUT / PEMBAYARAN (SUDAH DIROMBAK) --}}
     <div id="paymentModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50 p-4">
         <div class="bg-white dark:bg-gray-800 w-full max-w-md rounded-3xl p-8">
             <h3 class="text-2xl font-black text-center mb-6 uppercase dark:text-white">Data Pembeli</h3>
@@ -185,13 +185,19 @@
                 </div>
             </div>
 
-            <div id="btn-bayar-langsung" class="grid grid-cols-1 gap-3 mb-6">
-                <button type="button" onclick="submitFinal('Tunai')" class="p-4 border-2 border-gray-100 dark:border-gray-700 rounded-2xl font-bold dark:text-white text-left hover:border-orange-500 transition">💵 Tunai / Cash</button>
-                <button type="button" onclick="submitFinal('QRIS')" class="p-4 border-2 border-gray-100 dark:border-gray-700 rounded-2xl font-bold dark:text-white text-left hover:border-orange-500 transition">📱 QRIS / Transfer</button>
+            {{-- TOMBOL METODE PEMBAYARAN & BAYAR SEKARANG --}}
+            <div id="btn-bayar-langsung" class="mb-6">
+                <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Pilih Metode Pembayaran <span class="text-red-500">*</span></label>
+                <div class="grid grid-cols-2 gap-3 mb-4">
+                    <button type="button" id="btn-method-tunai" onclick="selectPaymentMethod('Tunai')" class="p-4 border-2 border-gray-100 dark:border-gray-700 rounded-2xl font-bold dark:text-white text-center hover:border-orange-500 transition">💵 Tunai</button>
+                    <button type="button" id="btn-method-qris" onclick="selectPaymentMethod('QRIS')" class="p-4 border-2 border-gray-100 dark:border-gray-700 rounded-2xl font-bold dark:text-white text-center hover:border-orange-500 transition">📱 E-Wallet</button>
+                </div>
+                <button type="button" onclick="processPayment()" class="w-full bg-green-500 hover:bg-green-600 text-white p-4 rounded-2xl font-black text-sm uppercase tracking-widest shadow-lg transition active:scale-95">💳 BAYAR SEKARANG</button>
             </div>
             
+            {{-- TOMBOL BAYAR NANTI --}}
             <div id="btn-bayar-nanti" class="mb-6 hidden">
-                <button type="button" onclick="submitFinal('Belum Bayar')" class="w-full bg-orange-500 hover:bg-orange-600 text-white p-4 rounded-2xl font-bold uppercase tracking-widest shadow-lg transition">Kirim ke Dapur (Bayar Nanti)</button>
+                <button type="button" onclick="submitFinal('Belum Bayar')" class="w-full bg-orange-500 hover:bg-orange-600 text-white p-4 rounded-2xl font-black text-sm uppercase tracking-widest shadow-lg transition active:scale-95">Kirim ke Dapur (Bayar Nanti)</button>
             </div>
 
             <button type="button" onclick="closePaymentModal()" class="w-full text-gray-400 font-bold uppercase text-xs transition hover:text-red-500">Batal</button>
@@ -272,6 +278,7 @@
         let cart = [];
         let pendingOrders = @json($pendingOrders ?? []);
         let activePanel = 'cart';
+        let selectedPaymentMethod = null; // Menyimpan status metode pembayaran yang dipilih
 
         const formatRupiah = (number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(number);
 
@@ -467,7 +474,7 @@
         }
 
         // ==========================================
-        // LOGIKA PEMBAYARAN & SUBMIT DIPERBAIKI 100%
+        // FUNGSI PILIH PEMBAYARAN DAN SUBMIT 
         // ==========================================
         function validateAndSubmit(type) {
             if (!document.getElementById('selected_table_id').value) {
@@ -482,7 +489,15 @@
 
             document.getElementById('payment_type').value = type;
 
-            // Sesuaikan isi modal: Bayar Nanti vs Bayar Langsung
+            // Reset UI Modal setiap dibuka
+            selectedPaymentMethod = null;
+            const btnTunai = document.getElementById('btn-method-tunai');
+            const btnQris = document.getElementById('btn-method-qris');
+            if(btnTunai && btnQris) {
+                btnTunai.className = "p-4 border-2 border-gray-100 dark:border-gray-700 rounded-2xl font-bold dark:text-white text-center hover:border-orange-500 transition";
+                btnQris.className = "p-4 border-2 border-gray-100 dark:border-gray-700 rounded-2xl font-bold dark:text-white text-center hover:border-orange-500 transition";
+            }
+
             if (type === 'later') {
                 document.getElementById('btn-bayar-langsung').classList.add('hidden');
                 document.getElementById('btn-bayar-nanti').classList.remove('hidden');
@@ -491,8 +506,33 @@
                 document.getElementById('btn-bayar-nanti').classList.add('hidden');
             }
 
-            // Buka Modal agar Kasir input Nama
             document.getElementById('paymentModal').classList.replace('hidden', 'flex');
+        }
+
+        function selectPaymentMethod(method) {
+            selectedPaymentMethod = method;
+            
+            const btnTunai = document.getElementById('btn-method-tunai');
+            const btnQris = document.getElementById('btn-method-qris');
+            
+            // Reset gaya tombol
+            btnTunai.className = "p-4 border-2 border-gray-100 dark:border-gray-700 rounded-2xl font-bold dark:text-white text-center hover:border-orange-500 transition";
+            btnQris.className = "p-4 border-2 border-gray-100 dark:border-gray-700 rounded-2xl font-bold dark:text-white text-center hover:border-orange-500 transition";
+            
+            // Terapkan gaya aktif pada yang dipilih
+            if(method === 'Tunai') {
+                btnTunai.className = "p-4 border-2 border-orange-500 bg-orange-50 dark:bg-orange-900/20 rounded-2xl font-bold text-orange-600 dark:text-orange-400 text-center transition";
+            } else if(method === 'QRIS') {
+                btnQris.className = "p-4 border-2 border-orange-500 bg-orange-50 dark:bg-orange-900/20 rounded-2xl font-bold text-orange-600 dark:text-orange-400 text-center transition";
+            }
+        }
+
+        function processPayment() {
+            if (!selectedPaymentMethod) {
+                alert("Pilih metode pembayaran (Tunai / QRIS) terlebih dahulu!");
+                return;
+            }
+            submitFinal(selectedPaymentMethod);
         }
 
         function closePaymentModal() { document.getElementById('paymentModal').classList.replace('flex', 'hidden'); }
@@ -507,12 +547,10 @@
                 return;
             }
 
-            // Transfer data dari Modal ke Form Utama
             document.getElementById('customer_name_input').value = customerName;
             document.getElementById('phone_number_input').value = phoneNumber;
             document.getElementById('payment_method').value = method;
             
-            // Eksekusi Submit!
             document.getElementById('orderForm').submit();
         }
 
