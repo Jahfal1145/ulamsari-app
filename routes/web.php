@@ -9,9 +9,14 @@ use App\Http\Controllers\MenuController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\MenuVariantController;
 
-Route::get('/', fn() => redirect()->route('pin.index'));
-Route::get('/', [PinController::class, 'index'])->name('login');
+Route::get('/', function () {
+    return redirect()->route('pin.index');
+});
 
+Route::get('/login-pin', [PinController::class, 'show'])
+    ->name('pin.index');
+
+    
 Route::get('/login-pin', [PinController::class, 'show'])->name('pin.index');
 Route::post('/login-pin/verify', [PinController::class, 'verify'])->name('pin.verify');
 Route::post('/login-pin/logout/{role}', [PinController::class, 'logout'])->name('pin.logout');
