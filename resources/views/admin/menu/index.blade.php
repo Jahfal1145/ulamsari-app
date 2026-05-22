@@ -660,13 +660,17 @@ function renderVariantList(variants, menuId) {
                         <p class="text-gray-400 text-[11px] font-semibold mt-0.5">${optsArr.length} pilihan · Default: <span class="text-purple-600">${v.default_option || optsArr || '-'}</span></p>
                     </div>
                   <div class="flex gap-2 shrink-0">
-    <button onclick="openEditCategoryModal(${cat.id}, '${cat.name.replace(/'/g, "\\'")}')"
-            class="bg-blue-50 hover:bg-blue-100 text-blue-600 px-3 py-1.5 rounded-lg font-bold text-[11px] transition">
+    <button onclick='openEditVariantModal(
+        ${v.id},
+        ${JSON.stringify(v.variant_name)},
+        ${JSON.stringify(optsArr)}
+    )'
+        class="bg-blue-50 hover:bg-blue-100 text-blue-600 px-3 py-1.5 rounded-lg font-bold text-[11px] transition">
         Edit
     </button>
 
-    <button onclick="deleteCategory(${cat.id})"
-            class="bg-red-50 hover:bg-red-500 text-red-500 hover:text-white px-3 py-1.5 rounded-lg font-bold text-[11px] transition">
+    <button onclick="deleteVariant(${v.id})"
+        class="bg-red-50 hover:bg-red-500 text-red-500 hover:text-white px-3 py-1.5 rounded-lg font-bold text-[11px] transition">
         Hapus
     </button>
 </div>
