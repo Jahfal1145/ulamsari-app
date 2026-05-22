@@ -304,505 +304,396 @@
         </div>
     </div>
 
-    <script>
-        let cart = [];
-        let pendingOrders = @json($pendingOrders ?? []);
-        let activePanel = 'cart';
-        let selectedPaymentMethod = null;
-        let selectedItemType = 'Dine In'; 
-        let selectedVariantName = '';
-        let selectedVariantPrice = 0;
-        let basePrice = 0;
 
-        const formatRupiah = (number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(number);
+<script>
+   let cart = [];
+let pendingOrders = @json($pendingOrders ?? []);
+let activePanel = 'cart';
+let selectedPaymentMethod = null;
+let selectedItemType = 'Dine In'; 
+let selectedVariantName = '';
+let selectedVariantPrice = 0;
+let basePrice = 0;
 
-        function switchPanel(panel) {
-            activePanel = panel;
+const formatRupiah = (number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(number);
 
-            // 1. Reset & Set Panel Pesanan Baru
-            if(panel === 'cart') {
-                document.getElementById('panel-cart').classList.replace('hidden', 'flex');
-            } else {
-                document.getElementById('panel-cart').classList.replace('flex', 'hidden');
+function switchPanel(panel) {
+    activePanel = panel;
+    if(panel === 'cart') {
+        document.getElementById('panel-cart').classList.replace('hidden', 'flex');
+    } else {
+        document.getElementById('panel-cart').classList.replace('flex', 'hidden');
+    }
+    if(panel === 'order') {
+        document.getElementById('panel-order').classList.replace('hidden', 'flex');
+    } else {
+        document.getElementById('panel-order').classList.replace('flex', 'hidden');
+    }
+    if(panel === 'history') {
+        document.getElementById('panel-history').classList.replace('hidden', 'flex');
+    } else {
+        document.getElementById('panel-history').classList.replace('flex', 'hidden');
+    }
+    document.getElementById('tab-cart').className = panel === 'cart' ? 'flex-1 py-2 rounded-xl font-bold text-[11px] uppercase border-2 border-orange-500 bg-orange-500 text-white transition' : 'flex-1 py-2 rounded-xl font-bold text-[11px] uppercase border-2 border-gray-100 dark:border-gray-700 text-gray-400 transition';
+    document.getElementById('tab-order').className = panel === 'order' ? 'flex-1 py-2 rounded-xl font-bold text-[11px] uppercase border-2 border-orange-500 bg-orange-500 text-white transition' : 'flex-1 py-2 rounded-xl font-bold text-[11px] uppercase border-2 border-gray-100 dark:border-gray-700 text-gray-400 transition';
+    document.getElementById('tab-history').className = panel === 'history' ? 'flex-1 py-2 rounded-xl font-bold text-[11px] uppercase border-2 border-orange-500 bg-orange-500 text-white transition' : 'flex-1 py-2 rounded-xl font-bold text-[11px] uppercase border-2 border-gray-100 dark:border-gray-700 text-gray-400 transition';
+    if (panel === 'order') loadOrderPanel();
+}
+
+function openTableModal() { document.getElementById('tableModal').classList.replace('hidden', 'flex'); }
+function closeTableModal() { document.getElementById('tableModal').classList.replace('flex', 'hidden'); }
+
+function selectTable(id) {
+    document.getElementById('selected_table_id').value = id;
+    document.getElementById('table_label').innerText = 'MEJA ' + id;
+    document.querySelectorAll('.meja-option').forEach(el => { el.classList.remove('border-orange-500'); el.classList.add('border-gray-100'); });
+    document.getElementById('btn-takeaway-ui').classList.remove('border-orange-500');
+    document.getElementById('btn-meja-' + id).classList.remove('border-gray-100');
+    document.getElementById('btn-meja-' + id).classList.add('border-orange-500');
+    closeTableModal();
+    loadOrderPanel();
+}
+
+function selectTakeaway() {
+    document.getElementById('selected_table_id').value = '0';
+    document.getElementById('table_label').innerText = 'TAKEAWAY';
+    document.querySelectorAll('.meja-option').forEach(el => { el.classList.remove('border-orange-500'); el.classList.add('border-gray-100'); });
+    document.getElementById('btn-takeaway-ui').classList.add('border-orange-500');
+    if (cart.length > 0) {
+        cart.forEach(item => {
+            if (!item.notes.toUpperCase().includes('BUNGKUS') && !item.notes.toUpperCase().includes('TAKEAWAY')) {
+                item.notes = (item.notes === '-' || item.notes === '') ? 'Bungkus' : item.notes + ' (Bungkus)';
             }
+        });
+        updateCartUI();
+    }
+    closeTableModal();
+    loadOrderPanel();
+}
 
-            // 2. Reset & Set Panel Cek Meja
-            if(panel === 'order') {
-                document.getElementById('panel-order').classList.replace('hidden', 'flex');
-            } else {
-                document.getElementById('panel-order').classList.replace('flex', 'hidden');
-            }
+function accPesanan(id) {
+    if(confirm("Apakah pelanggan sudah membayar? Pesanan akan berubah menjadi Lunas.")) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/kasir/konfirmasi/' + id;
+        const token = document.createElement('input');
+        token.type = 'hidden';
+        token.name = '_token';
+        token.value = '{{ csrf_token() }}';
+        form.appendChild(token);
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
 
-            // 3. Reset & Set Panel Riwayat
-            if(panel === 'history') {
-                document.getElementById('panel-history').classList.replace('hidden', 'flex');
-            } else {
-                document.getElementById('panel-history').classList.replace('flex', 'hidden');
-            }
+function loadOrderPanel() {
+    const tableId = document.getElementById('selected_table_id').value;
+    const container = document.getElementById('order-container');
+    const totalEl = document.getElementById('order-total-price');
 
-            // Update UI Warna Tab Button
-            document.getElementById('tab-cart').className = panel === 'cart' ? 'flex-1 py-2 rounded-xl font-bold text-[11px] uppercase border-2 border-orange-500 bg-orange-500 text-white transition' : 'flex-1 py-2 rounded-xl font-bold text-[11px] uppercase border-2 border-gray-100 dark:border-gray-700 text-gray-400 transition';
-            document.getElementById('tab-order').className = panel === 'order' ? 'flex-1 py-2 rounded-xl font-bold text-[11px] uppercase border-2 border-orange-500 bg-orange-500 text-white transition' : 'flex-1 py-2 rounded-xl font-bold text-[11px] uppercase border-2 border-gray-100 dark:border-gray-700 text-gray-400 transition';
-            document.getElementById('tab-history').className = panel === 'history' ? 'flex-1 py-2 rounded-xl font-bold text-[11px] uppercase border-2 border-orange-500 bg-orange-500 text-white transition' : 'flex-1 py-2 rounded-xl font-bold text-[11px] uppercase border-2 border-gray-100 dark:border-gray-700 text-gray-400 transition';
+    if (!tableId) {
+        container.innerHTML = `<div class="flex flex-col items-center justify-center h-full text-gray-300 dark:text-gray-600 italic font-bold text-center"><p>PILIH MEJA DULU</p></div>`;
+        totalEl.innerText = 'Rp 0';
+        return;
+    }
 
-            // Jika buka Cek Meja, langsung load datanya
-            if (panel === 'order') loadOrderPanel();
+    const rawOrder = pendingOrders[tableId];
+    if (!rawOrder || Object.keys(rawOrder).length === 0) {
+        container.innerHTML = `<div class="flex flex-col items-center justify-center h-full text-gray-400 italic font-bold text-center"><p>TIDAK ADA PESANAN AKTIF</p></div>`;
+        totalEl.innerText = 'Rp 0';
+        return;
+    }
+
+    let list = Array.isArray(rawOrder) ? [...rawOrder] : Object.values(rawOrder);
+    container.innerHTML = '';
+    let gTotal = 0;
+    list.reverse();
+
+    list.forEach((ord, idx) => {
+        gTotal += parseInt(ord.total_price);
+        let statusBadge = '';
+        let btnKonfirmasi = '';
+
+        if (ord.payment_method === 'Belum Bayar') {
+            statusBadge = `<span class="bg-red-100 text-red-600 text-[10px] font-bold px-2 py-1 rounded uppercase animate-pulse">Belum Bayar</span>`;
+            btnKonfirmasi = `
+            <div class="mt-3 border-t border-orange-200 dark:border-orange-800 pt-3 space-y-2">
+                <button type="button" onclick="accPesanan(${ord.id})" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-xl text-xs uppercase shadow-md transition active:scale-95">💳 TERIMA UANG (LUNAS)</button>
+                <button type="button" onclick="openPrintModal(${ord.id})" class="w-full bg-gray-800 hover:bg-black text-white font-bold py-3 rounded-xl text-xs uppercase shadow-md transition active:scale-95 flex items-center justify-center gap-2">Cetak Nota</button>
+            </div>`;
+        } else {
+            statusBadge = `<span class="bg-blue-100 text-blue-600 text-[10px] font-bold px-2 py-1 rounded uppercase">Lunas (Sedang Diproses)</span>`;
+            btnKonfirmasi = `
+            <div class="mt-3 border-t border-gray-200 dark:border-gray-700 pt-3">
+                <button type="button" onclick="openPrintModal(${ord.id})" class="w-full bg-gray-800 hover:bg-black text-white font-bold py-3 rounded-xl text-xs uppercase shadow-md transition active:scale-95 flex items-center justify-center gap-2">Cetak Nota</button>
+            </div>`;
         }
 
-        function openTableModal() { document.getElementById('tableModal').classList.replace('hidden', 'flex'); }
-        function closeTableModal() { document.getElementById('tableModal').classList.replace('flex', 'hidden'); }
+        container.insertAdjacentHTML('beforeend', `
+            <div class="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-2xl p-4 mt-2 mb-4 shadow-sm">
+                <div class="flex justify-between items-center mb-3">
+                    <p class="text-xs font-bold text-orange-600 uppercase">Pesanan #${list.length - idx}<br><span class="text-gray-500 text-[10px]">${ord.order_number}</span></p>
+                    ${statusBadge}
+                </div>
+                <div class="mt-2 mb-2 p-2 bg-white dark:bg-gray-800 rounded border border-orange-100 dark:border-gray-700 text-xs text-gray-700 dark:text-gray-300">
+                    <p><span class="font-bold text-gray-500">Pemesan:</span> <strong class="uppercase">${ord.customer_name ? ord.customer_name : 'Tanpa Nama'}</strong></p>
+                    <p><span class="font-bold text-gray-500">No. HP:</span> <strong class="text-blue-600">${ord.phone_number ? ord.phone_number : '-'}</strong></p>
+                </div>
+                <div id="order-items-${ord.id}" class="space-y-2"></div>
+                ${btnKonfirmasi}
+            </div>
+        `);
 
-        function selectTable(id) {
-            document.getElementById('selected_table_id').value = id;
-            document.getElementById('table_label').innerText = 'MEJA ' + id;
-            document.querySelectorAll('.meja-option').forEach(el => { el.classList.remove('border-orange-500'); el.classList.add('border-gray-100'); });
-            document.getElementById('btn-takeaway-ui').classList.remove('border-orange-500');
-            document.getElementById('btn-meja-' + id).classList.remove('border-gray-100');
-            document.getElementById('btn-meja-' + id).classList.add('border-orange-500');
-            closeTableModal();
-            loadOrderPanel();
+        const itemContainer = document.getElementById(`order-items-${ord.id}`);
+        ord.order_items.forEach(item => {
+            const itemName = item.menu ? item.menu.name : (item.name || 'Menu');
+            itemContainer.insertAdjacentHTML('beforeend', `
+                <div class="bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 shadow-sm flex justify-between items-center">
+                    <h4 class="font-bold uppercase text-sm dark:text-white">${itemName}</h4>
+                    <div class="flex gap-4"><span class="bg-black text-white px-2 rounded font-bold">x${item.quantity}</span><span class="font-bold dark:text-white">${formatRupiah(item.subtotal)}</span></div>
+                </div>
+            `);
+        });
+    });
+
+    totalEl.innerText = formatRupiah(gTotal);
+}
+
+function openMenu(element) {
+    const id = element.getAttribute('data-id');
+    const name = element.getAttribute('data-name');
+    const price = parseInt(element.getAttribute('data-price'));
+    const variantsBase64 = element.getAttribute('data-variants');
+    
+
+    document.getElementById('modalQty').value = 1;
+    document.getElementById('modalItemId').value = id;
+    document.getElementById('modalName').innerText = name;
+    document.getElementById('modalPrice').innerText = formatRupiah(price);
+    document.getElementById('modalPrice').dataset.rawPrice = price;
+    document.getElementById('modalNotes').value = '';
+
+    basePrice = price;
+    selectedVariantName = '';
+    selectedVariantPrice = 0;
+
+    let variantsArray = [];
+    if (variantsBase64) {
+        try {
+            const decodedJson = atob(variantsBase64);
+            variantsArray = JSON.parse(decodedJson);
+        } catch(e) {
+            console.error("Gagal decode varian:", e);
         }
+    }
 
-        function selectTakeaway() {
-            document.getElementById('selected_table_id').value = '0';
-            document.getElementById('table_label').innerText = 'TAKEAWAY';
-            document.querySelectorAll('.meja-option').forEach(el => { el.classList.remove('border-orange-500'); el.classList.add('border-gray-100'); });
-            document.getElementById('btn-takeaway-ui').classList.add('border-orange-500');
-            
-            if (cart.length > 0) {
-                cart.forEach(item => {
-                    if (!item.notes.toUpperCase().includes('BUNGKUS') && !item.notes.toUpperCase().includes('TAKEAWAY')) {
-                        item.notes = (item.notes === '-' || item.notes === '') ? 'Bungkus' : item.notes + ' (Bungkus)';
-                    }
-                });
-                updateCartUI(); 
-            }
-            closeTableModal();
-            loadOrderPanel();
-        }
+    const variantContainer = document.getElementById('variant-container');
 
-        function accPesanan(id) {
-            if(confirm("Apakah pelanggan sudah membayar? Pesanan akan berubah menjadi Lunas.")) {
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.action = '/kasir/konfirmasi/' + id;
-                const token = document.createElement('input');
-                token.type = 'hidden';
-                token.name = '_token';
-                token.value = '{{ csrf_token() }}';
-                form.appendChild(token);
-                document.body.appendChild(form);
-                form.submit();
-            }
-        }
+    if (variantsArray && variantsArray.length > 0) {
+        let html = '';
 
-        function loadOrderPanel() {
-            const tableId = document.getElementById('selected_table_id').value;
-            const container = document.getElementById('order-container');
-            const totalEl = document.getElementById('order-total-price');
+        variantsArray.forEach((variantGroup) => {
+            const variantTitle = variantGroup.name || variantGroup.variant_name || variantGroup.nama || 'Varian';
+            const options = variantGroup.options || variantGroup.values || variantGroup.items || [];
 
-            if (!tableId) {
-                container.innerHTML = `<div class="flex flex-col items-center justify-center h-full text-gray-300 dark:text-gray-600 italic font-bold text-center"><p>PILIH MEJA DULU</p></div>`;
-                totalEl.innerText = 'Rp 0';
-                return;
-            }
+            html += `<div class="mb-4">
+                <label class="block text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider">${variantTitle}</label>
+                <div class="grid grid-cols-2 gap-2">`;
 
-            const rawOrder = pendingOrders[tableId];
-            if (!rawOrder || Object.keys(rawOrder).length === 0) {
-                container.innerHTML = `<div class="flex flex-col items-center justify-center h-full text-gray-400 italic font-bold text-center"><p>TIDAK ADA PESANAN AKTIF</p></div>`;
-                totalEl.innerText = 'Rp 0';
-                return;
-            }
-
-            let list = Array.isArray(rawOrder) ? [...rawOrder] : Object.values(rawOrder);
-            container.innerHTML = '';
-            let gTotal = 0;
-            list.reverse();
-
-            list.forEach((ord, idx) => {
-                gTotal += parseInt(ord.total_price);
-                let statusBadge = '';
-                let btnKonfirmasi = '';
-
-                if (ord.payment_method === 'Belum Bayar') {
-                    statusBadge = `<span class="bg-red-100 text-red-600 text-[10px] font-bold px-2 py-1 rounded uppercase animate-pulse">Belum Bayar</span>`;
-                    btnKonfirmasi = `
-                    <div class="mt-3 border-t border-orange-200 dark:border-orange-800 pt-3 space-y-2">
-                        <button type="button" onclick="accPesanan(${ord.id})" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-xl text-xs uppercase shadow-md transition active:scale-95">💳 TERIMA UANG (LUNAS)</button>
-                        <button type="button" onclick="openPrintModal(${ord.id})" class="w-full bg-gray-800 hover:bg-black text-white font-bold py-3 rounded-xl text-xs uppercase shadow-md transition active:scale-95 flex items-center justify-center gap-2">Cetak Nota</button>
-                    </div>`;
-                } else {
-                    statusBadge = `<span class="bg-blue-100 text-blue-600 text-[10px] font-bold px-2 py-1 rounded uppercase">Lunas (Sedang Diproses)</span>`;
-                    btnKonfirmasi = `
-                    <div class="mt-3 border-t border-gray-200 dark:border-gray-700 pt-3">
-                        <button type="button" onclick="openPrintModal(${ord.id})" class="w-full bg-gray-800 hover:bg-black text-white font-bold py-3 rounded-xl text-xs uppercase shadow-md transition active:scale-95 flex items-center justify-center gap-2">Cetak Nota</button>
-                    </div>`;
-                }
-
-                container.insertAdjacentHTML('beforeend', `
-                    <div class="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-2xl p-4 mt-2 mb-4 shadow-sm">
-                        <div class="flex justify-between items-center mb-3">
-                            <p class="text-xs font-bold text-orange-600 uppercase">Pesanan #${list.length - idx}<br><span class="text-gray-500 text-[10px]">${ord.order_number}</span></p>
-                            ${statusBadge}
-                        </div>
-                        <div class="mt-2 mb-2 p-2 bg-white dark:bg-gray-800 rounded border border-orange-100 dark:border-gray-700 text-xs text-gray-700 dark:text-gray-300">
-                            <p><span class="font-bold text-gray-500">Pemesan:</span> <strong class="uppercase">${ord.customer_name ? ord.customer_name : 'Tanpa Nama'}</strong></p>
-                            <p><span class="font-bold text-gray-500">No. HP:</span> <strong class="text-blue-600">${ord.phone_number ? ord.phone_number : '-'}</strong></p>
-                        </div>
-                        <div id="order-items-${ord.id}" class="space-y-2"></div>
-                        ${btnKonfirmasi}
-                    </div>
-                `);
-
-                const itemContainer = document.getElementById(`order-items-${ord.id}`);
-                ord.order_items.forEach(item => {
-                    const itemName = item.menu ? item.menu.name : (item.name || 'Menu');
-                    itemContainer.insertAdjacentHTML('beforeend', `
-                        <div class="bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 shadow-sm flex justify-between items-center">
-                            <h4 class="font-bold uppercase text-sm dark:text-white">${itemName}</h4>
-                            <div class="flex gap-4"><span class="bg-black text-white px-2 rounded font-bold">x${item.quantity}</span><span class="font-bold dark:text-white">${formatRupiah(item.subtotal)}</span></div>
-                        </div>
-                    `);
-                });
+            options.forEach((option, index) => {
+                const optionName = typeof option === 'string' ? option : (option.name || option.nama || 'Opsi');
+                html += `
+                    <label class="border-2 border-gray-200 dark:border-gray-700 rounded-xl p-2 flex items-center gap-2 cursor-pointer hover:border-orange-500 transition">
+                        <input type="radio" name="varian_${variantTitle}" value="${optionName}"
+                            onchange='pilihVarian("${optionName}", 0)'
+                            class="accent-orange-500" ${index === 0 ? 'checked' : ''}>
+                        <span class="text-xs font-bold dark:text-white">${optionName}</span>
+                    </label>`;
             });
 
-            totalEl.innerText = formatRupiah(gTotal);
+            html += `</div></div>`;
+        });
+
+        variantContainer.innerHTML = html;
+        variantContainer.classList.remove('hidden');
+
+        if (variantsArray[0]?.options?.length > 0) {
+            pilihVarian(variantsArray[0].options[0], 0);
         }
+    } else {
+        variantContainer.innerHTML = '';
+        variantContainer.classList.add('hidden');
+    }
 
-        // 🔥 JURUS ULTIMATE: DECODE BASE64 AGAR DATA 100% AMAN 🔥
-        function openMenu(element) {
-            const id = element.getAttribute('data-id');
-            const name = element.getAttribute('data-name');
-            const price = parseInt(element.getAttribute('data-price'));
-            const variantsBase64 = element.getAttribute('data-variants');
+    const currentTable = document.getElementById('selected_table_id').value;
+    const gridPenyajian = document.getElementById('opsi-penyajian-grid');
+    const btnDine = document.getElementById('btn-item-dine');
 
-            document.getElementById('modalQty').value = 1;
-            document.getElementById('modalItemId').value = id;
-            document.getElementById('modalName').innerText = name;
-            document.getElementById('modalPrice').innerText = formatRupiah(price);
-            document.getElementById('modalPrice').dataset.rawPrice = price;
-            document.getElementById('modalNotes').value = "";
-            
-            basePrice = price; 
-            selectedVariantName = '';
-            selectedVariantPrice = 0;
+    if (currentTable === '0') {
+        gridPenyajian.classList.remove('grid-cols-2');
+        gridPenyajian.classList.add('grid-cols-1');
+        btnDine.classList.add('hidden');
+        selectItemType('Takeaway');
+    } else {
+        gridPenyajian.classList.remove('grid-cols-1');
+        gridPenyajian.classList.add('grid-cols-2');
+        btnDine.classList.remove('hidden');
+        selectItemType('Dine In');
+    }
 
-            let variantsArray = [];
-            if(variantsBase64) {
-                try { 
-                    // Decode Base64 kembali menjadi format JSON
-                    const decodedJson = atob(variantsBase64);
-                    variantsArray = JSON.parse(decodedJson); 
-                } catch(e) {
-                    console.error("Gagal decode varian:", e);
-                }
-            }
+    document.getElementById('addModal').classList.replace('hidden', 'flex');
+}
 
-            const variantContainer = document.getElementById('variant-container');
-            if (variantsArray && variantsArray.length > 0) {
-                let html = '<label class="block text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider">Pilihan Varian</label><div class="grid grid-cols-2 gap-2">';
-                
-                variantsArray.forEach((v, index) => {
-                    let vPrice = parseInt(v.price_adjustment || v.price || 0);
-                    html += `
-                        <label class="border-2 border-gray-200 dark:border-gray-700 rounded-xl p-2 flex items-center gap-2 cursor-pointer hover:border-orange-500 transition">
-                            <input type="radio" name="varian_pilihan" value="${v.name}" onchange="pilihVarian('${v.name}', ${vPrice})" class="accent-orange-500" ${index === 0 ? 'checked' : ''}>
+function pilihVarian(nama, hargaTambahan) {
+    selectedVariantName = nama;
+    selectedVariantPrice = parseInt(hargaTambahan) || 0;
+    const totalItemPrice = basePrice + selectedVariantPrice;
+    document.getElementById('modalPrice').innerText = formatRupiah(totalItemPrice);
+    document.getElementById('modalPrice').dataset.rawPrice = totalItemPrice;
+}
+
+function selectItemType(type) {
+    selectedItemType = type;
+    const btnDine = document.getElementById('btn-item-dine');
+    const btnTakeaway = document.getElementById('btn-item-takeaway');
+
+    if(type === 'Dine In') {
+        btnDine.className = "py-2.5 border-2 border-orange-500 bg-orange-50 dark:bg-orange-900/20 rounded-xl font-bold text-xs text-orange-600 dark:text-orange-400 text-center transition";
+        btnTakeaway.className = "py-2.5 border-2 border-gray-100 dark:border-gray-700 rounded-xl font-bold text-xs text-gray-500 dark:text-gray-400 text-center transition";
+    } else {
+        btnDine.className = "py-2.5 border-2 border-gray-100 dark:border-gray-700 rounded-xl font-bold text-xs text-gray-500 dark:text-gray-400 text-center transition";
+        btnTakeaway.className = "py-2.5 border-2 border-red-500 bg-red-50 dark:bg-red-950/20 rounded-xl font-bold text-xs text-red-600 dark:text-red-400 text-center transition";
+    }
+}
+
+function closeAddModal() { document.getElementById('addModal').classList.replace('flex', 'hidden'); }
+
+function changeQty(v) {
+    const q = document.getElementById('modalQty');
+    if (parseInt(q.value) + v >= 1) q.value = parseInt(q.value) + v;
+}
+
+function saveToCart() {
+    const id = document.getElementById('modalItemId').value;
+    const name = document.getElementById('modalName').innerText;
+    const price = parseInt(document.getElementById('modalPrice').dataset.rawPrice);
+    const qty = parseInt(document.getElementById('modalQty').value);
+    const notes = document.getElementById('modalNotes').value || '-';
+
+    const currentTable = document.getElementById('selected_table_id').value;
+    let finalNotes = notes;
+    if (currentTable === '0' || selectedItemType === 'Takeaway') {
+        if (!finalNotes.toUpperCase().includes('BUNGKUS') && !finalNotes.toUpperCase().includes('TAKEAWAY')) {
+            finalNotes = (finalNotes === '-' || finalNotes === '') ? 'Bungkus' : finalNotes + ' (Bungkus)';
+        }
+    }
+
+    cart.push({
+        menu_id: id,
+        name: name,
+        variant: selectedVariantName || '',
+        price: price,
+        qty: qty,
+        subtotal: price * qty,
+        notes: finalNotes
+    });
+
+    updateCartUI();
+    closeAddModal();
+}
+
+function updateCartUI() {
+    let total = 0;
+    const container = document.getElementById('cart-container');
+
+    if (cart.length === 0) {
+        container.innerHTML = `<div class="flex flex-col items-center justify-center h-full text-gray-300 dark:text-gray-600 italic font-bold"><p>BELUM ADA MENU DIPILIH</p></div>`;
+        document.getElementById('total-price').innerText = 'Rp 0';
+        document.getElementById('cart_data_input').value = "";
+        return;
+    }
+
+    container.innerHTML = '';
+    cart.forEach((item, i) => {
+        total += item.subtotal;
+
+        const isBungkus = item.notes.toUpperCase().includes('BUNGKUS') || item.notes.toUpperCase().includes('TAKEAWAY');
+        const penyajianBadge = isBungkus
+            ? `<span class="bg-red-100 text-red-700 text-[9px] px-2 py-0.5 rounded-md font-bold uppercase">Bungkus</span>`
+            : `<span class="bg-blue-100 text-blue-700 text-[9px] px-2 py-0.5 rounded-md font-bold uppercase">Dine In</span>`;
+
+        let textCatatan = item.notes.replace(/ \(Bungkus\)/gi, '').replace(/Bungkus/gi, '').trim();
+
+        container.insertAdjacentHTML('beforeend', `
+            <div class="bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-4 shadow-sm flex flex-col gap-2 relative group hover:border-orange-500 transition">
+                <div class="flex justify-between items-start pr-8">
+                    <div>
+                        <div class="flex items-center gap-2">
                             <div class="flex flex-col">
-                                <span class="text-xs font-bold dark:text-white">${v.name}</span>
-                                <span class="text-[10px] text-orange-500">+ ${formatRupiah(vPrice)}</span>
+                                <h4 class="font-bold text-sm leading-tight dark:text-white uppercase">${item.name}</h4>
+                                ${item.variant ? `<span class="text-[10px] text-orange-500 font-bold uppercase tracking-wide">${item.variant}</span>` : ''}
                             </div>
-                        </label>
-                    `;
-                });
-                html += '</div>';
-                variantContainer.innerHTML = html;
-                variantContainer.classList.remove('hidden');
-                
-                
-            } else {
-                variantContainer.innerHTML = '';
-                variantContainer.classList.add('hidden');
-            }
-
-            const currentTable = document.getElementById('selected_table_id').value;
-            const gridPenyajian = document.getElementById('opsi-penyajian-grid');
-            const btnDine = document.getElementById('btn-item-dine');
-            
-            if (currentTable === '0') {
-                gridPenyajian.classList.remove('grid-cols-2');
-                gridPenyajian.classList.add('grid-cols-1');
-                btnDine.classList.add('hidden');
-                selectItemType('Takeaway');
-            } else {
-                gridPenyajian.classList.remove('grid-cols-1');
-                gridPenyajian.classList.add('grid-cols-2');
-                btnDine.classList.remove('hidden');
-                selectItemType('Dine In');
-            }
-
-            document.getElementById('addModal').classList.replace('hidden', 'flex');
-        }
-
-        function pilihVarian(nama, hargaTambahan) {
-            selectedVariantName = nama;
-            selectedVariantPrice = hargaTambahan;
-            const totalItemPrice = basePrice + selectedVariantPrice;
-            document.getElementById('modalPrice').innerText = formatRupiah(totalItemPrice);
-            document.getElementById('modalPrice').dataset.rawPrice = totalItemPrice;
-        }
-
-        function selectItemType(type) {
-            selectedItemType = type;
-            const btnDine = document.getElementById('btn-item-dine');
-            const btnTakeaway = document.getElementById('btn-item-takeaway');
-            
-            if(type === 'Dine In') {
-                btnDine.className = "py-2.5 border-2 border-orange-500 bg-orange-50 dark:bg-orange-900/20 rounded-xl font-bold text-xs text-orange-600 dark:text-orange-400 text-center transition";
-                btnTakeaway.className = "py-2.5 border-2 border-gray-100 dark:border-gray-700 rounded-xl font-bold text-xs text-gray-500 dark:text-gray-400 text-center transition";
-            } else {
-                btnDine.className = "py-2.5 border-2 border-gray-100 dark:border-gray-700 rounded-xl font-bold text-xs text-gray-500 dark:text-gray-400 text-center transition";
-                btnTakeaway.className = "py-2.5 border-2 border-red-500 bg-red-50 dark:bg-red-950/20 rounded-xl font-bold text-xs text-red-600 dark:text-red-400 text-center transition";
-            }
-        }
-
-        function closeAddModal() { document.getElementById('addModal').classList.replace('flex', 'hidden'); }
-
-        function changeQty(v) {
-            const q = document.getElementById('modalQty');
-            if (parseInt(q.value) + v >= 1) q.value = parseInt(q.value) + v;
-        }
-
-        function saveToCart() {
-            const id = document.getElementById('modalItemId').value;
-            let name = document.getElementById('modalName').innerText;
-            const price = parseInt(document.getElementById('modalPrice').dataset.rawPrice);
-            const qty = parseInt(document.getElementById('modalQty').value);
-            const notes = document.getElementById('modalNotes').value || '-';
-
-            if (selectedVariantName !== '') {
-                name = name + ' (' + selectedVariantName + ')';
-            }
-
-            const currentTable = document.getElementById('selected_table_id').value;
-            let finalNotes = notes;
-            if (currentTable === '0' || selectedItemType === 'Takeaway') {
-                if (!finalNotes.toUpperCase().includes('BUNGKUS') && !finalNotes.toUpperCase().includes('TAKEAWAY')) {
-                    finalNotes = (finalNotes === '-' || finalNotes === '') ? 'Bungkus' : finalNotes + ' (Bungkus)';
-                }
-            }
-
-            cart.push({ menu_id: id, name: name, price: price, qty: qty, subtotal: price * qty, notes: finalNotes });
-            closeAddModal();
-            updateCartUI();
-        }
-
-        function updateCartUI() {
-            let total = 0;
-            const container = document.getElementById('cart-container');
-            
-            if (cart.length === 0) {
-                container.innerHTML = `<div class="flex flex-col items-center justify-center h-full text-gray-300 dark:text-gray-600 italic font-bold"><p>BELUM ADA MENU DIPILIH</p></div>`;
-                document.getElementById('total-price').innerText = 'Rp 0';
-                document.getElementById('cart_data_input').value = "";
-                return;
-            }
-
-            container.innerHTML = '';
-            cart.forEach((item, i) => {
-                total += item.subtotal;
-                
-                const isBungkus = item.notes.toUpperCase().includes('BUNGKUS') || item.notes.toUpperCase().includes('TAKEAWAY');
-                const penyajianBadge = isBungkus 
-                    ? `<span class="bg-red-100 text-red-700 text-[9px] px-2 py-0.5 rounded-md font-bold uppercase">Bungkus</span>`
-                    : `<span class="bg-blue-100 text-blue-700 text-[9px] px-2 py-0.5 rounded-md font-bold uppercase">Dine In</span>`;
-
-                let textCatatan = item.notes.replace(/ \(Bungkus\)/gi, '').replace(/Bungkus/gi, '').trim();
-
-                container.insertAdjacentHTML('beforeend', `
-                    <div class="bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-4 shadow-sm flex flex-col gap-2 relative group hover:border-orange-500 transition">
-                        <div class="flex justify-between items-start pr-8">
-                            <div>
-                                <div class="flex items-center gap-2">
-                                    <h4 class="font-bold text-sm leading-tight dark:text-white uppercase">${item.name}</h4>
-                                    ${penyajianBadge}
-                                </div>
-                                <p class="text-orange-500 font-bold text-sm mt-1">${formatRupiah(item.price)}</p>
-                            </div>
-                            <span class="bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-xl text-sm font-black dark:text-white">x${item.qty}</span>
+                            ${penyajianBadge}
                         </div>
-                        ${(textCatatan !== '-' && textCatatan !== '') ? `<div class="bg-orange-50 dark:bg-orange-900/20 text-orange-600 px-3 py-2 rounded-xl text-xs font-semibold">Catatan: ${textCatatan}</div>` : ''}
-                        <button type="button" onclick="removeItem(${i})" class="absolute top-4 right-4 text-gray-300 hover:text-red-500 transition font-bold text-xl">✕</button>
+                        <p class="text-orange-500 font-bold text-sm mt-1">${formatRupiah(item.price)}</p>
                     </div>
-                `);
-            });
+                    <span class="bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-xl text-sm font-black dark:text-white">x${item.qty}</span>
+                </div>
+                ${(textCatatan !== '-' && textCatatan !== '') ? `<div class="bg-orange-50 dark:bg-orange-900/20 text-orange-600 px-3 py-2 rounded-xl text-xs font-semibold">Catatan: ${textCatatan}</div>` : ''}
+                <button type="button" onclick="removeItem(${i})" class="absolute top-4 right-4 text-gray-300 hover:text-red-500 transition font-bold text-xl">✕</button>
+            </div>
+        `);
+    });
 
-            document.getElementById('total-price').innerText = formatRupiah(total);
-            document.getElementById('cart_data_input').value = JSON.stringify(cart);
-        }
+    document.getElementById('total-price').innerText = formatRupiah(total);
+    document.getElementById('cart_data_input').value = JSON.stringify(cart);
+}
 
-        function removeItem(i) {
-            cart.splice(i, 1);
-            updateCartUI();
-        }
+function removeItem(i) {
+    cart.splice(i, 1);
+    updateCartUI();
+}
 
-        function validateAndSubmit(type) {
-            if (!document.getElementById('selected_table_id').value) {
-                alert("Pilih Meja dulu rek!");
-                openTableModal();
-                return;
-            }
-            if (cart.length === 0) {
-                alert("Keranjang kosong!");
-                return;
-            }
+function validateAndSubmit(type) {
+    if (!document.getElementById('selected_table_id').value) {
+        alert("Pilih Meja dulu rek!");
+        openTableModal();
+        return;
+    }
+    if (cart.length === 0) {
+        alert("Keranjang kosong!");
+        return;
+    }
 
-            document.getElementById('payment_type').value = type;
+    document.getElementById('payment_type').value = type;
 
-            selectedPaymentMethod = null;
-            const btnTunai = document.getElementById('btn-method-tunai');
-            const btnQris = document.getElementById('btn-method-qris');
-            if(btnTunai && btnQris) {
-                btnTunai.className = "p-4 border-2 border-gray-100 dark:border-gray-700 rounded-2xl font-bold dark:text-white text-center hover:border-orange-500 transition";
-                btnQris.className = "p-4 border-2 border-gray-100 dark:border-gray-700 rounded-2xl font-bold dark:text-white text-center hover:border-orange-500 transition";
-            }
+    selectedPaymentMethod = null;
+    const btnTunai = document.getElementById('btn-method-tunai');
+    const btnQris = document.getElementById('btn-method-qris');
+    if(btnTunai && btnQris) {
+        btnTunai.className = "p-4 border-2 border-gray-100 dark:border-gray-700 rounded-2xl font-bold dark:text-white text-center hover:border-orange-500 transition";
+        btnQris.className = "p-4 border-2 border-gray-100 dark:border-gray-700 rounded-2xl font-bold dark:text-white text-center hover:border-orange-500 transition";
+    }
 
-            if (type === 'later') {
-                document.getElementById('btn-bayar-langsung').classList.add('hidden');
-                document.getElementById('btn-bayar-nanti').classList.remove('hidden');
-            } else {
-                document.getElementById('btn-bayar-langsung').classList.remove('hidden');
-                document.getElementById('btn-bayar-nanti').classList.add('hidden');
-            }
+    if (type === 'later') {
+        document.getElementById('btn-bayar-langsung').classList.add('hidden');
+        document.getElementById('btn-bayar-nanti').classList.remove('hidden');
+    } else {
+        document.getElementById('btn-bayar-langsung').classList.remove('hidden');
+        document.getElementById('btn-bayar-nanti').classList.add('hidden');
+    }
 
-            document.getElementById('paymentModal').classList.replace('hidden', 'flex');
-        }
+    document.getElementById('paymentModal').classList.replace('hidden', 'flex');
+}
 
-        function selectPaymentMethod(method) {
-            selectedPaymentMethod = method;
-            const btnTunai = document.getElementById('btn-method-tunai');
-            const btnQris = document.getElementById('btn-method-qris');
-            
-            btnTunai.className = "p-4 border-2 border-gray-100 dark:border-gray-700 rounded-2xl font-bold dark:text-white text-center hover:border-orange-500 transition";
-            btnQris.className = "p-4 border-2 border-gray-100 dark:border-gray-700 rounded-2xl font-bold dark:text-white text-center hover:border-orange-500 transition";
-            
-            if(method === 'Tunai') {
-                btnTunai.className = "p-4 border-2 border-orange-500 bg-orange-50 dark:bg-orange-900/20 rounded-2xl font-bold text-orange-600 dark:text-orange-400 text-center transition";
-            } else if(method === 'QRIS') {
-                btnQris.className = "p-4 border-2 border-orange-500 bg-orange-50 dark:bg-orange-900/20 rounded-2xl font-bold text-orange-600 dark:text-orange-400 text-center transition";
-            }
-        }
+function selectPaymentMethod(method) {
+    selectedPaymentMethod = method;
+    const btnTunai = document.getElementById('btn-method-tunai');
+    const btnQris = document.getElementById('btn-method-qris');
 
-        function processPayment() {
-            if (!selectedPaymentMethod) {
-                alert("Pilih metode pembayaran (Tunai / QRIS) terlebih dahulu!");
-                return;
-            }
-            submitFinal(selectedPaymentMethod);
-        }
-
-        function closePaymentModal() { document.getElementById('paymentModal').classList.replace('flex', 'hidden'); }
-
-        function submitFinal(method) {
-            const customerName = document.getElementById('modal_customer_name').value;
-            const phoneNumber = document.getElementById('modal_phone_number').value;
-
-            if (!customerName) {
-                alert("Nama pelanggan wajib diisi!");
-                document.getElementById('modal_customer_name').focus();
-                return;
-            }
-
-            document.getElementById('customer_name_input').value = customerName;
-            document.getElementById('phone_number_input').value = phoneNumber;
-            document.getElementById('payment_method').value = method;
-            
-            document.getElementById('orderForm').submit();
-        }
-
-        function searchMenu() {
-            const val = document.getElementById('searchInput').value.toLowerCase();
-            document.querySelectorAll('.menu-card').forEach(c => {
-                const searchData = c.getAttribute('data-search') || '';
-                c.style.display = searchData.includes(val) ? 'flex' : 'none';
-            });
-        }
-
-        function filterMenu(k) {
-            document.querySelectorAll('.menu-card').forEach(c => {
-                c.style.display = (k === 'semua' || c.getAttribute('data-category') === k) ? 'flex' : 'none';
-            });
-        }
-
-        function exportExcel() {
-            const start = document.getElementById('start_date').value;
-            const end = document.getElementById('end_date').value;
-            if (!start || !end) { alert('Pilih tanggal Mulai & Selesai dulu!'); return; }
-            window.location.href = "{{ route('kasir.export') }}?start_date=" + start + "&end_date=" + end;
-        }
-
-        function closePrintModal() { document.getElementById('printModal').classList.replace('flex', 'hidden'); }
-
-        async function openPrintModal(orderId) {
-            const modal = document.getElementById('printModal');
-            const el = document.getElementById('nota-printable');
-            modal.classList.replace('hidden', 'flex');
-            el.innerHTML = '<p style="text-align:center;padding:20px;color:#999;">Memuat nota...</p>';
-
-            try {
-                const res = await fetch(`/kasir/nota/${orderId}`);
-                if (!res.ok) throw new Error("Gagal mengambil nota");
-                const order = await res.json();
-                const dt = new Date(order.created_at).toLocaleString('id-ID');
-                const mejaTxt = order.table_id == '0' ? 'TAKEAWAY' : 'MEJA ' + order.table_id;
-                const rp = (num) => 'Rp ' + parseInt(num).toLocaleString('id-ID');
-
-                let itemsHTML = '';
-                for (let item of order.order_items) {
-                    let qty = parseInt(item.quantity);
-                    let hargaSatuan = Math.round(item.subtotal / qty);
-                    itemsHTML += `
-                        <div class="nota-row"><span class="nota-item-name">${qty}x ${item.name}</span><span class="nota-item-price">${rp(item.subtotal)}</span></div>
-                        ${qty > 1 ? `<div class="nota-harga-satuan">${rp(hargaSatuan)}</div>` : ''}
-                    `;
-                }
-
-                el.innerHTML = `
-                    <div class="nota-center"><div class="nota-bold" style="font-size:13px;">AYAM BAKAR ULAM SARI</div><div>Graha DMP, Jl. Stadion, Sidoarjo</div><div>+62 0812-5996-2277</div></div>
-                    <hr class="nota-divider-solid">
-                    <div class="nota-row"><span>Order No</span><span class="nota-bold">${order.order_number || '#' + order.id}</span></div>
-                    <div class="nota-row"><span>Waktu</span><span>${dt}</span></div>
-                    <div class="nota-row"><span>Meja</span><span>${mejaTxt}</span></div>
-                    <hr class="nota-divider-dashed">
-                    <div class="nota-row"><span>Pemesan</span><span class="nota-bold">${order.customer_name ? order.customer_name.toUpperCase() : 'TANPA NAMA'}</span></div>
-                    <div class="nota-row"><span>No. HP</span><span>${order.phone_number ? order.phone_number : '-'}</span></div>
-                    <hr class="nota-divider-solid"><div style="margin:5px 0;">${itemsHTML}</div><hr class="nota-divider-dashed">
-                    <div class="nota-row" style="font-size:13px; margin-top:5px;"><span>TOTAL AKHIR</span><span class="nota-bold">${rp(order.total_price)}</span></div>
-                    <div class="nota-row"><span>METODE BAYAR</span><span class="nota-bold" style="text-transform:uppercase;">${order.payment_method}</span></div>
-                    <hr class="nota-divider-solid">
-                    <div class="nota-center" style="margin-top:10px; font-weight:bold;">TERIMA KASIH</div>
-                `;
-            } catch (err) {
-                el.innerHTML = '<p style="text-align:center;padding:20px;color:red;">Gagal memuat nota.</p>';
-            }
-        }
-
-        setInterval(() => {
-            fetch('/kasir/api/pending-orders')
-                .then(res => { if (!res.ok) throw new Error("Server error " + res.status); return res.json(); })
-                .then(data => {
-                    pendingOrders = data;
-                    for(let i = 1; i <= 12; i++) {
-                        const btnMeja = document.getElementById('btn-meja-' + i);
-                        if(!btnMeja) continue;
-                        const adaPesanan = data[i] && Object.keys(data[i]).length > 0;
-                        let titikMerah = btnMeja.querySelector('.indicator-dot');
-                        if(adaPesanan && !titikMerah) btnMeja.insertAdjacentHTML('beforeend', '<span class="absolute top-2 right-2 w-3 h-3 bg-red-500 rounded-full animate-pulse indicator-dot"></span>');
-                        else if (!adaPesanan && titikMerah) titikMerah.remove();
-                    }
-                    if (!document.getElementById('panel-order').classList.contains('hidden')) loadOrderPanel();
-                })
-                .catch(err => console.error("RADAR ERROR: ", err));
-        }, 5000);
-    </script>
+    btnTunai.className = "p-4 border-2 border-gray-100 dark:border-gray-700 rounded-2xl font-bold dark:text-white text-center hover:border-orange-500 transition";
+    btnQris.className = "p-4 border-2 border-gray-100 dark:border-gray-700 rounded-2xl font-bold dark:text-white text-center hover:border-orange-500 transition";
+}
+</script>
 </body>
 </html>
