@@ -304,9 +304,8 @@
         </div>
     </div>
 
-
 <script>
-   let cart = [];
+let cart = [];
 let pendingOrders = @json($pendingOrders ?? []);
 let activePanel = 'cart';
 let selectedPaymentMethod = null;
@@ -464,7 +463,6 @@ function openMenu(element) {
     const name = element.getAttribute('data-name');
     const price = parseInt(element.getAttribute('data-price'));
     const variantsBase64 = element.getAttribute('data-variants');
-    
 
     document.getElementById('modalQty').value = 1;
     document.getElementById('modalItemId').value = id;
@@ -693,7 +691,125 @@ function selectPaymentMethod(method) {
 
     btnTunai.className = "p-4 border-2 border-gray-100 dark:border-gray-700 rounded-2xl font-bold dark:text-white text-center hover:border-orange-500 transition";
     btnQris.className = "p-4 border-2 border-gray-100 dark:border-gray-700 rounded-2xl font-bold dark:text-white text-center hover:border-orange-500 transition";
+
+    if(method === 'Tunai') {
+        btnTunai.className = "p-4 border-2 border-orange-500 bg-orange-50 dark:bg-orange-900/20 rounded-2xl font-bold text-orange-600 dark:text-orange-400 text-center transition";
+    } else if(method === 'QRIS') {
+        btnQris.className = "p-4 border-2 border-orange-500 bg-orange-50 dark:bg-orange-900/20 rounded-2xl font-bold text-orange-600 dark:text-orange-400 text-center transition";
+    }
 }
+
+function processPayment() {
+    if (!selectedPaymentMethod) {
+        alert("Pilih metode pembayaran (Tunai / QRIS) terlebih dahulu!");
+        return;
+    }
+    submitFinal(selectedPaymentMethod);
+}
+
+function closePaymentModal() { document.getElementById('paymentModal').classList.replace('flex', 'hidden'); }
+
+function submitFinal(method) {
+    const customerName = document.getElementById('modal_customer_name').value;
+    const phoneNumber = document.getElementById('modal_phone_number').value;
+
+    if (!customerName) {
+        alert("Nama pelanggan wajib diisi!");
+        document.getElementById('modal_customer_name').focus();
+        return;
+    }
+
+    document.getElementById('customer_name_input').value = customerName;
+    document.getElementById('phone_number_input').value = phoneNumber;
+    document.getElementById('payment_method').value = method;
+
+    document.getElementById('orderForm').submit();
+}
+
+function searchMenu() {
+    const val = document.getElementById('searchInput').value.toLowerCase();
+    document.querySelectorAll('.menu-card').forEach(c => {
+        const searchData = c.getAttribute('data-search') || '';
+        c.style.display = searchData.includes(val) ? 'flex' : 'none';
+    });
+}
+
+function filterMenu(k) {
+    document.querySelectorAll('.menu-card').forEach(c => {
+        c.style.display = (k === 'semua' || c.getAttribute('data-category') === k) ? 'flex' : 'none';
+    });
+}
+
+function exportExcel() {
+    const start = document.getElementById('start_date').value;
+    const end = document.getElementById('end_date').value;
+    if (!start || !end) { alert('Pilih tanggal Mulai & Selesai dulu!'); return; }
+    window.location.href = "{{ route('kasir.export') }}?start_date=" + start + "&end_date=" + end;
+}
+
+function closePrintModal() { document.getElementById('printModal').classList.replace('flex', 'hidden'); }
+
+async function openPrintModal(orderId) {
+    const modal = document.getElementById('printModal');
+    const el = document.getElementById('nota-printable');
+    modal.classList.replace('hidden', 'flex');
+    el.innerHTML = '<p style="text-align:center;padding:20px;color:#999;">Memuat nota...</p>';
+
+    try {
+        const res = await fetch(`/kasir/nota/${orderId}`);
+        if (!res.ok) throw new Error("Gagal mengambil nota");
+        const order = await res.json();
+        const dt = new Date(order.created_at).toLocaleString('id-ID');
+        const mejaTxt = order.table_id == '0' ? 'TAKEAWAY' : 'MEJA ' + order.table_id;
+        const rp = (num) => 'Rp ' + parseInt(num).toLocaleString('id-ID');
+
+        let itemsHTML = '';
+        for (let item of order.order_items) {
+            let qty = parseInt(item.quantity);
+            let hargaSatuan = Math.round(item.subtotal / qty);
+            itemsHTML += `
+                <div class="nota-row"><span class="nota-item-name">${qty}x ${item.name}</span><span class="nota-item-price">${rp(item.subtotal)}</span></div>
+                ${qty > 1 ? `<div class="nota-harga-satuan">${rp(hargaSatuan)}</div>` : ''}
+            `;
+        }
+
+        el.innerHTML = `
+            <div class="nota-center"><div class="nota-bold" style="font-size:13px;">AYAM BAKAR ULAM SARI</div><div>Graha DMP, Jl. Stadion, Sidoarjo</div><div>+62 0812-5996-2277</div></div>
+            <hr class="nota-divider-solid">
+            <div class="nota-row"><span>Order No</span><span class="nota-bold">${order.order_number || '#' + order.id}</span></div>
+            <div class="nota-row"><span>Waktu</span><span>${dt}</span></div>
+            <div class="nota-row"><span>Meja</span><span>${mejaTxt}</span></div>
+            <hr class="nota-divider-dashed">
+            <div class="nota-row"><span>Pemesan</span><span class="nota-bold">${order.customer_name ? order.customer_name.toUpperCase() : 'TANPA NAMA'}</span></div>
+            <div class="nota-row"><span>No. HP</span><span>${order.phone_number ? order.phone_number : '-'}</span></div>
+            <hr class="nota-divider-solid"><div style="margin:5px 0;">${itemsHTML}</div><hr class="nota-divider-dashed">
+            <div class="nota-row" style="font-size:13px; margin-top:5px;"><span>TOTAL AKHIR</span><span class="nota-bold">${rp(order.total_price)}</span></div>
+            <div class="nota-row"><span>METODE BAYAR</span><span class="nota-bold" style="text-transform:uppercase;">${order.payment_method}</span></div>
+            <hr class="nota-divider-solid">
+            <div class="nota-center" style="margin-top:10px; font-weight:bold;">TERIMA KASIH</div>
+        `;
+    } catch (err) {
+        el.innerHTML = '<p style="text-align:center;padding:20px;color:red;">Gagal memuat nota.</p>';
+    }
+}
+
+setInterval(() => {
+    fetch('/kasir/api/pending-orders')
+        .then(res => { if (!res.ok) throw new Error("Server error " + res.status); return res.json(); })
+        .then(data => {
+            pendingOrders = data;
+            for(let i = 1; i <= 12; i++) {
+                const btnMeja = document.getElementById('btn-meja-' + i);
+                if(!btnMeja) continue;
+                const adaPesanan = data[i] && Object.keys(data[i]).length > 0;
+                let titikMerah = btnMeja.querySelector('.indicator-dot');
+                if(adaPesanan && !titikMerah) btnMeja.insertAdjacentHTML('beforeend', '<span class="absolute top-2 right-2 w-3 h-3 bg-red-500 rounded-full animate-pulse indicator-dot"></span>');
+                else if (!adaPesanan && titikMerah) titikMerah.remove();
+            }
+            if (!document.getElementById('panel-order').classList.contains('hidden')) loadOrderPanel();
+        })
+        .catch(err => console.error("RADAR ERROR: ", err));
+}, 5000);
 </script>
 </body>
 </html>
