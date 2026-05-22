@@ -13,14 +13,14 @@ class CashierController extends Controller
 {
     public function index()
     {
-        $menus = Menu::join('categories', 'menus.category_id', '=', 'categories.id')
-                    ->select('menus.*', 'categories.name as category_name')
+        // 🔥 JURUS ELOQUENT MURNI: Buang fungsi join() yang bikin ID tabrakan
+        // Kita panggil relasi 'variants' dan 'categories' secara langsung
+        $menus = Menu::with(['variants', 'categories'])
                     ->where('is_active', true)
                     ->get();
         
         $tables = Table::all();
 
-        // ★ AMBIL DATA KATEGORI UNTUK FILTER DI HALAMAN KASIR
         $categories = DB::table('categories')->get();
 
         $pendingOrders = Order::with(['orderItems.menu'])
@@ -32,7 +32,7 @@ class CashierController extends Controller
                         ->groupBy('table_id'); 
 
         $historyOrders = Order::with(['orderItems.menu'])
-                        ->where('order_status_id', '!=', 4) 
+                        ->where('payment_method', '!=', 'Belum Bayar') 
                         ->orderBy('id', 'desc')
                         ->limit(30)
                         ->get();
@@ -42,7 +42,6 @@ class CashierController extends Controller
     
     public function store(Request $request)
     {
-        // VALIDASI: Nama Wajib, HP Opsional
         $request->validate([
             'cart_data'     => 'required',
             'table_id'      => 'required',
@@ -58,31 +57,46 @@ class CashierController extends Controller
 
         DB::beginTransaction();
         try {
+            DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+
             $order = Order::create([
                 'table_id' => $request->table_id,
                 'order_number' => 'ORD-' . strtoupper(uniqid()),
                 'total_price' => collect($cart)->sum('subtotal'),
-                'order_status_id' => 1,
+                'order_status_id' => 1, // Tetap 1 agar Dapur bisa masak (meskipun belum bayar)
                 'payment_method' => $request->payment_method ?? 'Tunai',
                 'customer_name' => strtoupper($request->customer_name),
                 'phone_number' => $request->phone_number ?? '-',
             ]);
 
             foreach ($cart as $item) {
+                $notes = $item['notes'] ?? '-';
+                
+                if ($request->table_id == '0') {
+                    if (stripos($notes, 'Bungkus') === false && stripos($notes, 'Takeaway') === false) {
+                        $notes = ($notes === '-' || $notes === '') ? 'Bungkus' : $notes . ' (Bungkus)';
+                    }
+                }
+
                 OrderItem::create([
                     'order_id' => $order->id,
-                    'menu_id' => $item['menu_id'],
+                    'menu_id'  => $item['menu_id'],
                     'quantity' => $item['qty'],
                     'subtotal' => $item['subtotal'],
-                    'notes' => $item['notes'] ?? '-',
+                    'notes'    => $notes,
                 ]);
             }
 
+            DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+            
             DB::commit();
-            return back()->with('success', 'Pesanan Meja ' . $request->table_id . ' berhasil diproses.');
+            
+            $msg = $request->table_id == '0' ? 'Pesanan TAKEAWAY berhasil diproses.' : 'Pesanan Meja ' . $request->table_id . ' berhasil diproses.';
+            return back()->with('success', $msg);
 
         } catch (\Exception $e) {
             DB::rollback();
+            DB::statement('SET FOREIGN_KEY_CHECKS=1;'); 
             return back()->with('error', 'Gagal: ' . $e->getMessage());
         }
     }
@@ -120,7 +134,6 @@ class CashierController extends Controller
             $html .= '<td>' . $order->order_number . '</td>';
             $html .= '<td>' . $order->created_at->format('d/m/Y H:i') . '</td>';
             $html .= '<td>' . ($order->customer_name ?? '-') . '</td>';
-            // MENGUNCI FORMAT HP DI EXCEL
             $html .= '<td style="mso-number-format:\'\@\'">' . ($order->phone_number ?? '-') . '</td>';
             $html .= '<td>' . implode(', ', $pesananArr) . '</td>';
             $html .= '<td>' . $order->total_price . '</td>';
@@ -138,7 +151,8 @@ class CashierController extends Controller
     public function konfirmasi($id)
     {
         $order = Order::findOrFail($id);
-        $order->order_status_id = 1; 
+        // Ubah metode pembayaran agar tidak terbaca 'Belum Bayar' lagi
+        $order->payment_method = 'Tunai'; 
         $order->save();
         return redirect()->back()->with('success', 'Pembayaran Lunas!');
     }
@@ -146,7 +160,10 @@ class CashierController extends Controller
     public function apiPendingOrders()
     {
         return response()->json(Order::with(['orderItems.menu'])
-                        ->whereIn('order_status_id',)
+                        ->where(function($q) {
+                            $q->where('order_status_id', 1)
+                              ->orWhere('order_status_id', 4);
+                        })
                         ->get()
                         ->groupBy('table_id'));
     }
@@ -166,7 +183,6 @@ class CashierController extends Controller
                 'name'     => $item->menu->name ?? $item->name,
                 'quantity' => $item->quantity,
                 'subtotal' => $item->subtotal,
-                'notes'    => $item->notes, // Biar note/varian muncul di Nota
             ])
         ]);
     }

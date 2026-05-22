@@ -39,9 +39,9 @@ class DapurController extends Controller
                   ->orWhere('notes', 'Bungkus');
             })->with(['orderItems' => function($q) {
                 // Hanya muat item yang Takeaway saja di dalam kartunya
-                $q->where('notes', 'Takeaway')
-                  ->orWhere('notes', 'Take-away')
-                  ->orWhere('notes', 'Bungkus');
+                $q->where('notes', 'LIKE', '%Takeaway%')
+                ->orWhere('notes', 'LIKE', '%Take%')
+                ->orWhere('notes', 'LIKE', '%Bungkus%');
             }, 'orderItems.menu']);
 
         } else {

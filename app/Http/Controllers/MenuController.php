@@ -41,7 +41,7 @@ class MenuController extends Controller
             'price' => $request->price,
             'image' => $imagePath,
             'description' => $request->description,
-            'is_active' => true,
+            'is_active' => 1, 
         ]);
 
         $menu->categories()->sync($request->categories);

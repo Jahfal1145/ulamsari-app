@@ -12,6 +12,13 @@
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
         body { transition: background-color 0.3s, color 0.3s; }
 
+        /* 🔥 SCROLLBAR KHUSUS UNTUK PANEL KANAN 🔥 */
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #fb923c; border-radius: 10px; } /* Warna Orange */
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #ea580c; } /* Orange Gelap */
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #f97316; }
+
         @media print {
             body * { visibility: hidden !important; }
             #nota-printable, #nota-printable * { visibility: visible !important; }
@@ -48,7 +55,7 @@
         <input type="hidden" name="payment_method" id="payment_method" value="Belum Bayar">
 
         {{-- LEFT PANEL --}}
-        <div class="w-3/5 p-6 overflow-y-auto flex flex-col relative border-r dark:border-gray-700">
+        <div class="w-3/5 p-6 overflow-y-auto custom-scrollbar flex flex-col relative border-r dark:border-gray-700">
             <div class="flex justify-between items-center mb-6 flex-shrink-0">
                 <h2 class="text-3xl font-bold text-orange-600 tracking-tight uppercase">KASIR - ULAM SARI</h2>
                 <div class="relative w-64">
@@ -59,21 +66,30 @@
                 </div>
             </div>
 
-            {{-- ★ KATEGORI DINAMIS DARI DATABASE --}}
             <div class="flex gap-3 mb-6 overflow-x-auto pb-2 scrollbar-hide flex-shrink-0">
-                <button type="button" onclick="filterMenu('semua')" class="filter-btn bg-orange-500 text-white px-6 py-2 rounded-full font-semibold shadow-md transition">Semua</button>
-                @if(isset($categories))
-                    @foreach($categories as $cat)
-                        <button type="button" onclick="filterMenu('{{ $cat->name }}')" class="filter-btn bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 px-6 py-2 rounded-full font-semibold border dark:border-gray-700 hover:bg-orange-50 hover:text-orange-500 transition">{{ $cat->name }}</button>
-                    @endforeach
-                @endif
+                <button type="button" onclick="filterMenu('semua')" class="filter-btn bg-orange-500 text-white px-6 py-2 rounded-full font-semibold shadow-md transition">Menu</button>
+                <button type="button" onclick="filterMenu('Ter-favorit')" class="filter-btn bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 px-6 py-2 rounded-full font-semibold border dark:border-gray-700 hover:bg-orange-50 hover:text-orange-500 transition">Ter-favorit</button>
+                <button type="button" onclick="filterMenu('Makanan Berat')" class="filter-btn bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 px-6 py-2 rounded-full font-semibold border dark:border-gray-700 hover:bg-orange-50 hover:text-orange-500 transition">Makanan Berat</button>
+                <button type="button" onclick="filterMenu('Minuman')" class="filter-btn bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 px-6 py-2 rounded-full font-semibold border dark:border-gray-700 hover:bg-orange-50 hover:text-orange-500 transition">Minuman</button>
             </div>
 
             <div class="grid grid-cols-2 gap-6 pb-20" id="menuGrid">
                 @foreach($menus as $menu)
-                <div onclick="openAddModal({{ $menu->id }}, '{{ addslashes($menu->name) }}', {{ $menu->price }}, '{{ addslashes($menu->category_name) }}')"
+                @php 
+                    $catName = $menu->categories->count() > 0 ? $menu->categories->first()->name : 'Tanpa Kategori'; 
+                    // JURUS ULTIMATE: Ubah Varian jadi Base64 agar 1000% aman dari kutipan HTML!
+                    $variantsJson = $menu->variants ? $menu->variants->toJson() : '[]';
+                    $variantsBase64 = base64_encode($variantsJson);
+                @endphp
+                <div onclick="openMenu(this)"
                     class="menu-card bg-white dark:bg-gray-800 rounded-2xl shadow-sm border dark:border-gray-700 overflow-hidden transition hover:shadow-xl hover:border-orange-400 flex flex-col h-full cursor-pointer group"
-                    data-category="{{ $menu->category_name }}" data-name="{{ strtolower($menu->name) }}">
+                    data-id="{{ $menu->id }}"
+                    data-name="{{ $menu->name }}"
+                    data-search="{{ strtolower($menu->name) }}"
+                    data-price="{{ $menu->price }}"
+                    data-category="{{ $catName }}"
+                    data-variants="{{ $variantsBase64 }}">
+                    
                     @if($menu->image)
                         <img src="{{ asset('storage/' . $menu->image) }}" alt="{{ $menu->name }}" class="h-64 w-full object-cover object-center border-b dark:border-gray-700">
                     @else
@@ -104,7 +120,8 @@
             </div>
 
             <div id="panel-cart" class="flex flex-col flex-1 overflow-hidden">
-                <div id="cart-container" class="flex-1 overflow-y-auto pr-2 space-y-3">
+                {{-- CLASS custom-scrollbar DITAMBAHKAN DI SINI --}}
+                <div id="cart-container" class="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-3">
                     <div class="flex flex-col items-center justify-center h-full text-gray-300 dark:text-gray-600 italic font-bold"><p>BELUM ADA MENU DIPILIH</p></div>
                 </div>
                 <div class="border-t-2 border-gray-100 dark:border-gray-700 pt-4 mt-4">
@@ -120,7 +137,8 @@
             </div>
 
             <div id="panel-order" class="flex-col flex-1 overflow-hidden hidden">
-                <div id="order-container" class="flex-1 overflow-y-auto pr-2 space-y-3"></div>
+                {{-- CLASS custom-scrollbar DITAMBAHKAN DI SINI --}}
+                <div id="order-container" class="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-3"></div>
                 <div class="border-t-2 border-gray-100 dark:border-gray-700 pt-4 mt-4">
                     <div class="flex justify-between items-center">
                         <span class="text-gray-500 text-lg uppercase font-bold">Total Meja</span>
@@ -145,7 +163,8 @@
                     <button type="button" onclick="exportExcel()" class="bg-green-600 text-white text-[10px] font-bold px-3 py-3 rounded-xl uppercase transition shadow-md">Excel</button>
                 </div>
                 
-                <div class="flex-1 overflow-y-auto pr-2 space-y-3">
+                {{-- CLASS custom-scrollbar DITAMBAHKAN DI SINI --}}
+                <div class="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-3">
                     @forelse($historyOrders ?? [] as $history)
                         <div class="bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-4 shadow-sm hover:border-green-400 transition">
                             <div class="flex justify-between items-start mb-2 border-b dark:border-gray-700 pb-2">
@@ -192,7 +211,7 @@
                 <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Pilih Metode Pembayaran <span class="text-red-500">*</span></label>
                 <div class="grid grid-cols-2 gap-3 mb-4">
                     <button type="button" id="btn-method-tunai" onclick="selectPaymentMethod('Tunai')" class="p-4 border-2 border-gray-100 dark:border-gray-700 rounded-2xl font-bold dark:text-white text-center hover:border-orange-500 transition">💵 Tunai</button>
-                    <button type="button" id="btn-method-qris" onclick="selectPaymentMethod('QRIS')" class="p-4 border-2 border-gray-100 dark:border-gray-700 rounded-2xl font-bold dark:text-white text-center hover:border-orange-500 transition">📱 E-Wallet</button>
+                    <button type="button" id="btn-method-qris" onclick="selectPaymentMethod('QRIS')" class="p-4 border-2 border-gray-100 dark:border-gray-700 rounded-2xl font-bold dark:text-white text-center hover:border-orange-500 transition">📱 QRIS</button>
                 </div>
                 <button type="button" onclick="processPayment()" class="w-full bg-green-500 hover:bg-green-600 text-white p-4 rounded-2xl font-black text-sm uppercase tracking-widest shadow-lg transition active:scale-95">💳 BAYAR SEKARANG</button>
             </div>
@@ -227,12 +246,23 @@
         </div>
     </div>
 
-    {{-- ★ MODAL TAMBAH ITEM KASIR (SUDAH ADA VARIAN) --}}
+    {{-- MODAL TAMBAH ITEM --}}
     <div id="addModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50 p-4">
         <div class="bg-white dark:bg-gray-800 w-full max-w-sm rounded-3xl p-6">
             <h3 id="modalName" class="text-xl font-bold mb-1 dark:text-white">Nama Menu</h3>
             <p id="modalPrice" class="text-orange-500 font-bold mb-4">Rp 0</p>
             <input type="hidden" id="modalItemId">
+
+            <div id="variant-container" class="mb-4 hidden border-t-2 border-gray-100 dark:border-gray-700 pt-4">
+                </div>
+
+            <div class="mb-4 border-t-2 border-gray-100 dark:border-gray-700 pt-4">
+                <label class="block text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider">Opsi Penyajian Item</label>
+                <div id="opsi-penyajian-grid" class="grid grid-cols-2 gap-3">
+                    <button type="button" id="btn-item-dine" onclick="selectItemType('Dine In')" class="py-2.5 border-2 rounded-xl font-bold text-xs transition">🍽 Dine In</button>
+                    <button type="button" id="btn-item-takeaway" onclick="selectItemType('Takeaway')" class="py-2.5 border-2 rounded-xl font-bold text-xs transition">🛍 Bungkus</button>
+                </div>
+            </div>
 
             <div class="flex items-center justify-between mb-4 border-t-2 border-b-2 border-gray-100 dark:border-gray-700 py-4">
                 <span class="font-bold text-gray-500">Jumlah</span>
@@ -243,14 +273,9 @@
                 </div>
             </div>
 
-            {{-- TEMPAT VARIAN MUNCUL --}}
-            <div id="variant-selector-container" class="space-y-4 mb-4">
-                {{-- JS Akan mengisi ini --}}
-            </div>
-
             <div class="mb-6">
                 <label class="block text-xs font-bold text-gray-400 mb-2 uppercase">Catatan Tambahan</label>
-                <input type="text" id="modalNotes" placeholder="Cth: Pedas, Tanpa Daun Bawang..." class="w-full border-2 border-gray-200 dark:border-gray-700 dark:bg-gray-900 rounded-xl p-3 text-sm font-semibold outline-none focus:border-orange-500 dark:text-white">
+                <input type="text" id="modalNotes" placeholder="Cth: Pedas, Tanpa Daun Bawang..." class="w-full border-2 border-gray-200 dark:border-gray-700 dark:bg-gray-900 rounded-xl p-3 text-sm font-semibold outline-none focus:border-orange-500">
             </div>
 
             <div class="flex gap-3">
@@ -267,7 +292,7 @@
                 <h3 class="text-lg font-black uppercase dark:text-white">Preview Nota</h3>
                 <button onclick="closePrintModal()" class="text-gray-400 hover:text-red-500 font-bold text-xl">✕</button>
             </div>
-            <div class="border-2 border-dashed border-gray-200 rounded-xl p-3 mb-4 w-full flex justify-center bg-gray-50 overflow-auto">
+            <div class="border-2 border-dashed border-gray-200 rounded-xl p-3 mb-4 w-full flex justify-center bg-gray-50 overflow-auto custom-scrollbar" style="max-height: 300px;">
                 <div id="nota-printable-container">
                     <div id="nota-printable"><p style="text-align:center;padding:20px;color:#999;font-family:sans-serif;">Memuat nota...</p></div>
                 </div>
@@ -284,23 +309,43 @@
         let pendingOrders = @json($pendingOrders ?? []);
         let activePanel = 'cart';
         let selectedPaymentMethod = null;
+        let selectedItemType = 'Dine In'; 
+        let selectedVariantName = '';
+        let selectedVariantPrice = 0;
+        let basePrice = 0;
 
         const formatRupiah = (number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(number);
-        
-        function escapeHtml(str) {
-            return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-        }
 
         function switchPanel(panel) {
             activePanel = panel;
-            document.getElementById('panel-cart').classList.toggle('hidden', panel !== 'cart');
-            document.getElementById('panel-order').classList.toggle('hidden', panel !== 'order');
-            document.getElementById('panel-history').classList.toggle('hidden', panel !== 'history');
 
+            // 1. Reset & Set Panel Pesanan Baru
+            if(panel === 'cart') {
+                document.getElementById('panel-cart').classList.replace('hidden', 'flex');
+            } else {
+                document.getElementById('panel-cart').classList.replace('flex', 'hidden');
+            }
+
+            // 2. Reset & Set Panel Cek Meja
+            if(panel === 'order') {
+                document.getElementById('panel-order').classList.replace('hidden', 'flex');
+            } else {
+                document.getElementById('panel-order').classList.replace('flex', 'hidden');
+            }
+
+            // 3. Reset & Set Panel Riwayat
+            if(panel === 'history') {
+                document.getElementById('panel-history').classList.replace('hidden', 'flex');
+            } else {
+                document.getElementById('panel-history').classList.replace('flex', 'hidden');
+            }
+
+            // Update UI Warna Tab Button
             document.getElementById('tab-cart').className = panel === 'cart' ? 'flex-1 py-2 rounded-xl font-bold text-[11px] uppercase border-2 border-orange-500 bg-orange-500 text-white transition' : 'flex-1 py-2 rounded-xl font-bold text-[11px] uppercase border-2 border-gray-100 dark:border-gray-700 text-gray-400 transition';
             document.getElementById('tab-order').className = panel === 'order' ? 'flex-1 py-2 rounded-xl font-bold text-[11px] uppercase border-2 border-orange-500 bg-orange-500 text-white transition' : 'flex-1 py-2 rounded-xl font-bold text-[11px] uppercase border-2 border-gray-100 dark:border-gray-700 text-gray-400 transition';
             document.getElementById('tab-history').className = panel === 'history' ? 'flex-1 py-2 rounded-xl font-bold text-[11px] uppercase border-2 border-orange-500 bg-orange-500 text-white transition' : 'flex-1 py-2 rounded-xl font-bold text-[11px] uppercase border-2 border-gray-100 dark:border-gray-700 text-gray-400 transition';
 
+            // Jika buka Cek Meja, langsung load datanya
             if (panel === 'order') loadOrderPanel();
         }
 
@@ -323,12 +368,21 @@
             document.getElementById('table_label').innerText = 'TAKEAWAY';
             document.querySelectorAll('.meja-option').forEach(el => { el.classList.remove('border-orange-500'); el.classList.add('border-gray-100'); });
             document.getElementById('btn-takeaway-ui').classList.add('border-orange-500');
+            
+            if (cart.length > 0) {
+                cart.forEach(item => {
+                    if (!item.notes.toUpperCase().includes('BUNGKUS') && !item.notes.toUpperCase().includes('TAKEAWAY')) {
+                        item.notes = (item.notes === '-' || item.notes === '') ? 'Bungkus' : item.notes + ' (Bungkus)';
+                    }
+                });
+                updateCartUI(); 
+            }
             closeTableModal();
             loadOrderPanel();
         }
 
         function accPesanan(id) {
-            if(confirm("Apakah pelanggan sudah membayar? Pesanan akan di-ACC dan masuk ke layar Dapur.")) {
+            if(confirm("Apakah pelanggan sudah membayar? Pesanan akan berubah menjadi Lunas.")) {
                 const form = document.createElement('form');
                 form.method = 'POST';
                 form.action = '/kasir/konfirmasi/' + id;
@@ -370,15 +424,15 @@
                 let statusBadge = '';
                 let btnKonfirmasi = '';
 
-                if (ord.order_status_id == 4) {
+                if (ord.payment_method === 'Belum Bayar') {
                     statusBadge = `<span class="bg-red-100 text-red-600 text-[10px] font-bold px-2 py-1 rounded uppercase animate-pulse">Belum Bayar</span>`;
                     btnKonfirmasi = `
                     <div class="mt-3 border-t border-orange-200 dark:border-orange-800 pt-3 space-y-2">
-                        <button type="button" onclick="accPesanan(${ord.id})" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-xl text-xs uppercase shadow-md transition active:scale-95">Terima Uang & ACC ke Dapur</button>
+                        <button type="button" onclick="accPesanan(${ord.id})" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-xl text-xs uppercase shadow-md transition active:scale-95">💳 TERIMA UANG (LUNAS)</button>
                         <button type="button" onclick="openPrintModal(${ord.id})" class="w-full bg-gray-800 hover:bg-black text-white font-bold py-3 rounded-xl text-xs uppercase shadow-md transition active:scale-95 flex items-center justify-center gap-2">Cetak Nota</button>
                     </div>`;
                 } else {
-                    statusBadge = `<span class="bg-blue-100 text-blue-600 text-[10px] font-bold px-2 py-1 rounded uppercase">Sedang Diproses</span>`;
+                    statusBadge = `<span class="bg-blue-100 text-blue-600 text-[10px] font-bold px-2 py-1 rounded uppercase">Lunas (Sedang Diproses)</span>`;
                     btnKonfirmasi = `
                     <div class="mt-3 border-t border-gray-200 dark:border-gray-700 pt-3">
                         <button type="button" onclick="openPrintModal(${ord.id})" class="w-full bg-gray-800 hover:bg-black text-white font-bold py-3 rounded-xl text-xs uppercase shadow-md transition active:scale-95 flex items-center justify-center gap-2">Cetak Nota</button>
@@ -403,18 +457,10 @@
                 const itemContainer = document.getElementById(`order-items-${ord.id}`);
                 ord.order_items.forEach(item => {
                     const itemName = item.menu ? item.menu.name : (item.name || 'Menu');
-                    const noteHTML = item.notes && item.notes !== '-' ? `<p class="text-[10px] text-orange-500 mt-0.5">${item.notes}</p>` : '';
-                    
                     itemContainer.insertAdjacentHTML('beforeend', `
                         <div class="bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-xl p-3 shadow-sm flex justify-between items-center">
-                            <div>
-                                <h4 class="font-bold uppercase text-sm dark:text-white">${itemName}</h4>
-                                ${noteHTML}
-                            </div>
-                            <div class="flex gap-4 items-center">
-                                <span class="bg-black text-white px-2 py-0.5 rounded font-bold text-xs">x${item.quantity}</span>
-                                <span class="font-bold dark:text-white text-sm">${formatRupiah(item.subtotal)}</span>
-                            </div>
+                            <h4 class="font-bold uppercase text-sm dark:text-white">${itemName}</h4>
+                            <div class="flex gap-4"><span class="bg-black text-white px-2 rounded font-bold">x${item.quantity}</span><span class="font-bold dark:text-white">${formatRupiah(item.subtotal)}</span></div>
                         </div>
                     `);
                 });
@@ -423,47 +469,99 @@
             totalEl.innerText = formatRupiah(gTotal);
         }
 
-        // ★ BUKA MODAL + FETCH VARIAN (KASIR)
-        async function openAddModal(id, name, price, cat) {
+        // 🔥 JURUS ULTIMATE: DECODE BASE64 AGAR DATA 100% AMAN 🔥
+        function openMenu(element) {
+            const id = element.getAttribute('data-id');
+            const name = element.getAttribute('data-name');
+            const price = parseInt(element.getAttribute('data-price'));
+            const variantsBase64 = element.getAttribute('data-variants');
+
             document.getElementById('modalQty').value = 1;
             document.getElementById('modalItemId').value = id;
             document.getElementById('modalName').innerText = name;
             document.getElementById('modalPrice').innerText = formatRupiah(price);
             document.getElementById('modalPrice').dataset.rawPrice = price;
             document.getElementById('modalNotes').value = "";
-            document.getElementById('addModal').classList.replace('hidden', 'flex');
+            
+            basePrice = price; 
+            selectedVariantName = '';
+            selectedVariantPrice = 0;
 
-            const container = document.getElementById('variant-selector-container');
-            container.innerHTML = `<div class="text-gray-400 text-xs font-semibold py-2">Memuat pilihan varian...</div>`;
+            let variantsArray = [];
+            if(variantsBase64) {
+                try { 
+                    // Decode Base64 kembali menjadi format JSON
+                    const decodedJson = atob(variantsBase64);
+                    variantsArray = JSON.parse(decodedJson); 
+                } catch(e) {
+                    console.error("Gagal decode varian:", e);
+                }
+            }
 
-            try {
-                // Fetch memanggil rute publik
-                const res = await fetch(`/menu/${id}/variants?t=${Date.now()}`);
-                if (!res.ok) throw new Error(`Error server`);
+            const variantContainer = document.getElementById('variant-container');
+            if (variantsArray && variantsArray.length > 0) {
+                let html = '<label class="block text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider">Pilihan Varian</label><div class="grid grid-cols-2 gap-2">';
                 
-                const variants = await res.json();
-                container.innerHTML = '';
-
-                if (!variants || variants.length === 0) return;
-
-                variants.forEach(v => {
-                    const opts = Array.isArray(v.options) ? v.options : JSON.parse(v.options || '[]');
-                    if (opts.length === 0) return;
-
-                    let optionHTML = opts.map(opt => `<option value="${opt}" ${opt === v.default_option ? 'selected' : ''}>${opt}</option>`).join('');
-
-                    container.insertAdjacentHTML('beforeend', `
-                        <div class="variant-group" data-variant-name="${escapeHtml(v.variant_name)}">
-                            <label class="block font-bold text-xs text-gray-400 uppercase mb-1.5">${escapeHtml(v.variant_name)}</label>
-                            <select class="variant-select w-full border-2 border-gray-100 dark:border-gray-700 dark:bg-gray-900 p-3 rounded-xl font-bold text-sm outline-none focus:border-orange-500 dark:text-white bg-gray-50">
-                                ${optionHTML}
-                            </select>
-                        </div>
-                    `);
+                variantsArray.forEach((v, index) => {
+                    let vPrice = parseInt(v.price_adjustment || v.price || 0);
+                    html += `
+                        <label class="border-2 border-gray-200 dark:border-gray-700 rounded-xl p-2 flex items-center gap-2 cursor-pointer hover:border-orange-500 transition">
+                            <input type="radio" name="varian_pilihan" value="${v.name}" onchange="pilihVarian('${v.name}', ${vPrice})" class="accent-orange-500" ${index === 0 ? 'checked' : ''}>
+                            <div class="flex flex-col">
+                                <span class="text-xs font-bold dark:text-white">${v.name}</span>
+                                <span class="text-[10px] text-orange-500">+ ${formatRupiah(vPrice)}</span>
+                            </div>
+                        </label>
+                    `;
                 });
-            } catch (e) {
-                console.warn('Gagal memuat varian:', e.message);
-                container.innerHTML = '';
+                html += '</div>';
+                variantContainer.innerHTML = html;
+                variantContainer.classList.remove('hidden');
+                
+                
+            } else {
+                variantContainer.innerHTML = '';
+                variantContainer.classList.add('hidden');
+            }
+
+            const currentTable = document.getElementById('selected_table_id').value;
+            const gridPenyajian = document.getElementById('opsi-penyajian-grid');
+            const btnDine = document.getElementById('btn-item-dine');
+            
+            if (currentTable === '0') {
+                gridPenyajian.classList.remove('grid-cols-2');
+                gridPenyajian.classList.add('grid-cols-1');
+                btnDine.classList.add('hidden');
+                selectItemType('Takeaway');
+            } else {
+                gridPenyajian.classList.remove('grid-cols-1');
+                gridPenyajian.classList.add('grid-cols-2');
+                btnDine.classList.remove('hidden');
+                selectItemType('Dine In');
+            }
+
+            document.getElementById('addModal').classList.replace('hidden', 'flex');
+        }
+
+        function pilihVarian(nama, hargaTambahan) {
+            selectedVariantName = nama;
+            selectedVariantPrice = hargaTambahan;
+            const totalItemPrice = basePrice + selectedVariantPrice;
+            document.getElementById('modalPrice').innerText = formatRupiah(totalItemPrice);
+            document.getElementById('modalPrice').dataset.rawPrice = totalItemPrice;
+        }
+
+        function selectItemType(type) {
+            selectedItemType = type;
+            const btnDine = document.getElementById('btn-item-dine');
+            const btnTakeaway = document.getElementById('btn-item-takeaway');
+            
+            if(type === 'Dine In') {
+                btnDine.className = "py-2.5 border-2 border-orange-500 bg-orange-50 dark:bg-orange-900/20 rounded-xl font-bold text-xs text-orange-600 dark:text-orange-400 text-center transition";
+                btnTakeaway.className = "py-2.5 border-2 border-gray-100 dark:border-gray-700 rounded-xl font-bold text-xs text-gray-500 dark:text-gray-400 text-center transition";
+            } else {
+                btnDine.className = "py-2.5 border-2 border-gray-100 dark:border-gray-700 rounded-xl font-bold text-xs text-gray-500 dark:text-gray-400 text-center transition";
+                btnTakeaway.className = "py-2.5 border-2 border-red-500 bg-red-50 dark:bg-red-950/20 rounded-xl font-bold text-xs text-red-600 dark:text-red-400 text-center transition";
             }
         }
 
@@ -474,30 +572,26 @@
             if (parseInt(q.value) + v >= 1) q.value = parseInt(q.value) + v;
         }
 
-        // ★ SAVE TO CART (KASIR - DENGAN VARIAN)
         function saveToCart() {
             const id = document.getElementById('modalItemId').value;
-            const name = document.getElementById('modalName').innerText;
+            let name = document.getElementById('modalName').innerText;
             const price = parseInt(document.getElementById('modalPrice').dataset.rawPrice);
             const qty = parseInt(document.getElementById('modalQty').value);
-            const notesInput = document.getElementById('modalNotes').value.trim();
+            const notes = document.getElementById('modalNotes').value || '-';
 
-            const variants = {};
-            document.querySelectorAll('.variant-group').forEach(group => {
-                const vName = group.dataset.variantName;
-                const vVal  = group.querySelector('.variant-select')?.value || '';
-                if (vName && vVal) variants[vName] = vVal;
-            });
+            if (selectedVariantName !== '') {
+                name = name + ' (' + selectedVariantName + ')';
+            }
 
-            const variantSummary = Object.entries(variants).map(([k, v]) => `${k}: ${v}`).join(' • ');
-            
-            const finalNotesArr = [];
-            if(variantSummary) finalNotesArr.push(variantSummary);
-            if(notesInput) finalNotesArr.push(`Catatan: ${notesInput}`);
-            
-            const fullNotes = finalNotesArr.length > 0 ? finalNotesArr.join(' | ') : '-';
+            const currentTable = document.getElementById('selected_table_id').value;
+            let finalNotes = notes;
+            if (currentTable === '0' || selectedItemType === 'Takeaway') {
+                if (!finalNotes.toUpperCase().includes('BUNGKUS') && !finalNotes.toUpperCase().includes('TAKEAWAY')) {
+                    finalNotes = (finalNotes === '-' || finalNotes === '') ? 'Bungkus' : finalNotes + ' (Bungkus)';
+                }
+            }
 
-            cart.push({ menu_id: id, name, price, qty, subtotal: price * qty, notes: fullNotes });
+            cart.push({ menu_id: id, name: name, price: price, qty: qty, subtotal: price * qty, notes: finalNotes });
             closeAddModal();
             updateCartUI();
         }
@@ -516,16 +610,27 @@
             container.innerHTML = '';
             cart.forEach((item, i) => {
                 total += item.subtotal;
+                
+                const isBungkus = item.notes.toUpperCase().includes('BUNGKUS') || item.notes.toUpperCase().includes('TAKEAWAY');
+                const penyajianBadge = isBungkus 
+                    ? `<span class="bg-red-100 text-red-700 text-[9px] px-2 py-0.5 rounded-md font-bold uppercase">Bungkus</span>`
+                    : `<span class="bg-blue-100 text-blue-700 text-[9px] px-2 py-0.5 rounded-md font-bold uppercase">Dine In</span>`;
+
+                let textCatatan = item.notes.replace(/ \(Bungkus\)/gi, '').replace(/Bungkus/gi, '').trim();
+
                 container.insertAdjacentHTML('beforeend', `
                     <div class="bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-4 shadow-sm flex flex-col gap-2 relative group hover:border-orange-500 transition">
                         <div class="flex justify-between items-start pr-8">
                             <div>
-                                <h4 class="font-bold text-sm leading-tight dark:text-white uppercase">${escapeHtml(item.name)}</h4>
+                                <div class="flex items-center gap-2">
+                                    <h4 class="font-bold text-sm leading-tight dark:text-white uppercase">${item.name}</h4>
+                                    ${penyajianBadge}
+                                </div>
                                 <p class="text-orange-500 font-bold text-sm mt-1">${formatRupiah(item.price)}</p>
                             </div>
                             <span class="bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-xl text-sm font-black dark:text-white">x${item.qty}</span>
                         </div>
-                        ${item.notes !== '-' ? `<div class="bg-orange-50 dark:bg-orange-900/20 text-orange-600 px-3 py-2 rounded-xl text-xs font-semibold">${item.notes}</div>` : ''}
+                        ${(textCatatan !== '-' && textCatatan !== '') ? `<div class="bg-orange-50 dark:bg-orange-900/20 text-orange-600 px-3 py-2 rounded-xl text-xs font-semibold">Catatan: ${textCatatan}</div>` : ''}
                         <button type="button" onclick="removeItem(${i})" class="absolute top-4 right-4 text-gray-300 hover:text-red-500 transition font-bold text-xl">✕</button>
                     </div>
                 `);
@@ -540,9 +645,6 @@
             updateCartUI();
         }
 
-        // ==========================================
-        // FUNGSI PILIH PEMBAYARAN DAN SUBMIT 
-        // ==========================================
         function validateAndSubmit(type) {
             if (!document.getElementById('selected_table_id').value) {
                 alert("Pilih Meja dulu rek!");
@@ -577,7 +679,6 @@
 
         function selectPaymentMethod(method) {
             selectedPaymentMethod = method;
-            
             const btnTunai = document.getElementById('btn-method-tunai');
             const btnQris = document.getElementById('btn-method-qris');
             
@@ -620,18 +721,15 @@
 
         function searchMenu() {
             const val = document.getElementById('searchInput').value.toLowerCase();
-            document.querySelectorAll('.menu-card').forEach(c => c.style.display = c.dataset.name.includes(val) ? 'flex' : 'none');
+            document.querySelectorAll('.menu-card').forEach(c => {
+                const searchData = c.getAttribute('data-search') || '';
+                c.style.display = searchData.includes(val) ? 'flex' : 'none';
+            });
         }
 
         function filterMenu(k) {
             document.querySelectorAll('.menu-card').forEach(c => {
-                c.style.display = (k === 'semua' || c.dataset.category === k) ? 'flex' : 'none';
-            });
-            document.querySelectorAll('.filter-btn').forEach(btn => {
-                const isActive = (k === 'semua' && btn.innerText.trim().toLowerCase() === 'semua') || btn.innerText.trim() === k;
-                btn.className = isActive
-                    ? 'filter-btn bg-orange-500 text-white px-6 py-2 rounded-full font-semibold shadow-md transition'
-                    : 'filter-btn bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 px-6 py-2 rounded-full font-semibold border dark:border-gray-700 hover:bg-orange-50 hover:text-orange-500 transition';
+                c.style.display = (k === 'semua' || c.getAttribute('data-category') === k) ? 'flex' : 'none';
             });
         }
 
@@ -662,10 +760,8 @@
                 for (let item of order.order_items) {
                     let qty = parseInt(item.quantity);
                     let hargaSatuan = Math.round(item.subtotal / qty);
-                    let noteHTML = item.notes && item.notes !== '-' ? `<br><span style="font-size:9px;color:#555;">${item.notes}</span>` : '';
-                    
                     itemsHTML += `
-                        <div class="nota-row"><span class="nota-item-name">${qty}x ${item.name} ${noteHTML}</span><span class="nota-item-price">${rp(item.subtotal)}</span></div>
+                        <div class="nota-row"><span class="nota-item-name">${qty}x ${item.name}</span><span class="nota-item-price">${rp(item.subtotal)}</span></div>
                         ${qty > 1 ? `<div class="nota-harga-satuan">${rp(hargaSatuan)}</div>` : ''}
                     `;
                 }

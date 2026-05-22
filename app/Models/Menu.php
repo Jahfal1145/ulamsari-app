@@ -27,4 +27,11 @@ class Menu extends Model
             'category_id'
         );
     }
+
+    // TAMBAHKAN FUNGSI INI UNTUK MEMBUKA PINTU DATA VARIAN
+    public function variants()
+    {
+        // Sesuaikan 'Variant::class' jika nama modelmu berbeda (misal: MenuVariant::class)
+        return $this->hasMany(\App\Models\MenuVariant::class); 
+    } 
 }
