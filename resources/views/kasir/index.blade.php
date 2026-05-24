@@ -384,7 +384,6 @@ function accPesanan(id) {
         form.submit();
     }
 }
-
 function loadOrderPanel() {
     const tableId = document.getElementById('selected_table_id').value;
     const container = document.getElementById('order-container');
@@ -413,18 +412,28 @@ function loadOrderPanel() {
         let statusBadge = '';
         let btnKonfirmasi = '';
 
-        if (ord.payment_method === 'Belum Bayar') {
+        if (ord.order_status_id == 4) {
+            // Pesanan dari pelanggan, menunggu konfirmasi kasir
+            statusBadge = `<span class="bg-yellow-100 text-yellow-700 text-[10px] font-bold px-2 py-1 rounded uppercase animate-pulse">⏳ Menunggu Konfirmasi</span>`;
+            btnKonfirmasi = `
+            <div class="mt-3 border-t border-yellow-200 pt-3 space-y-2">
+                <button type="button" onclick="accPesanan(${ord.id})" class="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 rounded-xl text-xs uppercase shadow-md transition active:scale-95">✅ KONFIRMASI → KIRIM KE DAPUR</button>
+                <button type="button" onclick="openPrintModal(${ord.id})" class="w-full bg-gray-800 hover:bg-black text-white font-bold py-3 rounded-xl text-xs uppercase shadow-md transition active:scale-95">Cetak Nota</button>
+            </div>`;
+        } else if (ord.payment_method === 'Belum Bayar') {
+            // Pesanan dari kasir, belum bayar
             statusBadge = `<span class="bg-red-100 text-red-600 text-[10px] font-bold px-2 py-1 rounded uppercase animate-pulse">Belum Bayar</span>`;
             btnKonfirmasi = `
             <div class="mt-3 border-t border-orange-200 dark:border-orange-800 pt-3 space-y-2">
                 <button type="button" onclick="accPesanan(${ord.id})" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-xl text-xs uppercase shadow-md transition active:scale-95">💳 TERIMA UANG (LUNAS)</button>
-                <button type="button" onclick="openPrintModal(${ord.id})" class="w-full bg-gray-800 hover:bg-black text-white font-bold py-3 rounded-xl text-xs uppercase shadow-md transition active:scale-95 flex items-center justify-center gap-2">Cetak Nota</button>
+                <button type="button" onclick="openPrintModal(${ord.id})" class="w-full bg-gray-800 hover:bg-black text-white font-bold py-3 rounded-xl text-xs uppercase shadow-md transition active:scale-95">Cetak Nota</button>
             </div>`;
         } else {
-            statusBadge = `<span class="bg-blue-100 text-blue-600 text-[10px] font-bold px-2 py-1 rounded uppercase">Lunas (Sedang Diproses)</span>`;
+            // Sudah dikonfirmasi, sedang diproses dapur
+            statusBadge = `<span class="bg-blue-100 text-blue-600 text-[10px] font-bold px-2 py-1 rounded uppercase">Sedang Diproses Dapur</span>`;
             btnKonfirmasi = `
             <div class="mt-3 border-t border-gray-200 dark:border-gray-700 pt-3">
-                <button type="button" onclick="openPrintModal(${ord.id})" class="w-full bg-gray-800 hover:bg-black text-white font-bold py-3 rounded-xl text-xs uppercase shadow-md transition active:scale-95 flex items-center justify-center gap-2">Cetak Nota</button>
+                <button type="button" onclick="openPrintModal(${ord.id})" class="w-full bg-gray-800 hover:bg-black text-white font-bold py-3 rounded-xl text-xs uppercase shadow-md transition active:scale-95">Cetak Nota</button>
             </div>`;
         }
 

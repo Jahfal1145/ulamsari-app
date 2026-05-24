@@ -107,5 +107,6 @@ Route::middleware('pin.auth:admin')->prefix('admin')->group(function () {
     Route::post('/menu/variants/{id}/update', [App\Http\Controllers\MenuVariantController::class, 'update']);
 
     Route::delete('/menu/variants/{id}/delete', [App\Http\Controllers\MenuVariantController::class, 'destroy']);
-
 });
+
+Route::get('/kasir/api/pending-orders', [App\Http\Controllers\CashierController::class, 'apiPendingOrders']);
