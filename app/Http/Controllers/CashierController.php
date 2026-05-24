@@ -31,7 +31,7 @@ class CashierController extends Controller
 
         $historyOrders = Order::with(['orderItems.menu'])
                         ->where('order_status_id', 3)
-                        ->whereDate('created_at', now()->setTimezone('Asia/Jakarta')->toDateString())
+                        ->whereDate('created_at', now()->toDateString())
                         ->orderBy('id', 'desc')
                         ->get();
 
@@ -120,10 +120,14 @@ class CashierController extends Controller
         if ($start_date && $end_date) {
             $query->whereBetween('created_at', [$start_date . ' 00:00:00', $end_date . ' 23:59:59']);
         } else {
-            $query->whereDate('created_at', now()->format('Y-m-d'));
+            $query->whereDate('created_at', now()->toDateString());
         }
 
         $orders = $query->orderBy('id', 'desc')->get();
+
+        // 1. SIAPKAN VARIABEL UNTUK MENAMPUNG TOTAL
+        $grandTotalHarga = 0;
+        $grandTotalItem  = 0;
 
         $html  = '<table border="1" style="border-collapse: collapse; text-align: center; font-family: Arial, sans-serif;">';
         $html .= '<thead><tr style="background-color: #2563eb; color: white;">';
@@ -133,22 +137,44 @@ class CashierController extends Controller
         $no = 1;
         foreach ($orders as $order) {
             $pesananArr = [];
+            $totalItemPerOrder = 0; // Hitung item per nota ini
+
             foreach ($order->orderItems as $item) {
                 $pesananArr[] = ($item->menu->name ?? 'Item') . ' (x' . $item->quantity . ')';
+                $totalItemPerOrder += $item->quantity; // Tambah jumlah item pesanan
             }
+            
+            // 2. AKUMULASIKAN KE GRAND TOTAL
+            $grandTotalHarga += $order->total_price;
+            $grandTotalItem  += $totalItemPerOrder;
             
             $html .= '<tr>';
             $html .= '<td>' . $no++ . '</td>';
             $html .= '<td>' . $order->order_number . '</td>';
-            $html .= '<td>' . $order->created_at->format('d/m/Y H:i') . '</td>';
+            // Menambahkan setTimezone agar jam & tanggal terkonversi ke WIB saat diexport
+            $html .= '<td>' . $order->created_at->setTimezone('Asia/Jakarta')->format('d/m/Y H:i') . '</td>';
             $html .= '<td>' . ($order->customer_name ?? '-') . '</td>';
             $html .= '<td style="mso-number-format:\'\@\'">' . ($order->phone_number ?? '-') . '</td>';
             $html .= '<td>' . implode(', ', $pesananArr) . '</td>';
-            $html .= '<td>' . $order->total_price . '</td>';
+            // REVISI: Menambahkan format titik ribuan pada harga per baris order
+            $html .= '<td style="text-align: right;">' . number_format($order->total_price, 0, ',', '.') . '</td>';
             $html .= '<td>' . $order->payment_method . '</td>';
             $html .= '</tr>';
         }
-        $html .= '</tbody></table>';
+        $html .= '</tbody>'; 
+
+        // 3. BARIS GRAND TOTAL DI BAWAH TBODY
+        $html .= '<tfoot>';
+        $html .= '<tr style="font-weight: bold; background-color: #f3f4f6; height: 25px;">';
+        $html .= '<td colspan="5" style="text-align: right; padding-right: 10px;">GRAND TOTAL:</td>';
+        $html .= '<td style="text-align: left; padding-left: 5px;">' . $grandTotalItem . ' Item</td>'; 
+        // REVISI: Menambahkan format titik ribuan pada Grand Total Harga keseluruhan
+        $html .= '<td style="text-align: right;">' . number_format($grandTotalHarga, 0, ',', '.') . '</td>'; 
+        $html .= '<td>-</td>'; 
+        $html .= '</tr>';
+        $html .= '</tfoot>';
+
+        $html .= '</table>';
 
         return response($html, 200, [
             "Content-type"        => "application/vnd.ms-excel",
