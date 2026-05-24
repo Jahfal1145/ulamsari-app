@@ -6,22 +6,23 @@ use Illuminate\Http\Request;
 use App\Models\Menu;
 use App\Models\Order;
 use Illuminate\Support\Facades\DB; // Tambahkan ini
+use App\Models\Category;
 
 class PelangganController extends Controller
 {
     // TAMPILAN MENU
     public function index($meja)
     {
-        // 1. Ambil Menu
-        $menus = Menu::join('categories', 'menus.category_id', '=', 'categories.id')
-            ->select('menus.*', 'categories.name as category_name')
+        $menus = Menu::with('categories')
             ->where('is_active', true)
-            ->get();
+            ->get()
+            ->map(function($menu) {
+                $menu->category_name = $menu->categories->first()->name ?? 'Lainnya';
+                return $menu;
+            });
 
-        // 2. ★ AMBIL KATEGORI DARI DATABASE (Ini yang bikin kategori muncul!)
-        $categories = DB::table('categories')->get();
+        $categories = Category::all();
 
-        // 3. Kirim menus, meja, dan categories ke view
         return view('pelanggan.index', compact('menus', 'meja', 'categories'));
     }
 
