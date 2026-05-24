@@ -31,8 +31,8 @@ class CashierController extends Controller
 
         $historyOrders = Order::with(['orderItems.menu'])
                         ->where('order_status_id', 3)
+                        ->whereDate('created_at', now()->setTimezone('Asia/Jakarta')->toDateString())
                         ->orderBy('id', 'desc')
-                        ->limit(30)
                         ->get();
 
         return view('kasir.index', compact('menus', 'tables', 'pendingOrders', 'historyOrders', 'categories'));

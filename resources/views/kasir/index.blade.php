@@ -74,33 +74,33 @@
             </div>
 
             <div class="grid grid-cols-2 gap-6 pb-20" id="menuGrid">
-                @foreach($menus as $menu)
-                @php 
-                    $catName = $menu->categories->count() > 0 ? $menu->categories->first()->name : 'Tanpa Kategori'; 
-                    // JURUS ULTIMATE: Ubah Varian jadi Base64 agar 1000% aman dari kutipan HTML!
-                    $variantsJson = $menu->variants ? $menu->variants->toJson() : '[]';
-                    $variantsBase64 = base64_encode($variantsJson);
-                @endphp
-                <div onclick="openMenu(this)"
-                    class="menu-card bg-white dark:bg-gray-800 rounded-2xl shadow-sm border dark:border-gray-700 overflow-hidden transition hover:shadow-xl hover:border-orange-400 flex flex-col h-full cursor-pointer group"
-                    data-id="{{ $menu->id }}"
-                    data-name="{{ $menu->name }}"
-                    data-search="{{ strtolower($menu->name) }}"
-                    data-price="{{ $menu->price }}"
-                    data-category="{{ $catName }}"
-                    data-variants="{{ $variantsBase64 }}">
-                    
-                    @if($menu->image)
-                        <img src="{{ asset('storage/' . $menu->image) }}" alt="{{ $menu->name }}" class="h-64 w-full object-cover object-center border-b dark:border-gray-700">
-                    @else
-                        <div class="h-64 bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-gray-400 text-sm italic font-medium uppercase text-center p-2">FOTO<br>{{ $menu->name }}</div>
-                    @endif
-                    <div class="p-5 flex flex-col flex-1 relative bg-white dark:bg-gray-800 border-t dark:border-gray-700">
-                        <h3 class="font-bold text-xl leading-tight mb-2 text-gray-800 dark:text-gray-100">{{ $menu->name }}</h3>
-                        <p class="text-orange-500 font-bold text-lg">Rp {{ number_format($menu->price, 0, ',', '.') }}</p>
-                    </div>
-                </div>
-                @endforeach
+        @foreach($menus as $menu)
+        @php 
+            $catName = $menu->categories->count() > 0 ? $menu->categories->first()->name : 'Tanpa Kategori'; 
+            $variantsJson = $menu->variants ? $menu->variants->toJson() : '[]';
+            $variantsBase64 = base64_encode($variantsJson);
+        @endphp
+        <div onclick="openMenu(this)"
+            class="menu-card bg-white dark:bg-gray-800 rounded-2xl shadow-sm border dark:border-gray-700 overflow-hidden transition hover:shadow-xl hover:border-orange-400 flex flex-col h-full cursor-pointer group"
+            data-id="{{ $menu->id }}"
+            data-name="{{ $menu->name }}"
+            data-search="{{ strtolower($menu->name) }}"
+            data-price="{{ $menu->price }}"
+            data-category="{{ $catName }}"
+            data-variants="{{ $variantsBase64 }}">
+            
+            @if($menu->image)
+                <img src="{{ asset('storage/' . $menu->image) }}" alt="{{ $menu->name }}" class="h-64 w-full object-cover object-center border-b dark:border-gray-700">
+            @else
+                <div class="h-64 bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-gray-400 text-sm italic font-medium uppercase text-center p-2">FOTO<br>{{ $menu->name }}</div>
+            @endif
+            <div class="p-5 flex flex-col flex-1 relative bg-white dark:bg-gray-800 border-t dark:border-gray-700">
+                <h3 class="font-bold text-xl leading-tight mb-2 text-gray-800 dark:text-gray-100">{{ $menu->name }}</h3>
+                <p class="text-orange-500 font-bold text-lg">Rp {{ number_format($menu->price, 0, ',', '.') }}</p>
+            </div>
+        </div>
+        @endforeach
+    </div>
             </div>
         </div>
 
@@ -585,15 +585,29 @@ function saveToCart() {
     const name = document.getElementById('modalName').innerText;
     const price = parseInt(document.getElementById('modalPrice').dataset.rawPrice);
     const qty = parseInt(document.getElementById('modalQty').value);
-    const notes = document.getElementById('modalNotes').value || '-';
+    const extraNotes = document.getElementById('modalNotes').value.trim();
 
     const currentTable = document.getElementById('selected_table_id').value;
-    let finalNotes = notes;
-    if (currentTable === '0' || selectedItemType === 'Takeaway') {
-        if (!finalNotes.toUpperCase().includes('BUNGKUS') && !finalNotes.toUpperCase().includes('TAKEAWAY')) {
-            finalNotes = (finalNotes === '-' || finalNotes === '') ? 'Bungkus' : finalNotes + ' (Bungkus)';
+
+    // Tentukan jenis penyajian
+    let jenisLabel = selectedItemType; // 'Dine In' atau 'Takeaway'
+    if (currentTable === '0') jenisLabel = 'Takeaway';
+
+    // Kumpulkan varian yang dipilih
+    const variantParts = [];
+    document.querySelectorAll('#variant-container input[type="radio"]:checked').forEach(radio => {
+        const groupLabel = radio.closest('div.mb-4')?.querySelector('label')?.innerText?.trim();
+        if (groupLabel && radio.value) {
+            variantParts.push(`${groupLabel}: ${radio.value}`);
         }
-    }
+    });
+
+    // Bangun notes lengkap seperti format pelanggan: "Dine In • Level Pedas: Sedang • Catatan: xxx"
+    const noteParts = [jenisLabel];
+    if (variantParts.length > 0) noteParts.push(variantParts.join(' • '));
+    if (extraNotes) noteParts.push(`Catatan: ${extraNotes}`);
+
+    const finalNotes = noteParts.join(' • ');
 
     cart.push({
         menu_id: id,
@@ -608,7 +622,6 @@ function saveToCart() {
     updateCartUI();
     closeAddModal();
 }
-
 function updateCartUI() {
     let total = 0;
     const container = document.getElementById('cart-container');
@@ -629,7 +642,13 @@ function updateCartUI() {
             ? `<span class="bg-red-100 text-red-700 text-[9px] px-2 py-0.5 rounded-md font-bold uppercase">Bungkus</span>`
             : `<span class="bg-blue-100 text-blue-700 text-[9px] px-2 py-0.5 rounded-md font-bold uppercase">Dine In</span>`;
 
-        let textCatatan = item.notes.replace(/ \(Bungkus\)/gi, '').replace(/Bungkus/gi, '').trim();
+        // Bersihkan notes: buang bagian "Dine In" / "Takeaway" / "Bungkus" dari awal
+        const notesParts = item.notes.split(' • ').map(s => s.trim());
+        const filteredParts = notesParts.filter(p => {
+            const lower = p.toLowerCase();
+            return !['dine in', 'takeaway', 'take-away', 'bungkus'].includes(lower);
+        });
+        const textCatatan = filteredParts.join(' • ');
 
         container.insertAdjacentHTML('beforeend', `
             <div class="bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-4 shadow-sm flex flex-col gap-2 relative group hover:border-orange-500 transition">
@@ -646,7 +665,58 @@ function updateCartUI() {
                     </div>
                     <span class="bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-xl text-sm font-black dark:text-white">x${item.qty}</span>
                 </div>
-                ${(textCatatan !== '-' && textCatatan !== '') ? `<div class="bg-orange-50 dark:bg-orange-900/20 text-orange-600 px-3 py-2 rounded-xl text-xs font-semibold">Catatan: ${textCatatan}</div>` : ''}
+                ${textCatatan ? `<div class="bg-orange-50 dark:bg-orange-900/20 text-orange-600 px-3 py-2 rounded-xl text-xs font-semibold">📝 ${textCatatan}</div>` : ''}
+                <button type="button" onclick="removeItem(${i})" class="absolute top-4 right-4 text-gray-300 hover:text-red-500 transition font-bold text-xl">✕</button>
+            </div>
+        `);
+    });
+
+    document.getElementById('total-price').innerText = formatRupiah(total);
+    document.getElementById('cart_data_input').value = JSON.stringify(cart);
+}function updateCartUI() {
+    let total = 0;
+    const container = document.getElementById('cart-container');
+
+    if (cart.length === 0) {
+        container.innerHTML = `<div class="flex flex-col items-center justify-center h-full text-gray-300 dark:text-gray-600 italic font-bold"><p>BELUM ADA MENU DIPILIH</p></div>`;
+        document.getElementById('total-price').innerText = 'Rp 0';
+        document.getElementById('cart_data_input').value = "";
+        return;
+    }
+
+    container.innerHTML = '';
+    cart.forEach((item, i) => {
+        total += item.subtotal;
+
+        const isBungkus = item.notes.toUpperCase().includes('BUNGKUS') || item.notes.toUpperCase().includes('TAKEAWAY');
+        const penyajianBadge = isBungkus
+            ? `<span class="bg-red-100 text-red-700 text-[9px] px-2 py-0.5 rounded-md font-bold uppercase">Bungkus</span>`
+            : `<span class="bg-blue-100 text-blue-700 text-[9px] px-2 py-0.5 rounded-md font-bold uppercase">Dine In</span>`;
+
+        // Bersihkan notes: buang bagian "Dine In" / "Takeaway" / "Bungkus" dari awal
+        const notesParts = item.notes.split(' • ').map(s => s.trim());
+        const filteredParts = notesParts.filter(p => {
+            const lower = p.toLowerCase();
+            return !['dine in', 'takeaway', 'take-away', 'bungkus'].includes(lower);
+        });
+        const textCatatan = filteredParts.join(' • ');
+
+        container.insertAdjacentHTML('beforeend', `
+            <div class="bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-2xl p-4 shadow-sm flex flex-col gap-2 relative group hover:border-orange-500 transition">
+                <div class="flex justify-between items-start pr-8">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <div class="flex flex-col">
+                                <h4 class="font-bold text-sm leading-tight dark:text-white uppercase">${item.name}</h4>
+                                ${item.variant ? `<span class="text-[10px] text-orange-500 font-bold uppercase tracking-wide">${item.variant}</span>` : ''}
+                            </div>
+                            ${penyajianBadge}
+                        </div>
+                        <p class="text-orange-500 font-bold text-sm mt-1">${formatRupiah(item.price)}</p>
+                    </div>
+                    <span class="bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-xl text-sm font-black dark:text-white">x${item.qty}</span>
+                </div>
+                ${textCatatan ? `<div class="bg-orange-50 dark:bg-orange-900/20 text-orange-600 px-3 py-2 rounded-xl text-xs font-semibold">📝 ${textCatatan}</div>` : ''}
                 <button type="button" onclick="removeItem(${i})" class="absolute top-4 right-4 text-gray-300 hover:text-red-500 transition font-bold text-xl">✕</button>
             </div>
         `);
