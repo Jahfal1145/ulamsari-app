@@ -18,36 +18,35 @@ class DapurController extends Controller
                       ->orWhere('order_status_id', 2);
                 });
 
-        if ($jenis == 'dine-in') {
-            // TAMPILKAN ORDER YANG PUNYA ITEM DINE IN
-            $query->whereHas('orderItems', function($q) {
-                $q->where('notes', '!=', 'Takeaway')
-                  ->where('notes', '!=', 'Take-away')
-                  ->where('notes', '!=', 'Bungkus');
-            })->with(['orderItems' => function($q) {
-                // Hanya muat item yang Dine In saja di dalam kartunya
-                $q->where('notes', '!=', 'Takeaway')
-                  ->where('notes', '!=', 'Take-away')
-                  ->where('notes', '!=', 'Bungkus');
-            }, 'orderItems.menu']);
+                    if ($jenis == 'dine-in') {
+                $query->whereHas('orderItems', function($q) {
+                    $q->whereRaw('LOWER(notes) NOT LIKE ?', ['%bungkus%'])
+                    ->whereRaw('LOWER(notes) NOT LIKE ?', ['%takeaway%'])
+                    ->whereRaw('LOWER(notes) NOT LIKE ?', ['%take-away%']);
+                })->with(['orderItems' => function($q) {
+                    $q->whereRaw('LOWER(notes) NOT LIKE ?', ['%bungkus%'])
+                    ->whereRaw('LOWER(notes) NOT LIKE ?', ['%takeaway%'])
+                    ->whereRaw('LOWER(notes) NOT LIKE ?', ['%take-away%']);
+                }, 'orderItems.menu']);
 
-        } elseif ($jenis == 'take-away') {
-            // TAMPILKAN ORDER YANG PUNYA ITEM TAKEAWAY
-            $query->whereHas('orderItems', function($q) {
-                $q->where('notes', 'Takeaway')
-                  ->orWhere('notes', 'Take-away')
-                  ->orWhere('notes', 'Bungkus');
-            })->with(['orderItems' => function($q) {
-                // Hanya muat item yang Takeaway saja di dalam kartunya
-                $q->where('notes', 'LIKE', '%Takeaway%')
-                ->orWhere('notes', 'LIKE', '%Take%')
-                ->orWhere('notes', 'LIKE', '%Bungkus%');
-            }, 'orderItems.menu']);
+            } elseif ($jenis == 'take-away') {
+                $query->whereHas('orderItems', function($q) {
+                    $q->where(function($q2) {
+                        $q2->whereRaw('LOWER(notes) LIKE ?', ['%bungkus%'])
+                        ->orWhereRaw('LOWER(notes) LIKE ?', ['%takeaway%'])
+                        ->orWhereRaw('LOWER(notes) LIKE ?', ['%take-away%']);
+                    });
+                })->with(['orderItems' => function($q) {
+                    $q->where(function($q2) {
+                        $q2->whereRaw('LOWER(notes) LIKE ?', ['%bungkus%'])
+                        ->orWhereRaw('LOWER(notes) LIKE ?', ['%takeaway%'])
+                        ->orWhereRaw('LOWER(notes) LIKE ?', ['%take-away%']);
+                    });
+                }, 'orderItems.menu']);
 
-        } else {
-            // JIKA 'SEMUA', TAMPILKAN SEMUA ITEM SEPERTI BIASA
-            $query->with(['orderItems.menu']);
-        }
+            } else {
+                $query->with(['orderItems.menu']);
+            }
 
         $orders = $query->orderBy('id', 'asc')->get();
 

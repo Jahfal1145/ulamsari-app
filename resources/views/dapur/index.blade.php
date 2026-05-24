@@ -51,17 +51,16 @@
                 $headerBg = $isCooking ? 'bg-green-50' : 'bg-gray-50';
                 $headerText = $isCooking ? 'text-green-700' : 'text-gray-800';
 
-                // ========================================================
-                // LOGIKA PENGURUTAN: Pisahkan Dine In dan Takeaway
-                // ========================================================
                 $hasDineIn = false;
                 $hasTakeaway = false;
-                
                 $dineInItems = [];
                 $takeawayItems = [];
 
                 foreach($order->orderItems as $item) {
-                    if(strtolower($item->notes) == 'takeaway' || strtolower($item->notes) == 'take-away' || strtolower($item->notes) == 'bungkus') {
+                    $notesLower = strtolower($item->notes ?? '');
+                    if(str_contains($notesLower, 'bungkus') || 
+                    str_contains($notesLower, 'takeaway') || 
+                    str_contains($notesLower, 'take-away')) {
                         $hasTakeaway = true;
                         $takeawayItems[] = $item;
                     } else {
@@ -70,7 +69,6 @@
                     }
                 }
 
-                // Gabungkan: array Dine In di atas, array Takeaway di bawah
                 $sortedItems = array_merge($dineInItems, $takeawayItems);
             @endphp
 
@@ -118,32 +116,41 @@
                     <ul class="space-y-4">
                         {{-- KITA LOOPING ARRAY YANG SUDAH DIURUTKAN ($sortedItems) BUKAN ARRAY ASLI --}}
                         @foreach($sortedItems as $item)
-                        <li class="flex flex-col bg-gray-50 p-3 rounded-xl border border-gray-100">
-                            
-                            <div class="flex justify-between items-start">
-                                <div>
-                                    <span class="text-lg font-bold text-[#1a202c] block">{{ $item->menu->name ?? 'Menu Terhapus' }}</span>
-                                    <span class="text-xs font-bold text-gray-500 uppercase">{{ $item->menu->name ?? 'Menu' }} X{{ $item->quantity }}</span>
-                                </div>
-                                <div class="flex flex-col items-end gap-2">
-                                    <span class="bg-[#1a202c] text-white font-black px-3 py-1 rounded-lg text-xs shadow-sm">x{{ $item->quantity }}</span>
-                                    
-                                    @if(strtolower($item->notes) == 'takeaway' || strtolower($item->notes) == 'take-away' || strtolower($item->notes) == 'bungkus')
-                                        <span class="bg-[#d32f2f] text-white text-[10px] px-2 py-0.5 rounded font-black uppercase tracking-wider shadow-sm">BUNGKUS</span>
-                                    @else
-                                        <span class="bg-blue-500 text-white text-[10px] px-2 py-0.5 rounded font-black uppercase tracking-wider shadow-sm">DINE IN</span>
-                                    @endif
-                                </div>
-                            </div>
-                            
-                            @if($item->notes)
-                            <div class="mt-1 flex items-center text-[#d32f2f] italic text-[13px] font-medium">
-                                <span>Note: {{ $item->notes }}</span>
-                            </div>
-                            @endif
+                            @php
+                                $rawNotes = $item->notes ?? '';
+                                $notesLower = strtolower($rawNotes);
+                                $isBungkus = str_contains($notesLower, 'bungkus') || 
+                                            str_contains($notesLower, 'takeaway') || 
+                                            str_contains($notesLower, 'take-away');
 
-                        </li>
-                        @endforeach
+                                $notesParts = array_map('trim', explode('•', $rawNotes));
+                                $filteredParts = array_filter($notesParts, function($part) {
+                                    return !in_array(strtolower(trim($part)), ['dine in', 'takeaway', 'take-away', 'bungkus', '-', '']);
+                                });
+                                $cleanNote = implode(' • ', $filteredParts);
+                            @endphp
+                            <li class="flex flex-col bg-gray-50 p-3 rounded-xl border border-gray-100">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <span class="text-lg font-bold text-[#1a202c] block">{{ $item->menu->name ?? 'Menu Terhapus' }}</span>
+                                        <span class="text-xs font-bold text-gray-500 uppercase">{{ $item->menu->name ?? 'Menu' }} X{{ $item->quantity }}</span>
+                                    </div>
+                                    <div class="flex flex-col items-end gap-2">
+                                        <span class="bg-[#1a202c] text-white font-black px-3 py-1 rounded-lg text-xs shadow-sm">x{{ $item->quantity }}</span>
+                                        @if($isBungkus)
+                                            <span class="bg-[#d32f2f] text-white text-[10px] px-2 py-0.5 rounded font-black uppercase tracking-wider shadow-sm">BUNGKUS</span>
+                                        @else
+                                            <span class="bg-blue-500 text-white text-[10px] px-2 py-0.5 rounded font-black uppercase tracking-wider shadow-sm">DINE IN</span>
+                                        @endif
+                                    </div>
+                                </div>
+                                @if($cleanNote)
+                                <div class="mt-2 bg-yellow-50 border border-yellow-200 rounded-lg px-3 py-2 text-[13px] font-medium text-gray-700">
+                                    📝 {{ $cleanNote }}
+                                </div>
+                                @endif
+                            </li>
+                            @endforeach
                     </ul>
                 </div>
 
