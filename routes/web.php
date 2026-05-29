@@ -110,3 +110,4 @@ Route::middleware('pin.auth:admin')->prefix('admin')->group(function () {
 });
 
 Route::get('/kasir/api/pending-orders', [App\Http\Controllers\CashierController::class, 'apiPendingOrders']);
+Route::delete('/kasir/hapus/{id}', [CashierController::class, 'destroy'])->name('kasir.destroy');

@@ -384,6 +384,30 @@ function accPesanan(id) {
         form.submit();
     }
 }
+
+function hapusPesanan(id) {
+    if (!confirm("Yakin mau hapus pesanan ini? Tindakan ini tidak bisa dibatalkan.")) return;
+    
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '/kasir/hapus/' + id;
+    
+    const token = document.createElement('input');
+    token.type = 'hidden';
+    token.name = '_token';
+    token.value = '{{ csrf_token() }}';
+    form.appendChild(token);
+    
+    const method = document.createElement('input');
+    method.type = 'hidden';
+    method.name = '_method';
+    method.value = 'DELETE';
+    form.appendChild(method);
+    
+    document.body.appendChild(form);
+    form.submit();
+}
+
 function loadOrderPanel() {
     const tableId = document.getElementById('selected_table_id').value;
     const container = document.getElementById('order-container');
@@ -438,10 +462,12 @@ function loadOrderPanel() {
         }
 
         container.insertAdjacentHTML('beforeend', `
-            <div class="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-2xl p-4 mt-2 mb-4 shadow-sm">
-                <div class="flex justify-between items-center mb-3">
-                    <p class="text-xs font-bold text-orange-600 uppercase">Pesanan #${list.length - idx}<br><span class="text-gray-500 text-[10px]">${ord.order_number}</span></p>
+            <div class="flex justify-between items-center mb-3">
+                <p class="text-xs font-bold text-orange-600 uppercase">Pesanan #${list.length - idx}<br><span class="text-gray-500 text-[10px]">${ord.order_number}</span></p>
+                <div class="flex items-center gap-2">
                     ${statusBadge}
+                    <button type="button" onclick="hapusPesanan(${ord.id})" class="w-7 h-7 flex items-center justify-center bg-red-100 hover:bg-red-500 text-red-500 hover:text-white rounded-lg font-black text-sm transition active:scale-95" title="Hapus Pesanan">✕</button>
+                </div>
                 </div>
                 <div class="mt-2 mb-2 p-2 bg-white dark:bg-gray-800 rounded border border-orange-100 dark:border-gray-700 text-xs text-gray-700 dark:text-gray-300">
                     <p><span class="font-bold text-gray-500">Pemesan:</span> <strong class="uppercase">${ord.customer_name ? ord.customer_name : 'Tanpa Nama'}</strong></p>

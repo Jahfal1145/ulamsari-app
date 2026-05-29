@@ -196,6 +196,16 @@ class CashierController extends Controller
         );
     }
 
+
+        public function destroy($id)
+    {
+        $order = Order::findOrFail($id);
+        $order->orderItems()->delete();
+        $order->delete();
+
+        return redirect()->back()->with('success', 'Pesanan berhasil dihapus.');
+    }
+
     public function getNota($id)
     {
         $order = Order::with('orderItems.menu')->findOrFail($id);
@@ -213,5 +223,6 @@ class CashierController extends Controller
                 'subtotal' => $item->subtotal,
             ])
         ]);
+        
     }
 }
